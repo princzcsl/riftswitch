@@ -17,7 +17,9 @@ RiftSwitch fonctionne entièrement sur ton ordinateur. Tes identifiants, session
 | Destination | Quand | Ce qui est envoyé |
 |---|---|---|
 | `127.0.0.1` (Riot Client, client LoL) | En permanence quand le client tourne | Requêtes locales, rien ne sort de la machine |
-| `ddragon.leagueoflegends.com` | Affichage d'icônes, runes, patchs | Requêtes publiques, sans compte |
+| `authenticate.riotgames.com` | À la bascule vers un compte | Identifiant et mot de passe du compte (TLS), envoyés uniquement à Riot, comme le ferait le Riot Client |
+| `ddragon.leagueoflegends.com`, `raw.communitydragon.org`, `valorant-api.com` | Affichage d'icônes (champions, agents), runes, patchs | Requêtes publiques, sans compte |
+| `github.com` | Au démarrage si « Rechercher les mises à jour » est activé, ou sur demande | Requête publique du manifeste de version ; le paquet téléchargé est vérifié par signature avant installation |
 | Serveurs Riot de configuration et de chat | Uniquement en mode hors ligne | Le trafic que le Riot Client enverrait de toute façon, relayé localement |
 
 ## Statistiques anonymes (opt-in)

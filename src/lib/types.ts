@@ -7,6 +7,7 @@ export interface Settings {
   performance: "auto" | "quality" | "performance";
   zoom: number;
   streamerMode: boolean;
+  checkUpdates: boolean;
   playMenuLabels: boolean;
   autoLockMinutes: number;
   lockOnSleep: boolean;
@@ -89,6 +90,7 @@ export interface Account {
   hasUsername: boolean;
   profileIconId: number | null;
   level: number | null;
+  valShard: string | null;
 }
 
 export interface Folder {

@@ -13,13 +13,52 @@ pub struct ActiveIdentity {
     pub game_name: String,
     pub tag_line: String,
     pub puuid: Option<String>,
+    /// Région LoL du compte (ex. « EUW »), connue dès la connexion, même sans lancer de jeu.
+    pub region: Option<String>,
 }
 
+// userinfo en premier : une seule requête donne Riot ID, PUUID et région.
 const ENDPOINTS: [&str; 3] = [
-    "/player-account/aliases/v1/active",
     "/rso-auth/v1/authorization/userinfo",
+    "/player-account/aliases/v1/active",
     "/chat/v1/session",
 ];
+
+/// Plateforme Riot (`EUW1`, `LA2`…) vers la région affichée dans RiftSwitch.
+pub fn platform_region(platform: &str) -> Option<&'static str> {
+    let p = platform.trim().to_ascii_uppercase();
+    Some(match p.trim_end_matches(|c: char| c.is_ascii_digit()) {
+        "EUW" => "EUW",
+        "EUN" => "EUNE",
+        "NA" => "NA",
+        "KR" => "KR",
+        "JP" => "JP",
+        "BR" => "BR",
+        "LA" if p == "LA1" => "LAN",
+        "LA" => "LAS",
+        "OC" => "OCE",
+        "TR" => "TR",
+        "RU" => "RU",
+        "ME" => "ME",
+        "SG" | "PH" | "TH" => "SEA",
+        "TW" => "TW",
+        "VN" => "VN",
+        _ => return None,
+    })
+}
+
+fn region_of(v: &Value) -> Option<String> {
+    let platform = v
+        .get("lol")
+        .and_then(|l| s(l, "cpid").or_else(|| s(l, "pid")))
+        .or_else(|| {
+            v.get("lol_region")
+                .and_then(|r| r.as_array())
+                .and_then(|a| a.iter().find_map(|x| s(x, "cpid")))
+        })
+        .or_else(|| s(v, "original_platform_id"))?;
+    platform_region(&platform).map(str::to_string)
+}
 
 pub fn riot_client_api() -> Option<LocalApi> {
     LocalApi::from_lockfile(&paths::riot_client_lockfile())
@@ -31,13 +70,18 @@ pub async fn active() -> Option<ActiveIdentity> {
     for ep in ENDPOINTS {
         if let Ok(v) = api.get(ep).await {
             if let Some(id) = parse(&v) {
-                // Certaines routes n'exposent pas le PUUID : on complète avec les suivantes.
+                // Certaines routes n'exposent pas tout : on complète avec les suivantes.
                 match &mut found {
                     None => found = Some(id),
-                    Some(f) if f.puuid.is_none() => f.puuid = id.puuid,
-                    _ => {}
+                    Some(f) => {
+                        f.puuid = f.puuid.take().or(id.puuid);
+                        f.region = f.region.take().or(id.region);
+                    }
                 }
-                if found.as_ref().is_some_and(|f| f.puuid.is_some()) {
+                if found
+                    .as_ref()
+                    .is_some_and(|f| f.puuid.is_some() && f.region.is_some())
+                {
                     break;
                 }
             }
@@ -82,6 +126,7 @@ pub fn parse(v: &Value) -> Option<ActiveIdentity> {
         game_name: game_name?,
         tag_line,
         puuid,
+        region: region_of(v),
     })
 }
 
@@ -107,5 +152,22 @@ mod tests {
             ("Y", Some("pp"))
         );
         assert!(parse(&json!({"foo": 1})).is_none());
+    }
+
+    #[test]
+    fn reads_region_from_userinfo() {
+        let inner = json!({
+            "sub": "pp",
+            "acct": {"game_name": "Y", "tag_line": "T"},
+            "lol": {"cpid": "EUN1"},
+        })
+        .to_string();
+        let a = parse(&json!({"userInfo": inner})).unwrap();
+        assert_eq!(a.region.as_deref(), Some("EUNE"));
+        let b = parse(&json!({"game_name": "X", "lol_region": [{"cpid": "LA2"}]})).unwrap();
+        assert_eq!(b.region.as_deref(), Some("LAS"));
+        assert_eq!(platform_region("LA1"), Some("LAN"));
+        assert_eq!(platform_region("PBE1"), None);
+        assert!(parse(&json!({"game_name": "X"})).unwrap().region.is_none());
     }
 }

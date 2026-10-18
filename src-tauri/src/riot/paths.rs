@@ -128,6 +128,24 @@ pub fn valorant_config_root() -> PathBuf {
         .join("Config")
 }
 
+/// Shard VALORANT d'un compte, lu dans le nom de son dossier de config (`{puuid}-{shard}`).
+/// Simple listage de dossier : rien n'est ouvert ni modifié. Le plus récent gagne.
+pub fn valorant_shard(puuid: &str) -> Option<String> {
+    let prefix = format!("{}-", puuid.to_ascii_lowercase());
+    std::fs::read_dir(valorant_config_root())
+        .ok()?
+        .flatten()
+        .filter_map(|e| {
+            let name = e.file_name().to_string_lossy().to_ascii_lowercase();
+            let shard = name.strip_prefix(&prefix)?.to_string();
+            let modified = e.metadata().and_then(|m| m.modified()).ok();
+            (!shard.is_empty() && shard.chars().all(|c| c.is_ascii_alphanumeric()))
+                .then_some((modified, shard))
+        })
+        .max_by_key(|(m, _)| *m)
+        .map(|(_, s)| s)
+}
+
 /// Change la langue d'un jeu avant lancement (réglage produit + fichier du client LoL).
 pub fn set_game_locale(game: &str, locale: &str, lol_custom: &str) {
     let re = regex::Regex::new(r#"(?m)^(\s*locale:\s*)"[^"]*""#).expect("regex");

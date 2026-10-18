@@ -652,5 +652,19 @@
     "langsHint": "Spielsprache pro Spiel für dieses Konto (z. B. VALORANT auf Japanisch, LoL auf Englisch).",
     "done": "Konto hinzugefügt",
     "regionAuto": "Auto (Erkennung)"
+  },
+  "update": {
+    "available": "Version {v} verfügbar",
+    "text": "Signiertes Update, in wenigen Sekunden installiert.",
+    "install": "Installieren",
+    "later": "Später",
+    "downloading": "Download… {p} %",
+    "failed": "Update fehlgeschlagen:",
+    "upToDate": "RiftSwitch ist aktuell.",
+    "auto": "Beim Start nach Updates suchen",
+    "autoText": "Kontaktiert nur github.com; das Paket wird vor der Installation mit der RiftSwitch-Signatur geprüft.",
+    "check": "Updates",
+    "checkNow": "Prüfen",
+    "current": "Installierte Version: {v}"
   }
 }

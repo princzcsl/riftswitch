@@ -6,6 +6,8 @@
   import TitleBar from "./components/TitleBar.svelte";
   import MfaPrompt from "./components/MfaPrompt.svelte";
   import PlayOverlay from "./components/PlayOverlay.svelte";
+  import UpdateBanner from "./components/UpdateBanner.svelte";
+  import { updater } from "./lib/updater.svelte";
   import Toasts from "./components/Toasts.svelte";
   import Accounts from "./pages/Accounts.svelte";
   import Achievements from "./pages/Achievements.svelte";
@@ -52,6 +54,14 @@
   $effect(() => {
     if (app.page === "patches") patchBadge = false;
   });
+
+  // Une seule vérification de mise à jour par lancement, après le déverrouillage.
+  let updateChecked = false;
+  $effect(() => {
+    if (view !== "main" || updateChecked || !app.settings?.checkUpdates) return;
+    updateChecked = true;
+    setTimeout(() => updater.check(), 4000);
+  });
 </script>
 
 <div class="app-bg"><div class="blob"></div></div>
@@ -93,6 +103,7 @@
 
 <MfaPrompt />
 <PlayOverlay />
+<UpdateBanner />
 <Toasts />
 <span class="sr-only" aria-live="polite">{app.status.busy ? t("status.switching") : ""}</span>
 

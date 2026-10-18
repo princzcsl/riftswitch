@@ -1,6 +1,6 @@
 [package]
 name = "riftswitch"
-version = "1.0.0"
+version = "1.1.0"
 description = "RiftSwitch — launcher multi-comptes Riot Games"
 authors = ["Prince"]
 edition = "2021"
@@ -44,6 +44,8 @@ tokio-rustls = { version = "0.26", default-features = false, features = ["ring",
 rcgen = { version = "0.13", default-features = false, features = ["crypto", "ring", "pem"] }
 webpki-roots = "0.26"
 tiny_http = "0.12"
+tauri-plugin-updater = "2"
+tauri-plugin-process = "2"
 
 [target.'cfg(windows)'.dependencies]
 # Connexion assistée : fenêtre de défi hCaptcha dans un WebView2 autonome (le captcha est résolu

@@ -39,6 +39,8 @@ pub struct Settings {
     /// Télémétrie : opt-in, décochée par défaut. Rien n'est envoyé tant qu'elle est désactivée.
     pub telemetry: bool,
     pub telemetry_install_id: String,
+    /// Vérifie au démarrage si une nouvelle version est publiée (GitHub Releases).
+    pub check_updates: bool,
     /// Dernier jeu choisi globalement (pré-sélection).
     pub last_game: String,
     /// Chemins personnalisés (vides = détection automatique).
@@ -69,6 +71,7 @@ impl Default for Settings {
             third_party_ranks_opt_in: false,
             telemetry: false,
             telemetry_install_id: String::new(),
+            check_updates: true,
             last_game: "lol".into(),
             riot_client_path: String::new(),
             lol_path: String::new(),

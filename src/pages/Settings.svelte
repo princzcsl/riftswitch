@@ -4,6 +4,7 @@
   import { app } from "../lib/app.svelte";
   import { LANGUAGES, errorText, t } from "../lib/i18n.svelte";
   import { THEMES } from "../lib/themes";
+  import { updater } from "../lib/updater.svelte";
   import { computeAchievements, shards } from "../lib/achievements";
   import Icon from "../components/Icon.svelte";
   import Modal from "../components/Modal.svelte";
@@ -33,6 +34,21 @@
   // Réinitialisation
   let resetOpen = $state(false);
   let resetStep = $state(0);
+
+  async function checkNow() {
+    try {
+      if (!(await updater.check(true))) app.toast("success", t("update.upToDate"));
+    } catch (e) {
+      app.toast("error", `${t("update.failed")} ${errorText(e)}`);
+    }
+  }
+  async function installUpdate() {
+    try {
+      await updater.install();
+    } catch (e) {
+      app.toast("error", `${t("update.failed")} ${errorText(e)}`);
+    }
+  }
 
   function set<K extends keyof typeof s>(key: K, value: (typeof s)[K]) {
     app.saveSettings({ [key]: value } as Partial<typeof s>);
@@ -266,6 +282,21 @@
             <h2>RiftSwitch</h2>
             <p class="muted">v{app.boot?.version}{app.boot?.portable ? " · portable" : ""}</p>
           </div>
+        </div>
+        <div class="setting">
+          <div><strong>{t("update.auto")}</strong><p>{t("update.autoText")}</p></div>
+          <Toggle checked={s.checkUpdates} onchange={(v) => set("checkUpdates", v)} />
+        </div>
+        <div class="setting">
+          <div>
+            <strong>{t("update.check")}</strong>
+            <p>{updater.available ? t("update.available", { v: updater.available.version }) : t("update.current", { v: app.boot?.version ?? "" })}</p>
+          </div>
+          {#if updater.available}
+            <button class="btn primary" onclick={installUpdate} disabled={updater.progress !== null}><Icon name="download" size={15} />{t("update.install")}</button>
+          {:else}
+            <button class="btn" onclick={checkNow} disabled={updater.checking}><Icon name="refresh" size={15} />{t("update.checkNow")}</button>
+          {/if}
         </div>
         <p class="small muted">{t("about.legal")}</p>
         <p class="small muted">{t("about.vanguard")}</p>

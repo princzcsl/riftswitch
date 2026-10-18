@@ -147,6 +147,8 @@ pub struct Account {
     /// Infos LoL lues sur le client (icône d'invocateur, niveau).
     pub profile_icon_id: Option<i64>,
     pub level: Option<i64>,
+    /// Shard VALORANT (eu, na, ap, kr…) déduit du dossier de config local du compte.
+    pub val_shard: Option<String>,
     /// Secrets scellés (AAD = id du compte). Jamais envoyés au front.
     pub secret: Option<Sealed>,
 }

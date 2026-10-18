@@ -92,6 +92,7 @@
   <div class="chips">
     {#if connected}<span class="chip success"><span class="dot pulse"></span>{t("accounts.connected")}</span>{/if}
     {#if account.region}<span class="chip">{account.region}</span>{/if}
+    {#if account.valShard}<span class="chip" title="VALORANT">VAL {account.valShard.toUpperCase()}</span>{/if}
     {#if showFolder && folder}<span class="chip" style="color:{folder.color || 'inherit'}"><Icon name="folder" size={12} />{folder.name}</span>{/if}
     {#each account.tags.slice(0, 3) as tag}<span class="chip accent">{tag}</span>{/each}
   </div>

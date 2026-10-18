@@ -102,9 +102,26 @@ pub fn spawn(app: AppHandle) {
                         if a.puuid.is_none() {
                             a.puuid = i.puuid.clone();
                         }
+                        // Détails auto : région dès la connexion, shard VALORANT après un 1er lancement.
+                        let mut filled = false;
+                        if a.region.is_empty() {
+                            if let Some(r) = &i.region {
+                                a.region = r.clone();
+                                filled = true;
+                            }
+                        }
+                        if a.val_shard.is_none() {
+                            if let Some(sh) =
+                                a.puuid.as_deref().and_then(crate::riot::paths::valorant_shard)
+                            {
+                                a.val_shard = Some(sh);
+                                filled = true;
+                            }
+                        }
                         let id = a.id.clone();
-                        let dirty = before
-                            != (a.game_name.clone(), a.tag_line.clone(), a.puuid.clone())
+                        let dirty = filled
+                            || before
+                                != (a.game_name.clone(), a.tag_line.clone(), a.puuid.clone())
                             || v.data.last_active_account.as_deref() != Some(id.as_str());
                         v.data.last_active_account = Some(id.clone());
                         if dirty {
