@@ -1,0 +1,77 @@
+// Accès typé aux commandes du cœur Rust. Aucun secret ne remonte jamais par ici.
+import { invoke } from "@tauri-apps/api/core";
+import type {
+  Account,
+  AccountInput,
+  Bootstrap,
+  ConfigProfile,
+  Folder,
+  Game,
+  RiotStatus,
+  RunePage,
+  Settings,
+  ValDir,
+  IniDoc,
+} from "./types";
+
+export const api = {
+  bootstrap: () => invoke<Bootstrap>("get_bootstrap"),
+  saveSettings: (settings: Settings) => invoke<Settings>("save_settings", { settings }),
+  touch: () => invoke<void>("touch"),
+  setupVault: (password: string | null) => invoke<void>("setup_vault", { password }),
+  unlock: (password: string | null) => invoke<void>("unlock", { password }),
+  lock: () => invoke<void>("lock"),
+  changeMasterPassword: (newPassword: string | null) => invoke<void>("change_master_password", { newPassword }),
+  resetApp: () => invoke<void>("reset_app"),
+  exportBackup: (path: string, passphrase: string) => invoke<void>("export_backup", { path, passphrase }),
+  importBackup: (path: string, passphrase: string) => invoke<number>("import_backup", { path, passphrase }),
+  telemetryPreview: () => invoke<Record<string, unknown>>("telemetry_preview"),
+  closeWindow: () => invoke<void>("close_window"),
+  quitApp: () => invoke<void>("quit_app"),
+  openDataDir: () => invoke<void>("open_data_dir"),
+
+  listAccounts: () => invoke<Account[]>("list_accounts"),
+  saveAccount: (input: AccountInput) => invoke<Account>("save_account", { input }),
+  setFavorite: (id: string, favorite: boolean) => invoke<void>("set_favorite", { id, favorite }),
+  deleteAccount: (id: string) => invoke<void>("delete_account", { id }),
+  reorderAccounts: (ids: string[]) => invoke<void>("reorder_accounts", { ids }),
+  listFolders: () => invoke<Folder[]>("list_folders"),
+  saveFolder: (folder: Folder) => invoke<Folder>("save_folder", { folder }),
+  deleteFolder: (id: string) => invoke<void>("delete_folder", { id }),
+  reorderFolders: (ids: string[]) => invoke<void>("reorder_folders", { ids }),
+
+  play: (accountId: string, game: Game, offline: boolean, notice: { title: string; body: string } | null) =>
+    invoke<{ switched: boolean }>("play", { accountId, game, offline, notice }),
+  setOffline: (offline: boolean) => invoke<boolean>("set_offline", { offline }),
+  riotStatus: () => invoke<RiotStatus>("riot_status"),
+  quitRiot: () => invoke<void>("quit_riot"),
+  captureCurrent: (targetId: string | null) =>
+    invoke<{ accountId: string; created: boolean }>("capture_current", { targetId }),
+  addViaRiotLogin: () => invoke<{ accountId: string; created: boolean }>("add_via_riot_login"),
+  cancelLogin: () => invoke<void>("cancel_login"),
+  submitMfa: (code: string) => invoke<void>("submit_mfa", { code }),
+
+  listProfiles: () => invoke<ConfigProfile[]>("list_profiles"),
+  getProfile: (id: string) => invoke<ConfigProfile>("get_profile", { id }),
+  saveProfile: (profile: ConfigProfile) => invoke<ConfigProfile>("save_profile", { profile }),
+  deleteProfile: (id: string) => invoke<void>("delete_profile", { id }),
+  duplicateProfile: (id: string, name: string) => invoke<ConfigProfile>("duplicate_profile", { id, name }),
+  captureProfile: (game: "lol" | "val", name: string, categories: string[], valDir: string | null, sourceAccount: string | null) =>
+    invoke<ConfigProfile>("capture_profile", { game, name, categories, valDir, sourceAccount }),
+  readCurrentLol: () => invoke<{ input: IniDoc; game: IniDoc }>("read_current_lol"),
+  applyProfile: (id: string, valDir: string | null) => invoke<string[]>("apply_profile", { id, valDir }),
+  assignProfile: (id: string, accountIds: string[]) => invoke<void>("assign_profile", { id, accountIds }),
+  exportProfileCode: (id: string) => invoke<string>("export_profile_code", { id }),
+  importProfileCode: (code: string) => invoke<ConfigProfile>("import_profile_code", { code }),
+  exportProfileFile: (id: string, path: string) => invoke<void>("export_profile_file", { id, path }),
+  importProfileFile: (path: string) => invoke<ConfigProfile>("import_profile_file", { path }),
+  listValDirs: () => invoke<ValDir[]>("list_val_dirs"),
+
+  runesClientPages: () => invoke<RunePage[]>("runes_client_pages"),
+  runesLibrary: () => invoke<RunePage[]>("runes_library"),
+  runesSave: (page: RunePage) => invoke<RunePage>("runes_save", { page }),
+  runesDelete: (id: string) => invoke<void>("runes_delete", { id }),
+  runesPush: (page: RunePage) => invoke<void>("runes_push", { page }),
+  runesExportCode: (page: RunePage) => invoke<string>("runes_export_code", { page }),
+  runesImportCode: (code: string) => invoke<RunePage>("runes_import_code", { code }),
+};

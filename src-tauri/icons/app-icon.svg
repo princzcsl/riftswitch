@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1b2a6b"/>
+      <stop offset="0.55" stop-color="#3a1f7a"/>
+      <stop offset="1" stop-color="#0e1636"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.42" r="0.55">
+      <stop offset="0" stop-color="#7fe3ff" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#7fe3ff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="body" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#bff4ff"/>
+      <stop offset="0.6" stop-color="#6ccfff"/>
+      <stop offset="1" stop-color="#4b8cff"/>
+    </linearGradient>
+    <linearGradient id="horn" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffe7a3"/>
+      <stop offset="1" stop-color="#e0a83a"/>
+    </linearGradient>
+    <linearGradient id="rim" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.7"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0.05"/>
+    </linearGradient>
+  </defs>
+  <rect x="48" y="48" width="928" height="928" rx="220" fill="url(#bg)"/>
+  <rect x="48" y="48" width="928" height="928" rx="220" fill="url(#glow)"/>
+  <!-- anneau « faille » -->
+  <circle cx="512" cy="540" r="330" fill="none" stroke="#9b7bff" stroke-opacity="0.45" stroke-width="18" stroke-dasharray="120 60"/>
+  <!-- cornes -->
+  <path d="M352 360 C 300 250, 330 190, 380 170 C 380 240, 400 300, 430 330 Z" fill="url(#horn)"/>
+  <path d="M672 360 C 724 250, 694 190, 644 170 C 644 240, 624 300, 594 330 Z" fill="url(#horn)"/>
+  <!-- corps -->
+  <path d="M512 300 C 690 300, 760 420, 760 560 C 760 700, 650 790, 512 790 C 374 790, 264 700, 264 560 C 264 420, 334 300, 512 300 Z" fill="url(#body)"/>
+  <!-- reflet -->
+  <path d="M360 420 C 400 350, 470 330, 520 332 C 450 360, 400 400, 380 470 Z" fill="#ffffff" fill-opacity="0.55"/>
+  <!-- yeux -->
+  <ellipse cx="430" cy="560" rx="58" ry="74" fill="#14183a"/>
+  <ellipse cx="594" cy="560" rx="58" ry="74" fill="#14183a"/>
+  <circle cx="448" cy="534" r="20" fill="#ffffff"/>
+  <circle cx="612" cy="534" r="20" fill="#ffffff"/>
+  <circle cx="418" cy="590" r="9" fill="#7fe3ff"/>
+  <circle cx="582" cy="590" r="9" fill="#7fe3ff"/>
+  <!-- joues + bouche -->
+  <ellipse cx="370" cy="640" rx="34" ry="18" fill="#ff7fb3" fill-opacity="0.6"/>
+  <ellipse cx="654" cy="640" rx="34" ry="18" fill="#ff7fb3" fill-opacity="0.6"/>
+  <path d="M488 650 Q 512 676 536 650" fill="none" stroke="#14183a" stroke-width="12" stroke-linecap="round"/>
+  <!-- gemme -->
+  <path d="M512 380 L 548 420 L 512 462 L 476 420 Z" fill="#ffd25a" stroke="#fff3c4" stroke-width="6"/>
+  <!-- bord lumineux -->
+  <rect x="56" y="56" width="912" height="912" rx="212" fill="none" stroke="url(#rim)" stroke-width="8"/>
+</svg>

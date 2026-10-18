@@ -1,0 +1,70 @@
+[package]
+name = "riftswitch"
+version = "1.0.0"
+description = "RiftSwitch — launcher multi-comptes Riot Games"
+authors = ["Prince"]
+edition = "2021"
+rust-version = "1.80"
+
+[lib]
+name = "riftswitch_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["tray-icon", "image-png"] }
+tauri-plugin-single-instance = "2"
+tauri-plugin-dialog = "2"
+tauri-plugin-notification = "2"
+tauri-plugin-opener = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "net", "io-util", "time", "sync"] }
+
+# Crypto du coffre
+argon2 = "0.5"
+chacha20poly1305 = "0.10"
+getrandom = "0.2"
+zeroize = { version = "1", features = ["derive"] }
+base64 = "0.22"
+keyring = { version = "3", features = ["windows-native", "apple-native"] }
+
+# Riot Client / LCU (API locales en 127.0.0.1) et données publiques (Data Dragon)
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls", "cookies"] }
+sysinfo = { version = "0.33", default-features = false, features = ["system"] }
+regex = "1"
+flate2 = "1"
+uuid = { version = "1", features = ["v4"] }
+
+# Mode hors ligne (proxy XMPP local, inspiré de Deceive)
+rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12", "logging"] }
+tokio-rustls = { version = "0.26", default-features = false, features = ["ring", "tls12", "logging"] }
+rcgen = { version = "0.13", default-features = false, features = ["crypto", "ring", "pem"] }
+webpki-roots = "0.26"
+tiny_http = "0.12"
+
+[target.'cfg(windows)'.dependencies]
+# Connexion assistée : fenêtre de défi hCaptcha dans un WebView2 autonome (le captcha est résolu
+# par l'utilisateur). Versions alignées sur celles déjà tirées par Tauri (pas de conflit COM).
+webview2-com = "0.39"
+windows = { version = "0.62", features = [
+  "Win32_Foundation",
+  "Win32_System_Com",
+  "Win32_System_LibraryLoader",
+  "Win32_System_Threading",
+  "Win32_UI_WindowsAndMessaging",
+  "Win32_UI_Shell",
+  "Win32_Graphics_Gdi",
+] }
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+panic = "abort"
+strip = true
+
+[profile.dev.package."*"]
+opt-level = 2
