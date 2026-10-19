@@ -634,7 +634,9 @@
     "token_exchange": "Riot refused the token exchange.",
     "redeem": "The Riot Client refused the sign-in.",
     "redeem_failed": "The Riot Client did not accept the sign-in in time.",
-    "captcha_failed": "Riot keeps asking for verification. Try again in a few minutes."
+    "captcha_failed": "Riot keeps asking for verification. Try again in a few minutes.",
+    "login_bad_credentials": "Riot rejected the username or password. Check them in the account’s Security tab.",
+    "login_rate_limited": "Too many sign-in attempts: Riot is blocking them for now. Wait about 15 minutes, then try again."
   },
   "mfa": {
     "title": "Two-factor code",

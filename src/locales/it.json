@@ -634,7 +634,9 @@
     "token_exchange": "Riot ha rifiutato lo scambio del token.",
     "redeem": "Il Riot Client ha rifiutato l’accesso.",
     "redeem_failed": "Il Riot Client non ha accettato l’accesso in tempo.",
-    "captcha_failed": "Riot continua a chiedere la verifica. Riprova tra qualche minuto."
+    "captcha_failed": "Riot continua a chiedere la verifica. Riprova tra qualche minuto.",
+    "login_bad_credentials": "Riot rifiuta nome utente o password. Controllali nella scheda Sicurezza dell’account.",
+    "login_rate_limited": "Troppi tentativi di accesso: Riot li blocca per ora. Attendi circa 15 minuti, poi riprova."
   },
   "mfa": {
     "title": "Codice 2FA",

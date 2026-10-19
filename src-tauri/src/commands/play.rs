@@ -388,7 +388,13 @@ async fn credential_login(
                 return Ok(Zeroizing::new(login_token));
             }
             Outcome::Failed { reason } => {
-                return Err(AppError::new("login_failed", reason));
+                log(format!("login: refusé par Riot ({reason})"));
+                let code = match reason.as_str() {
+                    "auth_failure" => "login_bad_credentials",
+                    "rate_limited" => "login_rate_limited",
+                    _ => "login_failed",
+                };
+                return Err(AppError::new(code, reason));
             }
             Outcome::Mfa { methods, email } => {
                 log("login: A2F requise");

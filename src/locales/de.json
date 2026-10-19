@@ -634,7 +634,9 @@
     "token_exchange": "Riot hat den Token-Austausch abgelehnt.",
     "redeem": "Der Riot Client hat die Anmeldung abgelehnt.",
     "redeem_failed": "Der Riot Client hat die Anmeldung nicht rechtzeitig akzeptiert.",
-    "captcha_failed": "Riot verlangt immer wieder die Überprüfung. Versuche es in ein paar Minuten erneut."
+    "captcha_failed": "Riot verlangt immer wieder die Überprüfung. Versuche es in ein paar Minuten erneut.",
+    "login_bad_credentials": "Riot lehnt Benutzername oder Passwort ab. Prüfe sie im Tab Sicherheit des Kontos.",
+    "login_rate_limited": "Zu viele Anmeldeversuche: Riot blockiert sie vorerst. Warte etwa 15 Minuten und versuche es dann erneut."
   },
   "mfa": {
     "title": "2FA-Code",

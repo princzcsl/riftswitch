@@ -112,7 +112,11 @@ impl LoginSession {
             "type": "auth"
         });
         let v = self.send(reqwest::Method::PUT, "/api/v1/login", Some(body)).await?;
-        Ok(parse_outcome(&v))
+        let outcome = parse_outcome(&v);
+        if !matches!(outcome, Outcome::Success { .. }) {
+            crate::util::log(format!("login: réponse Riot {}", describe(&v)));
+        }
+        Ok(outcome)
     }
 
     /// Soumet un code d'A2F.
@@ -180,14 +184,35 @@ fn parse_outcome(v: &Value) -> Outcome {
         let email = mf.and_then(|m| str_of(m, "email"));
         return Outcome::Mfa { methods, email };
     }
+    // Un refus contient aussi un nouveau captcha (pour réessayer) : l'erreur passe avant,
+    // sinon chaque refus est pris pour une demande de captcha et on boucle.
+    let error = error_of(v);
     let challenge = parse_challenge(captcha_node(v));
-    if challenge.requires() {
+    if challenge.requires() && error.as_deref().map_or(true, |e| e.contains("captcha")) {
         return Outcome::Challenge { challenge };
     }
-    let reason = str_of(v, "error")
+    let reason = error
         .or_else(|| str_of(v, "message"))
         .unwrap_or_else(|| "unknown".into());
     Outcome::Failed { reason }
+}
+
+/// Code d'erreur de Riot, à la racine ou dans `riot_identity`.
+fn error_of(v: &Value) -> Option<String> {
+    str_of(v, "error").or_else(|| v.get("riot_identity").and_then(|r| str_of(r, "error")))
+}
+
+/// Résumé sans valeur sensible d'une réponse non réussie, pour le journal.
+fn describe(v: &Value) -> String {
+    let keys = v
+        .as_object()
+        .map(|o| o.keys().cloned().collect::<Vec<_>>().join(","))
+        .unwrap_or_default();
+    format!(
+        "type={} error={} champs=[{keys}]",
+        str_of(v, "type").unwrap_or_default(),
+        error_of(v).unwrap_or_default()
+    )
 }
 
 #[cfg(test)]
@@ -217,5 +242,13 @@ mod tests {
 
         let chal = parse_outcome(&json!({"type": "auth", "captcha": {"type": "hcaptcha", "hcaptcha": {"key": "k"}}}));
         assert!(matches!(chal, Outcome::Challenge { .. }));
+        // Un refus arrive avec un nouveau captcha : c'est l'erreur qui compte.
+        let captcha = json!({"type": "hcaptcha", "hcaptcha": {"key": "k"}});
+        let refused = parse_outcome(&json!({"type": "auth", "error": "rate_limited", "captcha": captcha}));
+        assert!(matches!(refused, Outcome::Failed { ref reason } if reason == "rate_limited"));
+        let nested = parse_outcome(&json!({"type": "auth", "riot_identity": {"error": "auth_failure"}, "captcha": captcha}));
+        assert!(matches!(nested, Outcome::Failed { ref reason } if reason == "auth_failure"));
+        let bad_captcha = parse_outcome(&json!({"type": "auth", "error": "captcha_failure", "captcha": captcha}));
+        assert!(matches!(bad_captcha, Outcome::Challenge { .. }));
     }
 }

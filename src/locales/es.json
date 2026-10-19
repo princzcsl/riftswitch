@@ -634,7 +634,9 @@
     "token_exchange": "Riot rechazó el intercambio de token.",
     "redeem": "El Riot Client rechazó el inicio de sesión.",
     "redeem_failed": "El Riot Client no aceptó el inicio de sesión a tiempo.",
-    "captcha_failed": "Riot sigue pidiendo la verificación. Inténtalo de nuevo en unos minutos."
+    "captcha_failed": "Riot sigue pidiendo la verificación. Inténtalo de nuevo en unos minutos.",
+    "login_bad_credentials": "Riot rechaza el usuario o la contraseña. Revísalos en la pestaña Seguridad de la cuenta.",
+    "login_rate_limited": "Demasiados intentos de inicio de sesión: Riot los bloquea por ahora. Espera unos 15 minutos y vuelve a intentarlo."
   },
   "mfa": {
     "title": "Código 2FA",
