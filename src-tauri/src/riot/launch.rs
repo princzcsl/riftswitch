@@ -104,23 +104,35 @@ pub async fn launch_product(exe: &Path, game: &str, locale: Option<&str>) -> App
     let route = format!("/product-launcher/v1/products/{product}/patchlines/live");
     let start = Instant::now();
     let mut last = String::new();
-    // Quand le client a démarré avec `--launch-product`, il lance le jeu tout seul après la connexion.
-    while start.elapsed() < Duration::from_secs(12) {
-        if super::process::snapshot().game_in_progress() {
-            log(format!("launch: {product} déjà en cours de lancement par le client"));
+    // 423 = le client lance déjà ce produit (démarré avec `--launch-product`, il lance le jeu tout
+    // seul après la connexion) : on cesse de le redemander et on attend simplement son ouverture.
+    let mut in_progress = false;
+    let limit = |busy: bool| Duration::from_secs(if busy { 30 } else { 12 });
+    while start.elapsed() < limit(in_progress) {
+        if super::process::snapshot().product_running(game) {
+            log(format!(
+                "launch: {product} ouvert en {} ms",
+                start.elapsed().as_millis()
+            ));
             return Ok(());
         }
-        if let Some(api) = identity::riot_client_api() {
-            // Même appel que le bouton Jouer officiel : POST sans corps.
-            match api.request(reqwest::Method::POST, &route, None).await {
-                Ok(_) => {
-                    log(format!("launch: {product} lancé via l'API du client"));
-                    return Ok(());
+        if !in_progress {
+            if let Some(api) = identity::riot_client_api() {
+                // Même appel que le bouton Jouer officiel : POST sans corps.
+                match api.request(reqwest::Method::POST, &route, None).await {
+                    Ok(_) => {
+                        log(format!("launch: {product} lancé via l'API du client"));
+                        return Ok(());
+                    }
+                    Err(e) if e.detail.contains("423") => {
+                        log(format!("launch: {product} déjà en cours de lancement (423)"));
+                        in_progress = true;
+                    }
+                    Err(e) => last = e.detail,
                 }
-                Err(e) => last = e.detail,
             }
         }
-        tokio::time::sleep(Duration::from_millis(700)).await;
+        tokio::time::sleep(Duration::from_millis(300)).await;
     }
     log(format!(
         "launch: API indisponible ({last}), repli sur la ligne de commande"

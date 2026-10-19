@@ -322,10 +322,17 @@
     </div>
   {:else}
     {#if account}
+      <div class="section-title">{t("editor.hoursInGame")}</div>
       <div class="stats">
         <div><span class="faint small">League of Legends</span><strong>{hours(account.playtime.lol)}</strong></div>
         <div><span class="faint small">TFT</span><strong>{hours(account.playtime.tft)}</strong></div>
         <div><span class="faint small">VALORANT</span><strong>{hours(account.playtime.val)}</strong></div>
+      </div>
+      <div class="section-title">{t("editor.hoursLauncher")}</div>
+      <div class="stats">
+        <div><span class="faint small">League of Legends</span><strong>{hours(account.playtime.launcher?.lol ?? 0)}</strong></div>
+        <div><span class="faint small">TFT</span><strong>{hours(account.playtime.launcher?.tft ?? 0)}</strong></div>
+        <div><span class="faint small">VALORANT</span><strong>{hours(account.playtime.launcher?.val ?? 0)}</strong></div>
       </div>
       <div class="section-title">{t("editor.aliases")}</div>
       {#each account.aliases as al}

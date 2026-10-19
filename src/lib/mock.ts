@@ -238,12 +238,14 @@ let settings = {
   zoom: 100,
   streamerMode: false,
   checkUpdates: true,
+  bonusShards: 0,
   playMenuLabels: true,
   autoLockMinutes: 0,
   lockOnSleep: false,
   closeToTray: true,
   startMinimized: false,
   blockSwitchInGame: true,
+  closeRiotClient: true,
   autoApplyProfiles: true,
   discordRpc: false,
   discordShowRiotId: false,
@@ -283,7 +285,7 @@ export function installMock() {
       case "riot_status":
         return {
           clientInstalled: true,
-          procs: { riotClient: true, riotClientPid: 1, lolClient: true, lolGame: false, valGame: false },
+          procs: { riotClient: true, riotClientPid: 1, lolClient: true, lolGame: false, valGame: false, valInMatch: false },
           identity: { gameName: "Prince", tagLine: "EUW", puuid: "p1" },
           activeAccountId: "a1",
           proxyRunning: false,

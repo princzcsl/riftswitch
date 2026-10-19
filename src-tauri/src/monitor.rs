@@ -8,7 +8,7 @@ use std::sync::atomic::Ordering;
 use std::time::{Duration, Instant};
 use tauri::{AppHandle, Emitter, Manager};
 
-use crate::riot::{identity, lcu, paths, process, RiotStatus};
+use crate::riot::{identity, lcu, paths, presence, process, RiotStatus};
 use crate::state::AppState;
 use crate::util::{log, now_ms};
 use crate::vault::Vault;
@@ -18,6 +18,15 @@ pub fn credit_playtime(vault: &mut Vault, account_id: &str, game: &str, secs: u6
         return;
     };
     let p = &mut vault.data.accounts[idx].playtime;
+    // « launcher:<jeu> » : temps hors partie, compté à part (ni totaux de jeu ni succès).
+    if let Some(g) = game.strip_prefix("launcher:") {
+        match g {
+            "val" => p.launcher.val += secs,
+            "tft" => p.launcher.tft += secs,
+            _ => p.launcher.lol += secs,
+        }
+        return;
+    }
     match game {
         "val" => p.val += secs,
         "tft" => p.tft += secs,
@@ -70,6 +79,8 @@ pub fn spawn(app: AppHandle) {
             let procs = tokio::task::spawn_blocking(process::snapshot)
                 .await
                 .unwrap_or_default();
+            // VALORANT tourne dès le menu : l'état de présence dit s'il y a vraiment une partie.
+            let procs = presence::with_match_state(procs).await;
 
             // ── Compte connecté au Riot Client ──
             if procs.riot_client {
@@ -193,8 +204,11 @@ pub fn spawn(app: AppHandle) {
                 }
             }
 
-            // ── Temps de jeu ──
-            if procs.lol_game || procs.val_game {
+            // ── Temps de jeu : « en partie » (totaux, succès) et « launcher » (client LoL, menus VALORANT) ──
+            let in_game = procs.lol_game || procs.val_in_match;
+            let in_launcher = !in_game && (procs.lol_client || procs.val_game);
+            let mut current: Option<(String, String)> = None;
+            if in_game || in_launcher {
                 let fallback = state
                     .with_vault(|v| Ok(v.data.last_active_account.clone()))
                     .ok()
@@ -219,12 +233,17 @@ pub fn spawn(app: AppHandle) {
                             "lol".into()
                         }
                     };
-                    pending_target = Some((id, game));
-                    pending_secs += real_elapsed.as_secs().min(90);
+                    let game = if in_launcher {
+                        format!("launcher:{game}")
+                    } else {
+                        game
+                    };
+                    current = Some((id, game));
                 }
             }
-            let game_over = !(procs.lol_game || procs.val_game);
-            if pending_secs > 0 && (game_over || pending_secs >= 120) {
+            // Changement de compte, de jeu ou d'état (partie ↔ launcher), fin de session, ou
+            // 2 minutes cumulées : on enregistre le temps accumulé sur sa cible d'origine.
+            if pending_secs > 0 && (pending_target != current || pending_secs >= 120) {
                 if let Some((id, game)) = pending_target.clone() {
                     let flushed = state
                         .with_vault(|v| {
@@ -242,6 +261,10 @@ pub fn spawn(app: AppHandle) {
                     pending_secs = 0;
                     accounts_changed = true;
                 }
+            }
+            if let Some(c) = current {
+                pending_secs += real_elapsed.as_secs().min(90);
+                pending_target = Some(c);
             }
 
             // ── Verrouillage automatique ──

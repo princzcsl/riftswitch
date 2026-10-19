@@ -5,7 +5,7 @@
   import { api } from "../lib/api";
   import { app } from "../lib/app.svelte";
   import { errorText, t } from "../lib/i18n.svelte";
-  import { ACCOUNT_COLORS } from "../lib/avatars";
+  import { ACCOUNT_COLORS, randomColor } from "../lib/avatars";
   import { GAME_LOCALES } from "../lib/format";
   import Avatar from "./Avatar.svelte";
   import Icon from "./Icon.svelte";
@@ -26,14 +26,13 @@
   const VAL_ROLES = ["duelist", "controller", "initiator", "sentinel"];
 
   function blank(): AccountInput {
-    const n = app.accounts.length;
     return {
       id: null,
       label: "",
       gameName: "",
       tagLine: "",
       region: "",
-      color: ACCOUNT_COLORS[n % 7],
+      color: randomColor(app.accounts.map((a) => a.color)),
       icon: "auto",
       tags: [],
       folderId: null,
@@ -78,7 +77,7 @@
     const name = newFolder.trim();
     if (!name) return;
     try {
-      const f = await api.saveFolder({ id: "", name, color: ACCOUNT_COLORS[app.folders.length % 7], order: 0 });
+      const f = await api.saveFolder({ id: "", name, color: randomColor(app.folders.map((x) => x.color ?? "")), order: 0 });
       await app.refreshAccounts();
       form.folderId = f.id;
       newFolder = "";

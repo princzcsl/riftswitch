@@ -5,7 +5,7 @@
   import { THEMES } from "../lib/themes";
 
   const list = $derived(computeAchievements(app.accounts, app.folders, app.profiles));
-  const balance = $derived(shards(list));
+  const balance = $derived(shards(list) + (app.settings?.bonusShards ?? 0));
   const unlockables = $derived(THEMES.filter((th) => th.cost > 0));
 </script>
 

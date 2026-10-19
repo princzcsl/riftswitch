@@ -8,12 +8,14 @@ export interface Settings {
   zoom: number;
   streamerMode: boolean;
   checkUpdates: boolean;
+  bonusShards: number;
   playMenuLabels: boolean;
   autoLockMinutes: number;
   lockOnSleep: boolean;
   closeToTray: boolean;
   startMinimized: boolean;
   blockSwitchInGame: boolean;
+  closeRiotClient: boolean;
   autoApplyProfiles: boolean;
   discordRpc: boolean;
   discordShowRiotId: boolean;
@@ -82,7 +84,7 @@ export interface Account {
   ranks: Ranks;
   decay: { daysRemaining: number | null; bankedGames: number | null; updatedAt: number | null };
   health: { penalties: string[]; honorLevel: number | null; updatedAt: number | null };
-  playtime: { lol: number; tft: number; val: number; recent: Record<string, number>; launches: Record<string, number> };
+  playtime: { lol: number; tft: number; val: number; recent: Record<string, number>; launches: Record<string, number>; launcher?: { lol: number; tft: number; val: number } };
   profiles: { lol: string | null; val: string | null };
   sessionCapturedAt: number | null;
   hasSession: boolean;
@@ -106,6 +108,7 @@ export interface ProcSnapshot {
   lolClient: boolean;
   lolGame: boolean;
   valGame: boolean;
+  valInMatch: boolean;
 }
 
 export interface RiotStatus {

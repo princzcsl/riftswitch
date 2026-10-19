@@ -17,7 +17,7 @@ export interface Toast {
 
 const emptyStatus: RiotStatus = {
   clientInstalled: false,
-  procs: { riotClient: false, riotClientPid: null, lolClient: false, lolGame: false, valGame: false },
+  procs: { riotClient: false, riotClientPid: null, lolClient: false, lolGame: false, valGame: false, valInMatch: false },
   identity: null,
   activeAccountId: null,
   proxyRunning: false,

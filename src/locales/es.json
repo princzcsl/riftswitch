@@ -50,7 +50,8 @@
     "clientMissing": "Riot Client no encontrado",
     "clientOpen": "Riot Client abierto · sin sesión",
     "connectedAs": "Conectado · {name}",
-    "connectedUnknown": "Conectado · {id} (no guardada)"
+    "connectedUnknown": "Conectado · {id} (no guardada)",
+    "gameOpen": "{game} abierto"
   },
   "streamer": {
     "toggle": "Modo streamer",
@@ -189,7 +190,9 @@
     "keepCurrent": "Déjalo vacío para mantener",
     "usernamePh": "Usuario de acceso de Riot",
     "loginReady": "El cambio con un clic está activado para esta cuenta.",
-    "loginNeeded": "Añade usuario y contraseña para cambiar a esta cuenta con un clic."
+    "loginNeeded": "Añade usuario y contraseña para cambiar a esta cuenta con un clic.",
+    "hoursInGame": "Horas en partida",
+    "hoursLauncher": "Horas en el launcher"
   },
   "icon": {
     "set": "Iconos",
@@ -526,7 +529,9 @@
     "resetTitle": "Restablecer RiftSwitch",
     "resetText": "Borra todo: bóveda, sesiones, perfiles, caché, preferencias y la clave guardada por el sistema. RiftSwitch vuelve al primer inicio.",
     "resetConfirm2": "Última confirmación: no se puede deshacer.",
-    "resetFinal": "Borrar todo"
+    "resetFinal": "Borrar todo",
+    "closeRiotClient": "Cerrar el Riot Client tras el lanzamiento",
+    "closeRiotClientText": "Cuando el juego está abierto, su ventana se cierra como con la X. El cliente sigue funcionando en segundo plano."
   },
   "setup": {
     "welcome": "Bienvenido a RiftSwitch",
@@ -661,10 +666,13 @@
     "downloading": "Descargando… {p} %",
     "failed": "Error al actualizar:",
     "upToDate": "RiftSwitch está actualizado.",
-    "auto": "Buscar actualizaciones al iniciar",
-    "autoText": "Solo contacta con github.com; el paquete se verifica con la firma de RiftSwitch antes de instalarlo.",
+    "auto": "Actualizaciones automáticas",
+    "autoText": "Las nuevas versiones se instalan al iniciar, sin que hagas nada. Solo contacta con github.com; cada paquete se verifica con la firma de RiftSwitch.",
     "check": "Actualizaciones",
     "checkNow": "Comprobar",
-    "current": "Versión instalada: {v}"
+    "current": "Versión instalada: {v}",
+    "screenTitle": "Actualizando",
+    "screenText": "RiftSwitch {v} se está instalando y se reiniciará solo.",
+    "preparing": "Preparando…"
   }
 }

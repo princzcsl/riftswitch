@@ -28,6 +28,8 @@ pub struct Settings {
     pub start_minimized: bool,
     /// Fermer le Riot Client proprement avant un switch (sinon on refuse si une partie est en cours).
     pub block_switch_in_game: bool,
+    /// Ferme la fenêtre du Riot Client (comme la croix) une fois le jeu ouvert.
+    pub close_riot_client: bool,
     /// Appliquer automatiquement le profil de config associé au compte au lancement.
     pub auto_apply_profiles: bool,
     pub discord_rpc: bool,
@@ -41,6 +43,8 @@ pub struct Settings {
     pub telemetry_install_id: String,
     /// Vérifie au démarrage si une nouvelle version est publiée (GitHub Releases).
     pub check_updates: bool,
+    /// Éclats offerts en plus de ceux des succès (réglage manuel, absent de l'interface).
+    pub bonus_shards: u32,
     /// Dernier jeu choisi globalement (pré-sélection).
     pub last_game: String,
     /// Chemins personnalisés (vides = détection automatique).
@@ -63,6 +67,7 @@ impl Default for Settings {
             close_to_tray: true,
             start_minimized: false,
             block_switch_in_game: true,
+            close_riot_client: true,
             auto_apply_profiles: true,
             discord_rpc: false,
             discord_show_riot_id: false,
@@ -72,6 +77,7 @@ impl Default for Settings {
             telemetry: false,
             telemetry_install_id: String::new(),
             check_updates: true,
+            bonus_shards: 0,
             last_game: "lol".into(),
             riot_client_path: String::new(),
             lol_path: String::new(),

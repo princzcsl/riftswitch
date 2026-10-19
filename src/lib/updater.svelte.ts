@@ -10,14 +10,32 @@ class UpdaterState {
   progress = $state<number | null>(null);
   checking = $state(false);
   dismissed = $state(false);
+  /** Mise à jour automatique en cours : l'écran « Mise à jour en cours » couvre l'app. */
+  updating = $state(false);
   #update: Update | null = null;
+
+  /**
+   * Au démarrage : si une version est publiée, on l'installe sans rien demander. Téléchargement
+   * affiché à l'écran, puis installation silencieuse ; l'installateur relance RiftSwitch.
+   */
+  async autoUpdate() {
+    if (import.meta.env.DEV) return;
+    if (!(await this.check())) return;
+    this.updating = true;
+    try {
+      await this.install();
+    } catch {
+      // Hors ligne, signature refusée… : on laisse l'app démarrer normalement.
+      this.updating = false;
+    }
+  }
 
   /** Renvoie true si une mise à jour est disponible. Lève une erreur seulement si `manual`. */
   async check(manual = false): Promise<boolean> {
     if (this.checking) return !!this.available;
     this.checking = true;
     try {
-      const u = await check();
+      const u = await check({ timeout: 10_000 });
       this.#update = u ?? null;
       this.available = u ? { version: u.version, notes: u.body ?? "" } : null;
       if (u) this.dismissed = false;

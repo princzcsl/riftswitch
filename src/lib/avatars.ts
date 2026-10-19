@@ -47,3 +47,12 @@ export const ACCOUNT_COLORS = [
   "#ff4655",
   "#8a8fa8",
 ];
+
+/** Couleur de départ au hasard parmi les 7 proposées, en évitant celles déjà utilisées. */
+export function randomColor(used: string[]): string {
+  const palette = ACCOUNT_COLORS.slice(0, 7);
+  const taken = new Set(used.map((c) => c.toLowerCase()));
+  const free = palette.filter((c) => !taken.has(c));
+  const pool = free.length ? free : palette;
+  return pool[Math.floor(Math.random() * pool.length)];
+}

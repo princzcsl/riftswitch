@@ -24,14 +24,20 @@
     if (status.busy === "switching") return t("status.switching");
     if (status.busy === "waiting_login") return t("status.waitingLogin");
     if (status.procs.lolGame) return t("status.inGame", { game: "League of Legends" });
-    if (status.procs.valGame) return t("status.inGame", { game: "VALORANT" });
+    if (status.procs.valInMatch) return t("status.inGame", { game: "VALORANT" });
+    if (status.procs.valGame) return t("status.gameOpen", { game: "VALORANT" });
     if (!status.procs.riotClient) return status.clientInstalled ? t("status.clientClosed") : t("status.clientMissing");
-    if (active) return t("status.connectedAs", { name: streamer ? active.label : `${active.label} · ${displayRiotId(active, false)}` });
+    if (active) {
+      // Sans surnom, on affiche seulement le Riot ID (évite « Connecté · · Pseudo »).
+      const riotId = displayRiotId(active, false);
+      const name = streamer ? active.label || "•••" : active.label ? `${active.label} · ${riotId}` : riotId;
+      return t("status.connectedAs", { name });
+    }
     if (status.identity) return t("status.connectedUnknown", { id: streamer ? "•••" : `${status.identity.gameName}#${status.identity.tagLine}` });
     return t("status.clientOpen");
   });
   const tone = $derived(
-    status.busy ? "busy" : status.procs.lolGame || status.procs.valGame ? "game" : status.procs.riotClient ? "on" : "off",
+    status.busy ? "busy" : status.procs.lolGame || status.procs.valInMatch ? "game" : status.procs.riotClient || status.procs.valGame ? "on" : "off",
   );
 </script>
 

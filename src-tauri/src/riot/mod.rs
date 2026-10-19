@@ -7,10 +7,12 @@ pub mod launch;
 pub mod lcu;
 pub mod local_api;
 pub mod paths;
+pub mod presence;
 pub mod process;
 pub mod redeem;
 pub mod rso_login;
 pub mod session;
+pub mod window;
 
 use serde::Serialize;
 

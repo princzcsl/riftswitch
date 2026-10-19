@@ -50,7 +50,8 @@
     "clientMissing": "Riot Client nicht gefunden",
     "clientOpen": "Riot Client offen · abgemeldet",
     "connectedAs": "Angemeldet · {name}",
-    "connectedUnknown": "Angemeldet · {id} (nicht gespeichert)"
+    "connectedUnknown": "Angemeldet · {id} (nicht gespeichert)",
+    "gameOpen": "{game} geöffnet"
   },
   "streamer": {
     "toggle": "Streamer-Modus",
@@ -189,7 +190,9 @@
     "keepCurrent": "Leer lassen zum Beibehalten",
     "usernamePh": "Riot-Anmeldename",
     "loginReady": "Wechsel mit einem Klick ist für dieses Konto aktiviert.",
-    "loginNeeded": "Gib Benutzername und Passwort ein, um mit einem Klick zu diesem Konto zu wechseln."
+    "loginNeeded": "Gib Benutzername und Passwort ein, um mit einem Klick zu diesem Konto zu wechseln.",
+    "hoursInGame": "Stunden im Spiel",
+    "hoursLauncher": "Stunden im Launcher"
   },
   "icon": {
     "set": "Symbole",
@@ -526,7 +529,9 @@
     "resetTitle": "RiftSwitch zurücksetzen",
     "resetText": "Löscht alles: Tresor, Sitzungen, Profile, Cache, Einstellungen und den vom System gespeicherten Schlüssel. RiftSwitch startet wie beim ersten Mal.",
     "resetConfirm2": "Letzte Bestätigung: Das kann nicht rückgängig gemacht werden.",
-    "resetFinal": "Alles löschen"
+    "resetFinal": "Alles löschen",
+    "closeRiotClient": "Riot Client nach dem Start schließen",
+    "closeRiotClientText": "Sobald das Spiel offen ist, wird sein Fenster wie mit dem X geschlossen. Der Client läuft im Hintergrund weiter."
   },
   "setup": {
     "welcome": "Willkommen bei RiftSwitch",
@@ -661,10 +666,13 @@
     "downloading": "Download… {p} %",
     "failed": "Update fehlgeschlagen:",
     "upToDate": "RiftSwitch ist aktuell.",
-    "auto": "Beim Start nach Updates suchen",
-    "autoText": "Kontaktiert nur github.com; das Paket wird vor der Installation mit der RiftSwitch-Signatur geprüft.",
+    "auto": "Automatische Updates",
+    "autoText": "Neue Versionen werden beim Start installiert, ohne dass du etwas tun musst. Kontaktiert nur github.com; jedes Paket wird mit der RiftSwitch-Signatur geprüft.",
     "check": "Updates",
     "checkNow": "Prüfen",
-    "current": "Installierte Version: {v}"
+    "current": "Installierte Version: {v}",
+    "screenTitle": "Update läuft",
+    "screenText": "RiftSwitch {v} wird installiert und startet von selbst neu.",
+    "preparing": "Wird vorbereitet…"
   }
 }

@@ -11,7 +11,7 @@
   import Toggle from "../components/Toggle.svelte";
 
   const s = $derived(app.settings!);
-  const balance = $derived(shards(computeAchievements(app.accounts, app.folders, app.profiles)));
+  const balance = $derived(shards(computeAchievements(app.accounts, app.folders, app.profiles)) + (app.settings?.bonusShards ?? 0));
 
   let section = $state("general");
   const sections = ["general", "appearance", "security", "riot", "privacy", "backup", "advanced", "about"];
@@ -44,8 +44,10 @@
   }
   async function installUpdate() {
     try {
+      updater.updating = true;
       await updater.install();
     } catch (e) {
+      updater.updating = false;
       app.toast("error", `${t("update.failed")} ${errorText(e)}`);
     }
   }
@@ -212,6 +214,10 @@
         <div class="setting">
           <div><strong>{t("settings.blockInGame")}</strong><p>{t("settings.blockInGameText")}</p></div>
           <Toggle checked={s.blockSwitchInGame} onchange={(v) => set("blockSwitchInGame", v)} />
+        </div>
+        <div class="setting">
+          <div><strong>{t("settings.closeRiotClient")}</strong><p>{t("settings.closeRiotClientText")}</p></div>
+          <Toggle checked={s.closeRiotClient} onchange={(v) => set("closeRiotClient", v)} />
         </div>
         <div class="setting">
           <div><strong>{t("settings.autoProfiles")}</strong><p>{t("settings.autoProfilesText")}</p></div>

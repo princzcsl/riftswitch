@@ -71,12 +71,24 @@ pub struct Health {
     pub updated_at: Option<i64>,
 }
 
+/// Secondes par jeu.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
-pub struct Playtime {
+pub struct GameTime {
     pub lol: u64,
     pub tft: u64,
     pub val: u64,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", default)]
+pub struct Playtime {
+    /// Temps en partie (League of Legends.exe lancé, ou VALORANT à l'état INGAME).
+    pub lol: u64,
+    pub tft: u64,
+    pub val: u64,
+    /// Temps dans les launchers : client LoL hors partie, menus de VALORANT.
+    pub launcher: GameTime,
     /// Dernières sessions (secondes jouées par jour, clé = AAAA-MM-JJ) pour le « temps de jeu récent ».
     pub recent: BTreeMap<String, u64>,
     /// Lancements via l'app, par jeu.

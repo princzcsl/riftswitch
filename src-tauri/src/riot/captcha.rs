@@ -41,12 +41,16 @@ pub fn build_html(site_key: &str, rq_data: &str, host: &str) -> String {
 <div id='status'>Chargement du défi…</div><div id='checkbox'></div>
 <script>
 function post(m){{try{{window.chrome.webview.postMessage(m);}}catch(e){{}}}}
+// La fenêtre reste hors écran : on ne la montre que si un défi demande une action.
+function show(){{post({{type:'show'}});}}
+setTimeout(show,7000);
 function go(){{
   if(!(window.__ready&&typeof hcaptcha!=='undefined')){{setTimeout(go,100);return;}}
   document.getElementById('status').textContent='Résolution du défi…';
   try{{
     var opts={{sitekey:{site_key},size:'invisible',hl:'{hl}',
-      'error-callback':function(c){{post({{type:'err',error:String(c)}});}},
+      'open-callback':show,
+      'error-callback':function(c){{show();post({{type:'err',error:String(c)}});}},
       'chalexpired-callback':function(){{document.getElementById('status').textContent='Défi expiré.';}},
       callback:function(t){{if(t)post({{type:'ok',token:t}});}}}};
     if({host_json}!=='')opts.host={host_json};
@@ -56,8 +60,8 @@ function go(){{
       if(!t){{post({{type:'err',error:'empty'}});return;}}
       post({{type:'ok',token:t}});
       document.getElementById('status').textContent='Défi résolu.';
-    }}).catch(function(e){{post({{type:'err',error:String(e)}});document.getElementById('status').textContent='Échec du défi.';}});
-  }}catch(ex){{post({{type:'err',error:String(ex)}});document.getElementById('status').textContent='Erreur : '+String(ex);}}
+    }}).catch(function(e){{show();post({{type:'err',error:String(e)}});document.getElementById('status').textContent='Échec du défi.';}});
+  }}catch(ex){{show();post({{type:'err',error:String(ex)}});document.getElementById('status').textContent='Erreur : '+String(ex);}}
 }}
 go();
 </script></body></html>"#
@@ -96,6 +100,23 @@ mod imp {
     thread_local! {
         /// Jeton résolu (partagé entre les handlers WebView2 et la boucle de messages).
         static RESULT: RefCell<Option<String>> = const { RefCell::new(None) };
+        /// Fenêtre du défi et sa position centrée, pour l'afficher à la demande.
+        static WINDOW: std::cell::Cell<(isize, i32, i32)> = const { std::cell::Cell::new((0, 0, 0)) };
+    }
+
+    /// Ramène la fenêtre (créée hors écran, sans bouton de barre des tâches) au centre, au premier plan.
+    unsafe fn reveal() {
+        let (raw, x, y) = WINDOW.with(|c| c.get());
+        if raw == 0 {
+            return;
+        }
+        let hwnd = HWND(raw as *mut core::ffi::c_void);
+        let _ = ShowWindow(hwnd, SW_HIDE);
+        SetWindowLongPtrW(hwnd, GWL_EXSTYLE, WS_EX_APPWINDOW.0 as isize);
+        let _ = SetWindowPos(hwnd, Some(HWND_TOP), x, y, 0, 0, SWP_NOSIZE | SWP_FRAMECHANGED);
+        let _ = ShowWindow(hwnd, SW_SHOW);
+        let _ = SetForegroundWindow(hwnd);
+        WINDOW.with(|c| c.set((0, 0, 0)));
     }
 
     unsafe extern "system" fn wndproc(hwnd: HWND, msg: u32, w: WPARAM, l: LPARAM) -> LRESULT {
@@ -144,13 +165,15 @@ mod imp {
             let (w, h) = (460, 680);
             let sw = GetSystemMetrics(SM_CXSCREEN);
             let sh = GetSystemMetrics(SM_CYSCREEN);
+            // Hors écran et sans bouton de barre des tâches : la page reste « visible » pour
+            // hCaptcha (le défi invisible passe souvent tout seul), sans rien montrer à l'utilisateur.
             let hwnd = CreateWindowExW(
-                WINDOW_EX_STYLE::default(),
+                WS_EX_TOOLWINDOW,
                 class,
                 w!("Riot — vérification"),
                 WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU,
-                (sw - w) / 2,
-                (sh - h) / 2,
+                -32000,
+                -32000,
                 w,
                 h,
                 None,
@@ -159,6 +182,7 @@ mod imp {
                 None,
             )
             .map_err(com)?;
+            WINDOW.with(|c| c.set((hwnd.0 as isize, (sw - w) / 2, (sh - h) / 2)));
 
             // Environnement WebView2 (dossier de données dédié : évite d'écrire à côté de l'exe).
             let folder = HSTRING::from(user_data_dir.as_os_str());
@@ -166,10 +190,16 @@ mod imp {
                 let (tx, rx) = mpsc::channel();
                 CreateCoreWebView2EnvironmentCompletedHandler::wait_for_async_operation(
                     Box::new(move |handler| {
+                        // Hors écran, Chromium jugerait la page masquée et la ralentirait :
+                        // on coupe ce calcul pour que le défi invisible se résolve normalement.
+                        let options = webview2_com::CoreWebView2EnvironmentOptions::default();
+                        options.set_additional_browser_arguments(
+                            "--disable-features=CalculateNativeWinOcclusion".to_string(),
+                        );
                         CreateCoreWebView2EnvironmentWithOptions(
                             PCWSTR::null(),
                             PCWSTR(folder.as_ptr()),
-                            None,
+                            &ICoreWebView2EnvironmentOptions::from(options),
                             &handler,
                         )
                         .map_err(webview2_com::Error::WindowsError)
@@ -256,6 +286,9 @@ mod imp {
                             if args.WebMessageAsJson(&mut json).is_ok() {
                                 let s = webview2_com::take_pwstr(json);
                                 if let Ok(v) = serde_json::from_str::<serde_json::Value>(&s) {
+                                    if v.get("type").and_then(|x| x.as_str()) == Some("show") {
+                                        unsafe { reveal() };
+                                    }
                                     if v.get("type").and_then(|x| x.as_str()) == Some("ok") {
                                         if let Some(t) = v.get("token").and_then(|x| x.as_str()) {
                                             RESULT.with(|r| *r.borrow_mut() = Some(t.to_string()));
@@ -274,7 +307,8 @@ mod imp {
             let nav = HSTRING::from(page_url.as_str());
             webview.Navigate(&nav).map_err(com)?;
 
-            let _ = ShowWindow(hwnd, SW_SHOW);
+            // Affichée hors écran sans prendre le focus ; `reveal` la montre si un défi l'exige.
+            let _ = ShowWindow(hwnd, SW_SHOWNOACTIVATE);
 
             // Boucle de messages : se termine quand le jeton arrive (PostQuitMessage) ou à la fermeture.
             let mut msg = MSG::default();

@@ -22,12 +22,23 @@ pub struct ProcSnapshot {
     pub riot_client_pid: Option<u32>,
     pub lol_client: bool,
     pub lol_game: bool,
+    /// VALORANT ouvert (le processus du jeu tourne dès le menu principal).
     pub val_game: bool,
+    /// Réellement en partie VALORANT : complété par `presence::with_match_state`.
+    pub val_in_match: bool,
 }
 
 impl ProcSnapshot {
+    /// Le produit demandé est ouvert : client LoL (LoL / TFT) ou jeu VALORANT.
+    pub fn product_running(&self, game: &str) -> bool {
+        if game == "val" {
+            self.val_game
+        } else {
+            self.lol_client || self.lol_game
+        }
+    }
     pub fn game_in_progress(&self) -> bool {
-        self.lol_game || self.val_game
+        self.lol_game || self.val_in_match
     }
     pub fn any_riot(&self) -> bool {
         self.riot_client || self.lol_client || self.lol_game || self.val_game
@@ -43,6 +54,19 @@ fn refreshed() -> System {
     let mut sys = System::new();
     sys.refresh_processes_specifics(ProcessesToUpdate::All, true, ProcessRefreshKind::nothing());
     sys
+}
+
+/// PID des processus d'interface du Riot Client (ceux qui portent sa fenêtre).
+pub fn riot_client_ui_pids() -> Vec<u32> {
+    refreshed()
+        .processes()
+        .iter()
+        .filter(|(_, p)| {
+            let n = normalize(p.name());
+            RIOT_CLIENT.contains(&n.as_str()) && n != "riotclientcrashhandler"
+        })
+        .map(|(pid, _)| pid.as_u32())
+        .collect()
 }
 
 pub fn snapshot() -> ProcSnapshot {

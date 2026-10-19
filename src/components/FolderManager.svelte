@@ -2,7 +2,7 @@
   import { api } from "../lib/api";
   import { app } from "../lib/app.svelte";
   import { errorText, t } from "../lib/i18n.svelte";
-  import { ACCOUNT_COLORS } from "../lib/avatars";
+  import { randomColor } from "../lib/avatars";
   import Icon from "./Icon.svelte";
   import Modal from "./Modal.svelte";
 
@@ -12,7 +12,7 @@
   async function add() {
     if (!name.trim()) return;
     try {
-      await api.saveFolder({ id: "", name, color: ACCOUNT_COLORS[app.folders.length % ACCOUNT_COLORS.length], order: 0 });
+      await api.saveFolder({ id: "", name, color: randomColor(app.folders.map((x) => x.color ?? "")), order: 0 });
       name = "";
       await app.refreshAccounts();
     } catch (e) {

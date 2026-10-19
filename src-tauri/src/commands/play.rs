@@ -22,7 +22,7 @@ use crate::error::{AppError, AppResult};
 use crate::offline::OfflineProxy;
 use crate::riot::rso_login::{LoginSession, Outcome};
 use crate::riot::session::RsoTokens;
-use crate::riot::{captcha, identity, launch, lcu, paths, process, redeem, rso_login, session, RiotStatus};
+use crate::riot::{captcha, identity, launch, lcu, paths, presence, process, redeem, rso_login, session, window, RiotStatus};
 use crate::state::AppState;
 use crate::util::{log, now_ms};
 use crate::vault::model::Account;
@@ -225,7 +225,7 @@ async fn do_play(
     }
     .filter(|l| !l.is_empty());
 
-    let procs = process::snapshot();
+    let procs = presence::with_match_state(process::snapshot()).await;
     let ident = if procs.riot_client {
         signed_in_identity().await
     } else {
@@ -573,6 +573,24 @@ fn record_launch(state: &AppState, account_id: &str, game: &str) {
 /// Après lancement : application du profil LoL via le client une fois connecté.
 fn after_launch(app: AppHandle, account_id: String, game: &'static str) {
     changed(&app);
+    if app.state::<AppState>().settings().close_riot_client {
+        tauri::async_runtime::spawn(async move {
+            let start = Instant::now();
+            while start.elapsed() < Duration::from_secs(120) {
+                if process::snapshot().product_running(game) {
+                    // Laisse le client passer la main au jeu, puis ferme sa fenêtre (comme la croix).
+                    // Un second passage : il se réaffiche parfois juste après l'ouverture du jeu.
+                    tokio::time::sleep(Duration::from_millis(1500)).await;
+                    let n = window::close_riot_client_windows();
+                    tokio::time::sleep(Duration::from_secs(4)).await;
+                    let m = window::close_riot_client_windows();
+                    log(format!("launch: fenêtre du Riot Client fermée ({n} + {m})"));
+                    return;
+                }
+                tokio::time::sleep(Duration::from_millis(500)).await;
+            }
+        });
+    }
     if game == "val" {
         return;
     }
@@ -653,7 +671,7 @@ pub fn riot_status(state: State<'_, AppState>) -> RiotStatus {
 #[tauri::command]
 pub async fn quit_riot(state: State<'_, AppState>) -> AppResult<()> {
     let _guard = state.busy.try_lock().map_err(|_| AppError::code("busy"))?;
-    if process::snapshot().game_in_progress() {
+    if presence::with_match_state(process::snapshot()).await.game_in_progress() {
         return Err(AppError::code("game_in_progress"));
     }
     launch::shutdown(Duration::from_secs(12)).await;
@@ -755,7 +773,7 @@ pub async fn add_via_riot_login(
     let exe = paths::riot_client_services(&settings.riot_client_path)
         .ok_or_else(|| AppError::code("riot_not_found"))?;
     let _guard = state.busy.try_lock().map_err(|_| AppError::code("busy"))?;
-    let procs = process::snapshot();
+    let procs = presence::with_match_state(process::snapshot()).await;
     if procs.game_in_progress() {
         return Err(AppError::code("game_in_progress"));
     }
