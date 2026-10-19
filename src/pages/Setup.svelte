@@ -6,7 +6,7 @@
   import { LANGUAGES, errorText, i18n, setLanguage, t } from "../lib/i18n.svelte";
   import { THEMES } from "../lib/themes";
   import Icon from "../components/Icon.svelte";
-  import LoginWait from "../components/LoginWait.svelte";
+  import AccountAdd from "../components/AccountAdd.svelte";
   import Toggle from "../components/Toggle.svelte";
 
   let { initial = 0 }: { initial?: number } = $props();
@@ -19,7 +19,7 @@
   let telemetry = $state(false);
   let busy = $state(false);
   let error = $state("");
-  let loginOpen = $state(false);
+  let addOpen = $state(false);
   let importPass = $state("");
 
   const portable = $derived(app.boot?.portable ?? false);
@@ -178,24 +178,9 @@
         <div class="done"><Icon name="check" size={18} />{t("setup.accountsReady", { n: app.accounts.length })}</div>
       {/if}
       <div class="options">
-        <button class="opt" onclick={() => (loginOpen = true)}>
-          <Icon name="login" size={22} />
-          <div><strong>{t("accounts.addLogin")}</strong><p class="small muted">{t("accounts.addLoginHint")}</p></div>
-        </button>
-        <button
-          class="opt"
-          onclick={async () => {
-            try {
-              await api.captureCurrent(null);
-              await app.refreshAccounts();
-              app.toast("success", t("login.added"));
-            } catch (e) {
-              app.toast("error", errorText(e), 6000);
-            }
-          }}
-        >
-          <Icon name="download" size={22} />
-          <div><strong>{t("accounts.addCurrent")}</strong><p class="small muted">{t("accounts.addCurrentHint")}</p></div>
+        <button class="opt" onclick={() => (addOpen = true)}>
+          <Icon name="plus" size={22} />
+          <div><strong>{t("accounts.add")}</strong><p class="small muted">{t("add.loginHint")}</p></div>
         </button>
         <div class="opt static">
           <Icon name="upload" size={22} />
@@ -216,17 +201,21 @@
   </div>
 </div>
 
-<LoginWait bind:open={loginOpen} />
+<AccountAdd bind:open={addOpen} />
 
 <style>
   .setup {
     height: 100%;
-    display: grid;
-    place-items: center;
+    flex: 1;
+    min-width: 0;
+    display: flex;
     padding: 20px;
     overflow-y: auto;
   }
   .panel {
+    /* margin auto : centré à chaque étape, et défilable sans couper le haut si la fenêtre est basse. */
+    margin: auto;
+    flex: none;
     width: min(640px, 100%);
     padding: 28px 32px;
     display: flex;

@@ -14,7 +14,7 @@
 </script>
 
 {#if updater.available && !updater.dismissed}
-  <div class="banner glass-strong fade-in" role="status">
+  <div class="banner glass-strong glass-solid fade-in" role="status">
     <span class="ico"><Icon name="sparkle" size={18} /></span>
     <div class="grow col" style="gap:2px">
       <strong>{t("update.available", { v: updater.available.version })}</strong>

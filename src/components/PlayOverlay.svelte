@@ -13,7 +13,7 @@
 
 {#if show && account}
   <div class="overlay">
-    <div class="panel glass-strong fade-in">
+    <div class="panel glass-strong glass-solid fade-in">
       <div class="head">
         <Avatar icon={account.icon} color={account.color} size={48} label={account.label} />
         <div class="col" style="gap:2px">

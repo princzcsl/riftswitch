@@ -499,6 +499,20 @@ select.input option {
   }
 }
 
+/* Panneaux au premier plan : fond plein sous la teinte, aucune transparence si le flou manque. */
+.glass-solid,
+.perf .glass-solid {
+  background:
+    linear-gradient(var(--surface-2), var(--surface-2)),
+    var(--bg-solid);
+}
+
+/* Indicateur de chargement : il informe, il reste donc animé même sans animations. */
+.perf .spin,
+html .spin {
+  animation-duration: 0.9s !important;
+}
+
 [dir="rtl"] .sidebar {
   border-right: none;
   border-left: 1px solid var(--border);

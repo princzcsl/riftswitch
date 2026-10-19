@@ -58,6 +58,10 @@
     animation: fadeIn 0.18s ease;
   }
   .modal {
+    /* Teinte du thème posée sur un fond plein : lisible même si le flou n'est pas rendu. */
+    background:
+      linear-gradient(var(--surface-2), var(--surface-2)),
+      var(--bg-solid);
     max-height: calc(100vh - var(--titlebar-h) - 48px);
     display: flex;
     flex-direction: column;

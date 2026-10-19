@@ -6,7 +6,7 @@
   import { app } from "../lib/app.svelte";
   import { errorText, t } from "../lib/i18n.svelte";
   import { ACCOUNT_COLORS } from "../lib/avatars";
-  import { GAME_LOCALES, REGIONS, VAL_TIERS, hours, relativeTime } from "../lib/format";
+  import { GAME_LOCALES, REGIONS, VAL_TIERS, hours } from "../lib/format";
   import Avatar from "./Avatar.svelte";
   import Icon from "./Icon.svelte";
   import IconPicker from "./IconPicker.svelte";
@@ -139,17 +139,6 @@
       app.toast("error", errorText(e));
     } finally {
       saving = false;
-    }
-  }
-
-  async function recapture() {
-    if (!account) return;
-    try {
-      await api.captureCurrent(account.id);
-      app.toast("success", t("accounts.sessionRefreshed"));
-      app.refreshAccounts();
-    } catch (e) {
-      app.toast("error", errorText(e));
     }
   }
 
@@ -327,16 +316,6 @@
     <p class="faint small">{t("editor.passwordHint")}</p>
     <label class="row check"><Toggle bind:checked={form.twoFa} /> {t("editor.twoFa")}</label>
     {#if !form.twoFa}<p class="small" style="color:var(--warning)">{t("editor.twoFaReminder")}</p>{/if}
-    {#if account}
-      <div class="section-title">{t("editor.session")}</div>
-      <div class="row">
-        <span class="chip {account.hasSession ? 'success' : 'danger'}">
-          {account.hasSession ? t("editor.sessionOk", { when: relativeTime(account.sessionCapturedAt) }) : t("accounts.noSession")}
-        </span>
-        <span class="spacer"></span>
-        <button class="btn sm" onclick={recapture}><Icon name="refresh" size={14} />{t("accounts.refreshSession")}</button>
-      </div>
-    {/if}
     <div class="field" style="margin-top:14px">
       <label for="notes">{t("editor.notes")}</label>
       <textarea id="notes" class="input" placeholder={t("editor.notesPh")} bind:value={form.notes}></textarea>

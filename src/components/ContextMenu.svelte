@@ -22,6 +22,9 @@
   .ctx {
     position: fixed;
     z-index: 80;
+    background:
+      linear-gradient(var(--surface-2), var(--surface-2)),
+      var(--bg-solid);
     min-width: 180px;
     padding: 6px;
     border-radius: var(--radius-md);

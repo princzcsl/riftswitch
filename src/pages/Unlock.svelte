@@ -84,6 +84,8 @@
 <style>
   .wrap {
     height: 100%;
+    flex: 1;
+    min-width: 0;
     display: grid;
     place-items: center;
   }
