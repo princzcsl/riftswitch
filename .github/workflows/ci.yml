@@ -55,7 +55,7 @@ jobs:
           workspaces: src-tauri
       - run: npm ci
       # Build de contrôle : pas d'artefacts de mise à jour (la clé de signature reste hors CI).
-      - run: npx tauri build --target ${{ matrix.target }} --config '{"bundle":{"createUpdaterArtifacts":false}}'
+      - run: npx tauri build --target ${{ matrix.target }} --bundles nsis --config '{"bundle":{"createUpdaterArtifacts":false}}'
         shell: bash
       - uses: actions/upload-artifact@v7
         with:

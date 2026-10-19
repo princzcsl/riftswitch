@@ -29,8 +29,22 @@ jobs:
           fi
           git fetch --force origin "refs/tags/$TAG:refs/tags/$TAG"
           git tag -l --format='%(contents)' "$TAG" > notes.md
-          gh release create "$TAG" --draft --title "RiftSwitch $TAG" --notes-file notes.md
-          ID="$(gh api "repos/$GITHUB_REPOSITORY/releases" --jq ".[] | select(.tag_name == \"$TAG\") | .id")"
+          # Réutilise le brouillon d'un essai précédent du même tag, sinon le crée.
+          # L'identifiant vient de la réponse de l'API (la liste des releases n'est pas immédiate).
+          ID="$(gh api "repos/$GITHUB_REPOSITORY/releases" --paginate \
+            --jq ".[] | select(.draft and .tag_name == \"$TAG\") | .id" | head -n 1)"
+          if [ -n "$ID" ]; then
+            gh api -X PATCH "repos/$GITHUB_REPOSITORY/releases/$ID" \
+              -f name="RiftSwitch $TAG" -F body=@notes.md > /dev/null
+          else
+            ID="$(gh api -X POST "repos/$GITHUB_REPOSITORY/releases" \
+              -f tag_name="$TAG" -f name="RiftSwitch $TAG" -F body=@notes.md -F draft=true --jq .id)"
+          fi
+          if [ -z "$ID" ]; then
+            echo "::error::Impossible d'obtenir l'identifiant de la release $TAG."
+            exit 1
+          fi
+          echo "Release brouillon $ID"
           echo "id=$ID" >> "$GITHUB_OUTPUT"
 
   build:
@@ -38,8 +52,6 @@ jobs:
     environment: release
     strategy:
       fail-fast: true
-      # Un build à la fois : chacun complète le même latest.json.
-      max-parallel: 1
       matrix:
         target: [x86_64-pc-windows-msvc, aarch64-pc-windows-msvc]
     runs-on: windows-latest
@@ -57,6 +69,7 @@ jobs:
           workspaces: src-tauri
           key: ${{ matrix.target }}
       - run: npm ci
+      # latest.json est assemblé par « publish » à partir des deux signatures (builds en parallèle).
       - uses: tauri-apps/tauri-action@v1
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -64,13 +77,41 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
         with:
           releaseId: ${{ needs.create-release.outputs.id }}
-          args: --target ${{ matrix.target }}
-          updaterJsonPreferNsis: true
+          args: --target ${{ matrix.target }} --bundles nsis
+          uploadUpdaterJson: false
 
   publish:
     needs: [create-release, build]
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      ID: ${{ needs.create-release.outputs.id }}
     steps:
-      - env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh release edit "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --draft=false --latest
+      - run: |
+          TAG="$GITHUB_REF_NAME"
+          API="repos/$GITHUB_REPOSITORY/releases/$ID"
+          gh api "$API/assets" --paginate --jq '.[] | "\(.id) \(.name)"' > assets.txt
+          cat assets.txt
+          pick() { grep -E "$1" assets.txt | head -n 1; }
+          X64="$(pick '_x64-setup\.exe$' | cut -d' ' -f2)"
+          ARM="$(pick '_(arm64|aarch64)-setup\.exe$' | cut -d' ' -f2)"
+          X64_SIG="$(pick '_x64-setup\.exe\.sig$' | cut -d' ' -f1)"
+          ARM_SIG="$(pick '_(arm64|aarch64)-setup\.exe\.sig$' | cut -d' ' -f1)"
+          if [ -z "$X64" ] || [ -z "$ARM" ] || [ -z "$X64_SIG" ] || [ -z "$ARM_SIG" ]; then
+            echo "::error::Installateurs ou signatures manquants : publication annulée."
+            exit 1
+          fi
+          sig() { gh api "repos/$GITHUB_REPOSITORY/releases/assets/$1" -H "Accept: application/octet-stream"; }
+          BASE="https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG"
+          jq -n \
+            --arg version "${TAG#v}" \
+            --arg notes "$(gh api "$API" --jq .body)" \
+            --arg date "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --arg x64sig "$(sig "$X64_SIG")" --arg x64url "$BASE/$X64" \
+            --arg armsig "$(sig "$ARM_SIG")" --arg armurl "$BASE/$ARM" \
+            '{version: $version, notes: $notes, pub_date: $date, platforms: {
+              "windows-x86_64": {signature: $x64sig, url: $x64url},
+              "windows-aarch64": {signature: $armsig, url: $armurl}}}' > latest.json
+          cat latest.json
+          gh release upload "$TAG" latest.json --clobber --repo "$GITHUB_REPOSITORY"
+          gh api -X PATCH "$API" -F draft=false -f make_latest=true --jq '"Publiée : " + .html_url'
