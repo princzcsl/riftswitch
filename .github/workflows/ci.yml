@@ -54,7 +54,9 @@ jobs:
         with:
           workspaces: src-tauri
       - run: npm ci
-      - run: npx tauri build --target ${{ matrix.target }}
+      # Build de contrôle : pas d'artefacts de mise à jour (la clé de signature reste hors CI).
+      - run: npx tauri build --target ${{ matrix.target }} --config '{"bundle":{"createUpdaterArtifacts":false}}'
+        shell: bash
       - uses: actions/upload-artifact@v4
         with:
           name: riftswitch-${{ matrix.target }}
