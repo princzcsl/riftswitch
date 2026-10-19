@@ -113,5 +113,7 @@ jobs:
               "windows-x86_64": {signature: $x64sig, url: $x64url},
               "windows-aarch64": {signature: $armsig, url: $armurl}}}' > latest.json
           cat latest.json
+          # Rattache le brouillon à son tag (un tag déplacé le détache), puis envoie le manifeste.
+          gh api -X PATCH "$API" -f tag_name="$TAG" > /dev/null
           gh release upload "$TAG" latest.json --clobber --repo "$GITHUB_REPOSITORY"
           gh api -X PATCH "$API" -F draft=false -f make_latest=true --jq '"Publiée : " + .html_url'
