@@ -58,7 +58,7 @@
       <button class="chip cancel" onclick={() => api.cancelLogin()}>{t("common.cancel")}</button>
     {/if}
     {#if status.offline}
-      <span class="chip warning" title={t("offline.active")}><Icon name="ghost" size={12} /> {t("offline.short")}</span>
+      <span class="chip ghost" title={t("offline.active")}><Icon name="ghost" size={12} /> {t("offline.short")}</span>
     {/if}
   </div>
 

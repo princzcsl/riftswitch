@@ -633,7 +633,8 @@
     "no_mfa_pending": "No se solicitó 2FA.",
     "token_exchange": "Riot rechazó el intercambio de token.",
     "redeem": "El Riot Client rechazó el inicio de sesión.",
-    "redeem_failed": "El Riot Client no aceptó el inicio de sesión a tiempo."
+    "redeem_failed": "El Riot Client no aceptó el inicio de sesión a tiempo.",
+    "captcha_failed": "Riot sigue pidiendo la verificación. Inténtalo de nuevo en unos minutos."
   },
   "mfa": {
     "title": "Código 2FA",

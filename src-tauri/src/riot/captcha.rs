@@ -11,15 +11,22 @@
 
 use crate::error::AppResult;
 
-/// Affiche la fenêtre de défi et renvoie le jeton résolu, ou `None` si l'utilisateur l'a fermée.
-/// Bloquant (boucle de messages Windows) : appeler via `spawn_blocking`.
+/// Résout le défi et renvoie le jeton, ou `None` si l'utilisateur a fermé la fenêtre.
+/// `discreet` : fenêtre transparente, affichée seulement si le défi demande une action.
+/// Bloquant (boucle de messages Windows) : appeler depuis un thread dédié.
 #[cfg(windows)]
-pub fn solve(site_key: &str, rq_data: &str, host: &str, user_data_dir: &std::path::Path) -> AppResult<Option<String>> {
-    imp::solve(site_key, rq_data, host, user_data_dir)
+pub fn solve(
+    site_key: &str,
+    rq_data: &str,
+    host: &str,
+    user_data_dir: &std::path::Path,
+    discreet: bool,
+) -> AppResult<Option<String>> {
+    imp::solve(site_key, rq_data, host, user_data_dir, discreet)
 }
 
 #[cfg(not(windows))]
-pub fn solve(_: &str, _: &str, _: &str, _: &std::path::Path) -> AppResult<Option<String>> {
+pub fn solve(_: &str, _: &str, _: &str, _: &std::path::Path, _: bool) -> AppResult<Option<String>> {
     Err(crate::error::AppError::code("captcha_unsupported"))
 }
 
@@ -91,7 +98,7 @@ mod imp {
         WebResourceRequestedEventHandler,
     };
     use windows::core::{w, HSTRING, PCWSTR, PWSTR};
-    use windows::Win32::Foundation::{HWND, LPARAM, LRESULT, RECT, WPARAM};
+    use windows::Win32::Foundation::{COLORREF, HWND, LPARAM, LRESULT, RECT, WPARAM};
     use windows::Win32::System::Com::{CoInitializeEx, CoUninitialize, COINIT_APARTMENTTHREADED};
     use windows::Win32::System::LibraryLoader::GetModuleHandleW;
     use windows::Win32::UI::Shell::SHCreateMemStream;
@@ -104,7 +111,7 @@ mod imp {
         static WINDOW: std::cell::Cell<(isize, i32, i32)> = const { std::cell::Cell::new((0, 0, 0)) };
     }
 
-    /// Ramène la fenêtre (créée hors écran, sans bouton de barre des tâches) au centre, au premier plan.
+    /// Rend la fenêtre discrète normale : opaque, cliquable, dans la barre des tâches, au premier plan.
     unsafe fn reveal() {
         let (raw, x, y) = WINDOW.with(|c| c.get());
         if raw == 0 {
@@ -138,9 +145,10 @@ mod imp {
         rq_data: &str,
         host: &str,
         user_data_dir: &std::path::Path,
+        discreet: bool,
     ) -> AppResult<Option<String>> {
         RESULT.with(|r| *r.borrow_mut() = None);
-        unsafe { run(site_key, rq_data, host, user_data_dir) }
+        unsafe { run(site_key, rq_data, host, user_data_dir, discreet) }
     }
 
     unsafe fn run(
@@ -148,6 +156,7 @@ mod imp {
         rq_data: &str,
         host: &str,
         user_data_dir: &std::path::Path,
+        discreet: bool,
     ) -> AppResult<Option<String>> {
         let _ = CoInitializeEx(None, COINIT_APARTMENTTHREADED);
         let result = (|| -> AppResult<Option<String>> {
@@ -165,15 +174,21 @@ mod imp {
             let (w, h) = (460, 680);
             let sw = GetSystemMetrics(SM_CXSCREEN);
             let sh = GetSystemMetrics(SM_CYSCREEN);
-            // Hors écran et sans bouton de barre des tâches : la page reste « visible » pour
-            // hCaptcha (le défi invisible passe souvent tout seul), sans rien montrer à l'utilisateur.
+            let (x, y) = ((sw - w) / 2, (sh - h) / 2);
+            // Discret : à sa place (hCaptcha refuse les pages hors écran) mais transparente,
+            // traversée par les clics et hors de la barre des tâches.
+            let ex = if discreet {
+                WS_EX_LAYERED | WS_EX_TRANSPARENT | WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE
+            } else {
+                WINDOW_EX_STYLE::default()
+            };
             let hwnd = CreateWindowExW(
-                WS_EX_TOOLWINDOW,
+                ex,
                 class,
                 w!("Riot — vérification"),
                 WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU,
-                -32000,
-                -32000,
+                x,
+                y,
                 w,
                 h,
                 None,
@@ -182,7 +197,12 @@ mod imp {
                 None,
             )
             .map_err(com)?;
-            WINDOW.with(|c| c.set((hwnd.0 as isize, (sw - w) / 2, (sh - h) / 2)));
+            if discreet {
+                let _ = SetLayeredWindowAttributes(hwnd, COLORREF(0), 0, LWA_ALPHA);
+                WINDOW.with(|c| c.set((hwnd.0 as isize, x, y)));
+            } else {
+                WINDOW.with(|c| c.set((0, 0, 0)));
+            }
 
             // Environnement WebView2 (dossier de données dédié : évite d'écrire à côté de l'exe).
             let folder = HSTRING::from(user_data_dir.as_os_str());
@@ -190,16 +210,10 @@ mod imp {
                 let (tx, rx) = mpsc::channel();
                 CreateCoreWebView2EnvironmentCompletedHandler::wait_for_async_operation(
                     Box::new(move |handler| {
-                        // Hors écran, Chromium jugerait la page masquée et la ralentirait :
-                        // on coupe ce calcul pour que le défi invisible se résolve normalement.
-                        let options = webview2_com::CoreWebView2EnvironmentOptions::default();
-                        options.set_additional_browser_arguments(
-                            "--disable-features=CalculateNativeWinOcclusion".to_string(),
-                        );
                         CreateCoreWebView2EnvironmentWithOptions(
                             PCWSTR::null(),
                             PCWSTR(folder.as_ptr()),
-                            &ICoreWebView2EnvironmentOptions::from(options),
+                            None,
                             &handler,
                         )
                         .map_err(webview2_com::Error::WindowsError)
@@ -307,8 +321,13 @@ mod imp {
             let nav = HSTRING::from(page_url.as_str());
             webview.Navigate(&nav).map_err(com)?;
 
-            // Affichée hors écran sans prendre le focus ; `reveal` la montre si un défi l'exige.
-            let _ = ShowWindow(hwnd, SW_SHOWNOACTIVATE);
+            if discreet {
+                // Invisible et sans focus ; `reveal` la montre si un défi l'exige.
+                let _ = ShowWindow(hwnd, SW_SHOWNOACTIVATE);
+            } else {
+                let _ = ShowWindow(hwnd, SW_SHOW);
+                let _ = SetForegroundWindow(hwnd);
+            }
 
             // Boucle de messages : se termine quand le jeton arrive (PostQuitMessage) ou à la fermeture.
             let mut msg = MSG::default();

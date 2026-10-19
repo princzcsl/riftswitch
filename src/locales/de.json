@@ -633,7 +633,8 @@
     "no_mfa_pending": "Keine 2FA angefordert.",
     "token_exchange": "Riot hat den Token-Austausch abgelehnt.",
     "redeem": "Der Riot Client hat die Anmeldung abgelehnt.",
-    "redeem_failed": "Der Riot Client hat die Anmeldung nicht rechtzeitig akzeptiert."
+    "redeem_failed": "Der Riot Client hat die Anmeldung nicht rechtzeitig akzeptiert.",
+    "captcha_failed": "Riot verlangt immer wieder die Überprüfung. Versuche es in ein paar Minuten erneut."
   },
   "mfa": {
     "title": "2FA-Code",

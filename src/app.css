@@ -338,6 +338,12 @@ select.input option {
   color: var(--warning);
   border-color: transparent;
 }
+/* Mode fantôme : couleur du texte du thème (blanc en sombre, noir en clair). */
+.chip.ghost {
+  background: color-mix(in srgb, var(--text) 12%, transparent);
+  color: var(--text);
+  border-color: color-mix(in srgb, var(--text) 22%, transparent);
+}
 .chip.danger {
   background: color-mix(in srgb, var(--danger) 16%, transparent);
   color: var(--danger);

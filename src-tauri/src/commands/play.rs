@@ -31,6 +31,9 @@ use crate::vault::model::Account;
 const AUTH_TIMEOUT: Duration = Duration::from_secs(30);
 /// Délai laissé à l'utilisateur pour se connecter quand les jetons ont expiré.
 const LOGIN_TIMEOUT: Duration = Duration::from_secs(300);
+const MAX_CAPTCHA_ATTEMPTS: u32 = 5;
+// Riot a refusé un jeton obtenu en fenêtre discrète : on passe en visible pour la session.
+static DISCREET_REJECTED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 
 #[derive(Deserialize)]
 pub struct Notice {
@@ -366,10 +369,15 @@ async fn credential_login(
 ) -> AppResult<Zeroizing<String>> {
     let session = LoginSession::new()?;
     let challenge = session.start(true).await?;
+    // Premier essai en fenêtre discrète, sauf si Riot a déjà refusé ce mode pendant la session.
+    let mut discreet = !DISCREET_REJECTED.load(Ordering::Relaxed);
+    let mut attempts = 0;
     let captcha_token = if challenge.requires() {
         emit_step(app, "captcha");
-        solve_captcha(state, &challenge).await?
+        attempts += 1;
+        solve_captcha(state, &challenge, discreet).await?
     } else {
+        discreet = false;
         String::new()
     };
     let mut outcome = session.complete(user, pass, true, &captcha_token).await?;
@@ -389,8 +397,19 @@ async fn credential_login(
                 outcome = session.submit_mfa(&otp, true).await?;
             }
             Outcome::Challenge { challenge } => {
+                if discreet {
+                    DISCREET_REJECTED.store(true, Ordering::Relaxed);
+                    log("captcha: jeton discret refusé, nouvel essai en fenêtre visible");
+                } else {
+                    log(format!("captcha: nouveau défi demandé (essai {attempts})"));
+                }
+                if attempts >= MAX_CAPTCHA_ATTEMPTS {
+                    return Err(AppError::code("captcha_failed"));
+                }
+                discreet = false;
+                attempts += 1;
                 emit_step(app, "captcha");
-                let tok = solve_captcha(state, &challenge).await?;
+                let tok = solve_captcha(state, &challenge, false).await?;
                 outcome = session.complete(user, pass, true, &tok).await?;
             }
         }
@@ -398,7 +417,11 @@ async fn credential_login(
 }
 
 /// Affiche la fenêtre de défi hCaptcha (résolu par l'utilisateur) et renvoie le jeton.
-async fn solve_captcha(state: &AppState, challenge: &rso_login::Challenge) -> AppResult<String> {
+async fn solve_captcha(
+    state: &AppState,
+    challenge: &rso_login::Challenge,
+    discreet: bool,
+) -> AppResult<String> {
     let site = challenge
         .site_key
         .clone()
@@ -416,7 +439,7 @@ async fn solve_captcha(state: &AppState, challenge: &rso_login::Challenge) -> Ap
     std::thread::Builder::new()
         .name("riftswitch-captcha".into())
         .spawn(move || {
-            let _ = tx.send(captcha::solve(&site, &rq, &host, &dir));
+            let _ = tx.send(captcha::solve(&site, &rq, &host, &dir, discreet));
         })
         .map_err(|e| AppError::new("captcha", e.to_string()))?;
     let token = rx.await.map_err(|_| AppError::code("cancelled"))??;

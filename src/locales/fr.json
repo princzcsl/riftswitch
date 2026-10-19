@@ -633,7 +633,8 @@
     "no_mfa_pending": "Aucune A2F n’a été demandée.",
     "token_exchange": "Riot a refusé l’échange de jeton.",
     "redeem": "Le Riot Client a refusé la connexion.",
-    "redeem_failed": "Le Riot Client n’a pas accepté la connexion à temps."
+    "redeem_failed": "Le Riot Client n’a pas accepté la connexion à temps.",
+    "captcha_failed": "Riot redemande sans cesse la vérification. Réessaie dans quelques minutes."
   },
   "mfa": {
     "title": "Code A2F",

@@ -633,7 +633,8 @@
     "no_mfa_pending": "No 2FA was requested.",
     "token_exchange": "Riot refused the token exchange.",
     "redeem": "The Riot Client refused the sign-in.",
-    "redeem_failed": "The Riot Client did not accept the sign-in in time."
+    "redeem_failed": "The Riot Client did not accept the sign-in in time.",
+    "captcha_failed": "Riot keeps asking for verification. Try again in a few minutes."
   },
   "mfa": {
     "title": "Two-factor code",

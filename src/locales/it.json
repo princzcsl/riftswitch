@@ -633,7 +633,8 @@
     "no_mfa_pending": "Nessuna 2FA richiesta.",
     "token_exchange": "Riot ha rifiutato lo scambio del token.",
     "redeem": "Il Riot Client ha rifiutato l’accesso.",
-    "redeem_failed": "Il Riot Client non ha accettato l’accesso in tempo."
+    "redeem_failed": "Il Riot Client non ha accettato l’accesso in tempo.",
+    "captcha_failed": "Riot continua a chiedere la verifica. Riprova tra qualche minuto."
   },
   "mfa": {
     "title": "Codice 2FA",
