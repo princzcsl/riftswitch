@@ -395,10 +395,33 @@ fn os_key_delete(account: &str) {
 mod tests {
     use super::*;
 
-    fn tmp_vault() -> PathBuf {
-        std::env::temp_dir()
-            .join(format!("rs-vault-{}", uuid::Uuid::new_v4()))
-            .join("vault.rsv")
+    // Dossier temporaire supprimé à la fin du test.
+    struct TmpVault(PathBuf);
+    impl std::ops::Deref for TmpVault {
+        type Target = PathBuf;
+        fn deref(&self) -> &PathBuf {
+            &self.0
+        }
+    }
+    impl AsRef<std::path::Path> for TmpVault {
+        fn as_ref(&self) -> &std::path::Path {
+            &self.0
+        }
+    }
+    impl Drop for TmpVault {
+        fn drop(&mut self) {
+            if let Some(dir) = self.0.parent() {
+                let _ = std::fs::remove_dir_all(dir);
+            }
+        }
+    }
+
+    fn tmp_vault() -> TmpVault {
+        TmpVault(
+            std::env::temp_dir()
+                .join(format!("rs-vault-{}", uuid::Uuid::new_v4()))
+                .join("vault.rsv"),
+        )
     }
 
     #[test]
@@ -513,7 +536,8 @@ mod tests {
 
     #[test]
     fn export_import_roundtrip() {
-        let mut src = Vault::create(&tmp_vault(), Some("correct horse")).unwrap();
+        let src_path = tmp_vault();
+        let mut src = Vault::create(&src_path, Some("correct horse")).unwrap();
         let mut acc = Account {
             id: "x".into(),
             label: "Smurf".into(),
@@ -527,7 +551,8 @@ mod tests {
         let blob = src.export("export phrase").unwrap();
         assert!(!String::from_utf8_lossy(&blob).contains("pw123456"));
 
-        let mut dst = Vault::create(&tmp_vault(), Some("another pass")).unwrap();
+        let dst_path = tmp_vault();
+        let mut dst = Vault::create(&dst_path, Some("another pass")).unwrap();
         assert!(dst.import(&blob, "bad phrase!!").is_err());
         assert_eq!(dst.import(&blob, "export phrase").unwrap(), 1);
         let s = dst.open_secrets(&dst.data.accounts[0]).unwrap();
