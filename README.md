@@ -88,6 +88,12 @@ src-tauri/src/
 docs/                CONCEPTION, SECURITY, THREAT_MODEL, PRIVACY
 ```
 
+## Licence
+
+RiftSwitch est un logiciel libre sous licence [GPL-3.0-or-later](LICENSE) : tu peux l'utiliser, l'étudier, le modifier et le redistribuer, à condition que toute version redistribuée reste sous la même licence, avec son code source.
+Le nom « RiftSwitch » et son logo ne sont pas couverts par la licence : une version modifiée doit porter un autre nom.
+Travaux tiers intégrés ou adaptés : voir [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
 ## Avertissement
 
 RiftSwitch n'est pas approuvé par Riot Games et ne reflète pas les opinions de Riot Games ni de quiconque participant officiellement à la production ou à la gestion des propriétés de Riot Games. Riot Games et toutes les propriétés associées sont des marques commerciales ou déposées de Riot Games, Inc.

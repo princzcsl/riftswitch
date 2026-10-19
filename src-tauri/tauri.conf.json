@@ -50,10 +50,23 @@
     ],
     "windows": {
       "nsis": {
-        "installMode": "currentUser"
+        "installMode": "currentUser",
+        "template": "windows/installer.nsi",
+        "headerImage": "windows/header.bmp",
+        "sidebarImage": "windows/sidebar.bmp",
+        "installerIcon": "icons/icon.ico",
+        "languages": [
+          "English",
+          "French",
+          "Spanish",
+          "Italian",
+          "German"
+        ],
+        "displayLanguageSelector": false
       }
     },
-    "createUpdaterArtifacts": true
+    "createUpdaterArtifacts": true,
+    "copyright": "© 2026 princzcsl · GPL-3.0-or-later"
   },
   "plugins": {
     "updater": {
