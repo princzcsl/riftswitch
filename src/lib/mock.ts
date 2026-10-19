@@ -35,7 +35,7 @@ const accounts = [
     ranks: { lolSolo: rank("DIAMOND", "II", 64), lolFlex: null, tft: rank("PLATINUM", "I", 20), val: rank("ASCENDANT", "2", 41), updatedAt: now, manual: false },
     decay: { daysRemaining: 6, bankedGames: 2, updatedAt: now },
     health: { penalties: [], honorLevel: 4, updatedAt: now },
-    playtime: { lol: 86_000, tft: 12_000, val: 30_000, recent: { [Math.floor(now / day)]: 7200 }, launches: { lol: 12, val: 3 } },
+    playtime: { lol: 86_000, tft: 12_000, val: 30_000, recent: { [Math.floor(now / day)]: 7200 }, launches: { lol: 12, val: 3 }, launcher: { lol: 21_000, tft: 3_600, val: 9_000 } },
     profiles: { lol: "pr1", val: null },
     sessionCapturedAt: now - 2 * day,
     hasSession: true,

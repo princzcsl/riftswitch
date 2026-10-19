@@ -130,7 +130,8 @@
     "emptyText": "Füge ein Riot-Konto hinzu, um LoL, TFT oder VALORANT mit zwei Klicks zu wechseln und zu starten.",
     "deleteTitle": "Konto löschen",
     "deleteText": "„{name}“ aus RiftSwitch löschen? Die verschlüsselte Sitzung wird gelöscht. Dein Riot-Konto selbst bleibt unberührt.",
-    "deleted": "Konto gelöscht"
+    "deleted": "Konto gelöscht",
+    "playtimeDetail": "{game} im Spiel · {launcher} im Launcher"
   },
   "folders": {
     "title": "Ordner",
@@ -192,7 +193,8 @@
     "loginReady": "Wechsel mit einem Klick ist für dieses Konto aktiviert.",
     "loginNeeded": "Gib Benutzername und Passwort ein, um mit einem Klick zu diesem Konto zu wechseln.",
     "hoursInGame": "Stunden im Spiel",
-    "hoursLauncher": "Stunden im Launcher"
+    "hoursLauncher": "Stunden im Launcher",
+    "hoursTotal": "Gesamt"
   },
   "icon": {
     "set": "Symbole",

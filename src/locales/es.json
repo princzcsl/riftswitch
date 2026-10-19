@@ -130,7 +130,8 @@
     "emptyText": "Añade una cuenta de Riot para cambiar e iniciar LoL, TFT o VALORANT en dos clics.",
     "deleteTitle": "Eliminar cuenta",
     "deleteText": "¿Eliminar «{name}» de RiftSwitch? Su sesión cifrada se borrará. Tu cuenta de Riot no se ve afectada.",
-    "deleted": "Cuenta eliminada"
+    "deleted": "Cuenta eliminada",
+    "playtimeDetail": "{game} en partida · {launcher} en el launcher"
   },
   "folders": {
     "title": "Carpetas",
@@ -192,7 +193,8 @@
     "loginReady": "El cambio con un clic está activado para esta cuenta.",
     "loginNeeded": "Añade usuario y contraseña para cambiar a esta cuenta con un clic.",
     "hoursInGame": "Horas en partida",
-    "hoursLauncher": "Horas en el launcher"
+    "hoursLauncher": "Horas en el launcher",
+    "hoursTotal": "Total"
   },
   "icon": {
     "set": "Iconos",

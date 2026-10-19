@@ -322,18 +322,26 @@
     </div>
   {:else}
     {#if account}
-      <div class="section-title">{t("editor.hoursInGame")}</div>
-      <div class="stats">
-        <div><span class="faint small">League of Legends</span><strong>{hours(account.playtime.lol)}</strong></div>
-        <div><span class="faint small">TFT</span><strong>{hours(account.playtime.tft)}</strong></div>
-        <div><span class="faint small">VALORANT</span><strong>{hours(account.playtime.val)}</strong></div>
-      </div>
-      <div class="section-title">{t("editor.hoursLauncher")}</div>
-      <div class="stats">
-        <div><span class="faint small">League of Legends</span><strong>{hours(account.playtime.launcher?.lol ?? 0)}</strong></div>
-        <div><span class="faint small">TFT</span><strong>{hours(account.playtime.launcher?.tft ?? 0)}</strong></div>
-        <div><span class="faint small">VALORANT</span><strong>{hours(account.playtime.launcher?.val ?? 0)}</strong></div>
-      </div>
+      {@const p = account.playtime}
+      {@const rows = [["League of Legends", p.lol, p.launcher?.lol ?? 0], ["TFT", p.tft, p.launcher?.tft ?? 0], ["VALORANT", p.val, p.launcher?.val ?? 0]] as const}
+      <table class="hours">
+        <thead>
+          <tr><th></th><th>{t("editor.hoursInGame")}</th><th>{t("editor.hoursLauncher")}</th><th>{t("editor.hoursTotal")}</th></tr>
+        </thead>
+        <tbody>
+          {#each rows as [name, game, launcher]}
+            <tr><td>{name}</td><td>{hours(game)}</td><td>{hours(launcher)}</td><td><strong>{hours(game + launcher)}</strong></td></tr>
+          {/each}
+        </tbody>
+        <tfoot>
+          <tr>
+            <td>{t("editor.hoursTotal")}</td>
+            <td>{hours(p.lol + p.tft + p.val)}</td>
+            <td>{hours(rows.reduce((s, r) => s + r[2], 0))}</td>
+            <td><strong>{hours(rows.reduce((s, r) => s + r[1] + r[2], 0))}</strong></td>
+          </tr>
+        </tfoot>
+      </table>
       <div class="section-title">{t("editor.aliases")}</div>
       {#each account.aliases as al}
         <div class="row small"><span>{al.riotId}</span><span class="spacer"></span><span class="faint">{new Date(al.seenAt).toLocaleDateString()}</span></div>
@@ -492,20 +500,30 @@
     text-transform: none;
     letter-spacing: 0;
   }
-  .stats {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
+  .hours {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin-bottom: 6px;
   }
-  .stats div {
-    display: flex;
-    flex-direction: column;
-    padding: 12px;
-    border-radius: var(--radius-sm);
-    background: var(--surface);
-    border: 1px solid var(--border);
+  .hours th {
+    text-align: end;
+    font-weight: 600;
+    color: var(--text-3);
+    font-size: 11px;
+    padding: 0 8px 6px;
   }
-  .stats strong {
-    font-size: 20px;
+  .hours td {
+    text-align: end;
+    padding: 8px;
+    border-top: 1px solid var(--border);
+  }
+  .hours td:first-child {
+    text-align: start;
+    color: var(--text-2);
+  }
+  .hours tfoot td {
+    border-top: 1px solid color-mix(in srgb, var(--accent) 40%, var(--border));
+    font-weight: 600;
   }
 </style>

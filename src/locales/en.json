@@ -130,7 +130,8 @@
     "emptyText": "Add a Riot account to switch and launch LoL, TFT or VALORANT in two clicks.",
     "deleteTitle": "Delete account",
     "deleteText": "Delete \"{name}\" from RiftSwitch? Its encrypted session will be erased. Your Riot account itself is not affected.",
-    "deleted": "Account deleted"
+    "deleted": "Account deleted",
+    "playtimeDetail": "{game} in game · {launcher} in the launcher"
   },
   "folders": {
     "title": "Folders",
@@ -192,7 +193,8 @@
     "loginReady": "One-click switching is enabled for this account.",
     "loginNeeded": "Add username and password to switch to this account in one click.",
     "hoursInGame": "Hours in game",
-    "hoursLauncher": "Hours in the launcher"
+    "hoursLauncher": "Hours in the launcher",
+    "hoursTotal": "Total"
   },
   "icon": {
     "set": "Icons",

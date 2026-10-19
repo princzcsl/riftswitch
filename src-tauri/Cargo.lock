@@ -3453,7 +3453,7 @@ dependencies = [
 
 [[package]]
 name = "riftswitch"
-version = "1.2.0"
+version = "1.1.2"
 dependencies = [
  "argon2",
  "base64 0.22.1",

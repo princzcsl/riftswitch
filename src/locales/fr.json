@@ -130,7 +130,8 @@
     "emptyText": "Ajoute un compte Riot pour basculer et lancer LoL, TFT ou VALORANT en deux clics.",
     "deleteTitle": "Supprimer le compte",
     "deleteText": "Supprimer « {name} » de RiftSwitch ? Sa session chiffrée sera effacée. Ton compte Riot n'est pas touché.",
-    "deleted": "Compte supprimé"
+    "deleted": "Compte supprimé",
+    "playtimeDetail": "{game} en partie · {launcher} dans le launcher"
   },
   "folders": {
     "title": "Dossiers",
@@ -192,7 +193,8 @@
     "loginReady": "La bascule en un clic est activée pour ce compte.",
     "loginNeeded": "Ajoute identifiant et mot de passe pour basculer vers ce compte en un clic.",
     "hoursInGame": "Heures en partie",
-    "hoursLauncher": "Heures dans le launcher"
+    "hoursLauncher": "Heures dans le launcher",
+    "hoursTotal": "Total"
   },
   "icon": {
     "set": "Icônes",

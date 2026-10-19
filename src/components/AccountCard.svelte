@@ -29,7 +29,8 @@
   const streamer = $derived(app.settings?.streamerMode ?? false);
   const connected = $derived(app.status.activeAccountId === account.id);
   const folder = $derived(app.folders.find((f) => f.id === account.folderId));
-  const totalTime = $derived(account.playtime.lol + account.playtime.tft + account.playtime.val);
+  const gameTime = $derived(account.playtime.lol + account.playtime.tft + account.playtime.val);
+  const launcherTime = $derived((account.playtime.launcher?.lol ?? 0) + (account.playtime.launcher?.tft ?? 0) + (account.playtime.launcher?.val ?? 0));
   const decay = $derived(account.decay.daysRemaining);
   // Seulement les jeux classés, pour garder la carte sur une ligne.
   const ranked = $derived(
@@ -116,7 +117,7 @@
 
   <footer>
     <div class="meta small faint">
-      <span title={t("accounts.playtime")}>⏱ {hours(totalTime)}</span>
+      <span title={t("accounts.playtimeDetail", { game: hours(gameTime), launcher: hours(launcherTime) })}>⏱ {hours(gameTime + launcherTime)}</span>
       <span>· {relativeTime(account.lastUsedAt)}</span>
     </div>
     <PlayButton {account} />
