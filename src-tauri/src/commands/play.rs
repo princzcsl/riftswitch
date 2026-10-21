@@ -349,14 +349,17 @@ async fn sign_in_target(
     if let Some(tokens) = stored_tokens(state, &target.id)? {
         session::write_persisted(&tokens)?;
         launch::start_client(exe, Some(game), extra)?;
-        wait_signed_in(app, state, target).await?;
+        emit_step(app, "restore");
+        wait_signed_in(app, state, target, true).await?;
         let _ = refresh_tokens(state, &target.id).await;
         return Ok(());
     }
     // 3) Rien d'enregistré → écran de connexion officiel.
+    log("login: aucun identifiant enregistré pour ce compte, connexion manuelle");
     session::clear_persisted()?;
     launch::start_client(exe, Some(game), extra)?;
-    wait_signed_in(app, state, target).await
+    emit_step(app, "manual");
+    wait_signed_in(app, state, target, false).await
 }
 
 /// Connexion au service d'authentification de Riot avec les identifiants enregistrés.
@@ -508,7 +511,12 @@ pub async fn submit_mfa(state: State<'_, AppState>, code: String) -> AppResult<(
 
 /// Attend que le client soit authentifié sur le compte cible. Si les jetons ont expiré (ou n'existent
 /// pas), l'utilisateur se connecte dans la fenêtre officielle du Riot Client.
-async fn wait_signed_in(app: &AppHandle, state: &AppState, target: &Account) -> AppResult<()> {
+async fn wait_signed_in(
+    app: &AppHandle,
+    state: &AppState,
+    target: &Account,
+    restoring: bool,
+) -> AppResult<()> {
     if !launch::wait_api(Duration::from_secs(45)).await {
         return Err(AppError::new("riot_not_running", "api"));
     }
@@ -516,9 +524,9 @@ async fn wait_signed_in(app: &AppHandle, state: &AppState, target: &Account) -> 
         target.matches_identity(i.puuid.as_deref(), &i.game_name, &i.tag_line)
     };
 
-    // 1) Jetons restaurés : le client doit s'authentifier tout seul.
+    // 1) Jetons restaurés : le client doit s'authentifier tout seul (sans jetons, on passe).
     let start = Instant::now();
-    while start.elapsed() < AUTH_TIMEOUT {
+    while restoring && start.elapsed() < AUTH_TIMEOUT {
         if let Some(i) = signed_in_identity().await {
             if matches(&i) {
                 log(format!(
@@ -536,7 +544,9 @@ async fn wait_signed_in(app: &AppHandle, state: &AppState, target: &Account) -> 
     // 2) Jetons expirés ou absents : connexion dans la fenêtre officielle du Riot Client.
     log("play: jetons refusés ou absents → attente de connexion dans le Riot Client");
     set_busy(app, state, Some("waiting_login"));
-    let _ = app.emit("session-expired", target.label.clone());
+    if restoring {
+        let _ = app.emit("session-expired", target.label.clone());
+    }
     let start = Instant::now();
     while start.elapsed() < LOGIN_TIMEOUT {
         if state.cancel_login.load(Ordering::Relaxed) {

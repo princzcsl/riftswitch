@@ -79,13 +79,15 @@
     "sessionExpired": "Sesión caducada para {name}: inicia sesión en la ventana de Riot y el juego se iniciará solo.",
     "switchingTo": "Cambiando a {name}",
     "pleaseWait": "Espera…",
-    "captchaHint": "Resuelve la verificación en la ventana que se abrió.",
+    "captchaHint": "Si se abre una ventana de verificación, resuelve el desafío para continuar.",
     "step_prepare": "Preparando",
     "step_close": "Cerrando el Riot Client",
     "step_login": "Iniciando sesión en Riot",
-    "step_captcha": "Esperando la verificación",
+    "step_captcha": "Verificación de seguridad",
     "step_signin": "Conectando el cliente",
-    "step_launch": "Iniciando el juego"
+    "step_launch": "Iniciando el juego",
+    "step_restore": "Restaurando la sesión",
+    "step_manual": "Esperando a que inicies sesión en el Riot Client (no hay credenciales guardadas para esta cuenta)"
   },
   "hero": {
     "resume": "Continuar",

@@ -79,13 +79,15 @@
     "sessionExpired": "Session expired for {name}: sign in in the Riot window, the game will launch automatically.",
     "switchingTo": "Switching to {name}",
     "pleaseWait": "Please wait…",
-    "captchaHint": "Solve the verification in the window that opened.",
+    "captchaHint": "If a verification window opens, solve the challenge to continue.",
     "step_prepare": "Preparing",
     "step_close": "Closing the Riot Client",
     "step_login": "Signing in to Riot",
-    "step_captcha": "Waiting for verification",
+    "step_captcha": "Security check",
     "step_signin": "Signing in the client",
-    "step_launch": "Launching the game"
+    "step_launch": "Launching the game",
+    "step_restore": "Restoring the session",
+    "step_manual": "Waiting for you to sign in to the Riot Client (no saved credentials for this account)"
   },
   "hero": {
     "resume": "Pick up where you left off",

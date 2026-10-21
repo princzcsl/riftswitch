@@ -79,13 +79,15 @@
     "sessionExpired": "Sitzung für {name} abgelaufen: Melde dich im Riot-Fenster an, das Spiel startet dann automatisch.",
     "switchingTo": "Wechsel zu {name}",
     "pleaseWait": "Bitte warten…",
-    "captchaHint": "Löse die Verifizierung im geöffneten Fenster.",
+    "captchaHint": "Wenn sich ein Überprüfungsfenster öffnet, löse die Aufgabe, um fortzufahren.",
     "step_prepare": "Vorbereitung",
     "step_close": "Riot Client wird geschlossen",
     "step_login": "Anmeldung bei Riot",
-    "step_captcha": "Warten auf Verifizierung",
+    "step_captcha": "Sicherheitsprüfung",
     "step_signin": "Client wird angemeldet",
-    "step_launch": "Spiel wird gestartet"
+    "step_launch": "Spiel wird gestartet",
+    "step_restore": "Sitzung wird wiederhergestellt",
+    "step_manual": "Warte auf deine Anmeldung im Riot Client (keine gespeicherten Zugangsdaten für dieses Konto)"
   },
   "hero": {
     "resume": "Weiterspielen",

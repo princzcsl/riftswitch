@@ -1,6 +1,7 @@
 <script lang="ts">
   // Overlay affiché pendant une bascule : liste les étapes franchies jusqu'au lancement.
   import { app } from "../lib/app.svelte";
+  import { api } from "../lib/api";
   import { t } from "../lib/i18n.svelte";
   import Avatar from "./Avatar.svelte";
   import GameIcon from "./GameIcon.svelte";
@@ -9,15 +10,18 @@
   const account = $derived(app.accounts.find((a) => a.id === app.launching));
   // Overlay seulement pour une vraie bascule (au moins une étape émise), pas pour un lancement direct.
   const show = $derived(!!app.launching && app.playSteps.length > 0);
+  const current = $derived(app.playSteps[app.playSteps.length - 1]);
+  // L'app attend une action dans le Riot Client : on peut abandonner.
+  const waiting = $derived(current === "manual" || current === "restore");
 </script>
 
 {#if show && account}
   <div class="overlay">
     <div class="panel glass-strong glass-solid fade-in">
       <div class="head">
-        <Avatar icon={account.icon} color={account.color} size={48} label={account.label} />
+        <Avatar icon={account.icon} autoIconId={account.profileIconId} color={account.color} size={48} label={account.label} />
         <div class="col" style="gap:2px">
-          <strong>{t("play.switchingTo", { name: account.label })}</strong>
+          <strong>{t("play.switchingTo", { name: account.label || account.gameName })}</strong>
           <span class="muted small row" style="gap:6px">
             {#if account.lastGame}<GameIcon game={account.lastGame} size={14} />{/if}
             {t("play.pleaseWait")}
@@ -39,6 +43,11 @@
       </ul>
       {#if app.playSteps.includes("captcha")}
         <p class="hint small"><Icon name="info" size={13} />{t("play.captchaHint")}</p>
+      {/if}
+      {#if waiting}
+        <div class="row" style="justify-content:flex-end;margin-top:12px">
+          <button class="btn sm" onclick={() => api.cancelLogin()}>{t("common.cancel")}</button>
+        </div>
       {/if}
     </div>
   </div>
