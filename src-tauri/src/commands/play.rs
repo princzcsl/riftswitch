@@ -310,8 +310,14 @@ fn stored_credentials(
         v.open_secrets(&v.data.accounts[idx])
     })?;
     Ok(match (&secrets.username, &secrets.password) {
-        (Some(u), Some(p)) if !u.is_empty() && !p.is_empty() => {
-            Some((Zeroizing::new(u.clone()), Zeroizing::new(p.clone())))
+        (Some(u), Some(p)) if !u.trim().is_empty() && !p.is_empty() => {
+            let user = u.trim();
+            // Riot n'accepte que le nom d'utilisateur ; un email donne « invalid_request ».
+            if user.contains('@') {
+                log("login: l'identifiant enregistré est une adresse email");
+                return Err(AppError::code("login_email_username"));
+            }
+            Some((Zeroizing::new(user.to_string()), Zeroizing::new(p.clone())))
         }
         _ => None,
     })
@@ -395,6 +401,7 @@ async fn credential_login(
                 let code = match reason.as_str() {
                     "auth_failure" => "login_bad_credentials",
                     "rate_limited" => "login_rate_limited",
+                    "invalid_request" => "login_invalid_request",
                     _ => "login_failed",
                 };
                 return Err(AppError::new(code, reason));
@@ -688,6 +695,21 @@ pub fn play_external(app: AppHandle, account_id: String, game: String) {
             let _ = app.emit("play-error", e);
         }
     });
+}
+
+/// Statut affiché aux amis (le client doit passer par le proxy, donc avoir été lancé en mode fantôme).
+#[tauri::command]
+pub fn set_chat_status(state: State<'_, AppState>, status: String) -> AppResult<bool> {
+    let status = crate::offline::ChatStatus::parse(&status)
+        .ok_or_else(|| AppError::new("invalid", status.clone()))?;
+    match state.proxy() {
+        Some(p) if state.client_via_proxy.load(Ordering::Relaxed) => {
+            p.set_status(status);
+            log(format!("offline: statut {}", status.as_str()));
+            Ok(true)
+        }
+        _ => Ok(false),
+    }
 }
 
 #[tauri::command]

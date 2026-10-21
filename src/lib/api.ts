@@ -43,6 +43,7 @@ export const api = {
   play: (accountId: string, game: Game, offline: boolean, notice: { title: string; body: string } | null) =>
     invoke<{ switched: boolean }>("play", { accountId, game, offline, notice }),
   setOffline: (offline: boolean) => invoke<boolean>("set_offline", { offline }),
+  setChatStatus: (status: string) => invoke<boolean>("set_chat_status", { status }),
   riotStatus: () => invoke<RiotStatus>("riot_status"),
   quitRiot: () => invoke<void>("quit_riot"),
   captureCurrent: (targetId: string | null) =>

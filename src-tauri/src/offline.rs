@@ -9,7 +9,7 @@
 
 use regex::Regex;
 use std::io::Read;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicU8, Ordering};
 use std::sync::{Arc, Mutex, OnceLock};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
@@ -24,7 +24,7 @@ const PAS_URL: &str = "https://riot-geo.pas.si.riotgames.com/pas/v1/service/chat
 pub struct OfflineProxy {
     pub config_port: u16,
     pub chat_port: u16,
-    offline: AtomicBool,
+    status: AtomicU8,
     chat_target: Mutex<Option<(String, u16)>>,
     last_presence: Mutex<Option<String>>,
     injectors: Mutex<Vec<mpsc::UnboundedSender<Vec<u8>>>>,
@@ -41,7 +41,7 @@ impl OfflineProxy {
         let proxy = Arc::new(Self {
             config_port,
             chat_port,
-            offline: AtomicBool::new(offline),
+            status: AtomicU8::new(ChatStatus::from_offline(offline) as u8),
             chat_target: Mutex::new(None),
             last_presence: Mutex::new(None),
             injectors: Mutex::new(Vec::new()),
@@ -67,7 +67,7 @@ impl OfflineProxy {
                 let (p, tls) = (p.clone(), tls.clone());
                 tauri::async_runtime::spawn(async move {
                     if let Err(e) = p.handle_chat(sock, tls).await {
-                        log(format!("offline: connexion chat terminée ({})", e.code));
+                        log(format!("offline: connexion chat terminée ({}: {})", e.code, e.detail));
                     }
                 });
             }
@@ -85,20 +85,24 @@ impl OfflineProxy {
         )]
     }
 
+    pub fn status(&self) -> ChatStatus {
+        ChatStatus::from_u8(self.status.load(Ordering::Relaxed))
+    }
+
     pub fn is_offline(&self) -> bool {
-        self.offline.load(Ordering::Relaxed)
+        self.status() != ChatStatus::Online
+    }
+
+    pub fn set_offline(&self, offline: bool) {
+        self.set_status(ChatStatus::from_offline(offline));
     }
 
     /// Change le statut à chaud et renvoie la dernière présence pour l'appliquer tout de suite.
-    pub fn set_offline(&self, offline: bool) {
-        self.offline.store(offline, Ordering::Relaxed);
+    pub fn set_status(&self, status: ChatStatus) {
+        self.status.store(status as u8, Ordering::Relaxed);
         let last = self.last_presence.lock().unwrap().clone();
         if let Some(raw) = last {
-            let out = if offline {
-                rewrite_presences(&raw)
-            } else {
-                raw
-            };
+            let out = rewrite_presences(&raw, status);
             self.injectors
                 .lock()
                 .unwrap()
@@ -228,18 +232,20 @@ impl OfflineProxy {
         let client = acceptor
             .accept(sock)
             .await
-            .map_err(|e| AppError::new("offline_proxy", e.to_string()))?;
+            .map_err(|e| AppError::new("offline_accept", e.to_string()))?;
 
         let target = { self.chat_target.lock().unwrap().clone() };
         let (host, port) = target.ok_or_else(|| AppError::code("offline_no_target"))?;
-        let upstream_tcp = TcpStream::connect((host.as_str(), port)).await?;
+        let upstream_tcp = TcpStream::connect((host.as_str(), port))
+            .await
+            .map_err(|e| AppError::new("offline_upstream", format!("{host}:{port} {e}")))?;
         let connector = tokio_rustls::TlsConnector::from(client_tls());
         let name = rustls::pki_types::ServerName::try_from(host.clone())
             .map_err(|_| AppError::code("offline_proxy"))?;
         let upstream = connector
             .connect(name, upstream_tcp)
             .await
-            .map_err(|e| AppError::new("offline_proxy", e.to_string()))?;
+            .map_err(|e| AppError::new("offline_upstream", format!("{host} {e}")))?;
 
         let (mut c_read, mut c_write) = tokio::io::split(client);
         let (mut s_read, mut s_write) = tokio::io::split(upstream);
@@ -293,11 +299,7 @@ impl OfflineProxy {
                 if let Some(stanza) = broadcast_presence(&raw) {
                     *self.last_presence.lock().unwrap() = Some(stanza);
                 }
-                let out = if self.is_offline() {
-                    rewrite_presences(&raw)
-                } else {
-                    raw
-                };
+                let out = rewrite_presences(&raw, self.status());
                 let _ = tx.send(out.into_bytes());
             } else {
                 let _ = tx.send(pending.clone());
@@ -356,8 +358,12 @@ fn server_tls() -> AppResult<Arc<rustls::ServerConfig>> {
 }
 
 fn client_tls() -> Arc<rustls::ClientConfig> {
+    // Magasin Windows + Mozilla, comme Deceive (.NET valide avec le magasin Windows).
     let mut roots = rustls::RootCertStore::empty();
     roots.extend(webpki_roots::TLS_SERVER_ROOTS.iter().cloned());
+    for cert in rustls_native_certs::load_native_certs().certs {
+        let _ = roots.add(cert);
+    }
     let cfg = rustls::ClientConfig::builder_with_provider(provider())
         .with_safe_default_protocol_versions()
         .expect("versions TLS")
@@ -397,13 +403,75 @@ fn broadcast_presence(text: &str) -> Option<String> {
 
 /// Réécrit les présences diffusées (sans destinataire) pour apparaître hors ligne.
 /// Les présences adressées (salons de partie, lobby) restent intactes pour que le jeu fonctionne.
-pub fn rewrite_presences(text: &str) -> String {
+/// Statut affiché aux amis. Absent et occupé gardent le jeu en cours visible.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ChatStatus {
+    Online = 0,
+    Away = 1,
+    Busy = 2,
+    Mobile = 3,
+    Offline = 4,
+}
+
+impl ChatStatus {
+    pub fn from_offline(offline: bool) -> Self {
+        if offline {
+            Self::Offline
+        } else {
+            Self::Online
+        }
+    }
+    fn from_u8(v: u8) -> Self {
+        match v {
+            1 => Self::Away,
+            2 => Self::Busy,
+            3 => Self::Mobile,
+            4 => Self::Offline,
+            _ => Self::Online,
+        }
+    }
+    pub fn parse(s: &str) -> Option<Self> {
+        Some(match s {
+            "online" => Self::Online,
+            "away" => Self::Away,
+            "busy" => Self::Busy,
+            "mobile" => Self::Mobile,
+            "offline" => Self::Offline,
+            _ => return None,
+        })
+    }
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Online => "online",
+            Self::Away => "away",
+            Self::Busy => "busy",
+            Self::Mobile => "mobile",
+            Self::Offline => "offline",
+        }
+    }
+    /// Valeur XMPP de <show>.
+    fn show(self) -> &'static str {
+        match self {
+            Self::Online => "chat",
+            Self::Away => "away",
+            Self::Busy => "dnd",
+            Self::Mobile => "mobile",
+            Self::Offline => "offline",
+        }
+    }
+}
+
+pub fn rewrite_presences(text: &str, status: ChatStatus) -> String {
+    if status == ChatStatus::Online {
+        return text.to_string();
+    }
+    let hide_game = matches!(status, ChatStatus::Mobile | ChatStatus::Offline);
     static SHOW: OnceLock<Regex> = OnceLock::new();
     static STATUS: OnceLock<Regex> = OnceLock::new();
     static GAMES: OnceLock<Regex> = OnceLock::new();
     static ST: OnceLock<Regex> = OnceLock::new();
     let show = SHOW.get_or_init(|| Regex::new(r"(?s)<show>.*?</show>").unwrap());
-    let status = STATUS.get_or_init(|| Regex::new(r"(?s)<status>.*?</status>|<status/>").unwrap());
+    let status_re = STATUS.get_or_init(|| Regex::new(r"(?s)<status>.*?</status>|<status/>").unwrap());
     let games = GAMES.get_or_init(|| {
         Regex::new(r"(?s)<(league_of_legends|valorant|bacon|lion|riot_client)>.*?</(league_of_legends|valorant|bacon|lion|riot_client)>").unwrap()
     });
@@ -415,15 +483,20 @@ pub fn rewrite_presences(text: &str) -> String {
             if attrs.contains("to=") {
                 return c[0].to_string();
             }
+            let tag = format!("<show>{}</show>", status.show());
             let mut body = c["body"].to_string();
             body = if show.is_match(&body) {
-                show.replace_all(&body, "<show>offline</show>").to_string()
+                show.replace_all(&body, tag.as_str()).to_string()
             } else {
-                format!("<show>offline</show>{body}")
+                format!("{tag}{body}")
             };
-            body = status.replace_all(&body, "").to_string();
-            body = games.replace_all(&body, "").to_string();
-            body = st.replace_all(&body, "<st>offline</st>").to_string();
+            if hide_game {
+                body = status_re.replace_all(&body, "").to_string();
+                body = games.replace_all(&body, "").to_string();
+            }
+            body = st
+                .replace_all(&body, format!("<st>{}</st>", status.show()).as_str())
+                .to_string();
             format!("<presence{attrs}>{body}</presence>")
         })
         .to_string()
@@ -436,10 +509,21 @@ mod tests {
     #[test]
     fn rewrites_broadcast_only() {
         let input = r#"<presence id="1"><show>chat</show><status>hi</status><games><league_of_legends><st>dnd</st><p>x</p></league_of_legends><keystone><st>chat</st></keystone></games></presence><presence to="room@lobby"><show>chat</show></presence>"#;
-        let out = rewrite_presences(input);
+        let out = rewrite_presences(input, ChatStatus::Offline);
         assert!(out.contains(r#"<presence id="1"><show>offline</show><games><keystone><st>offline</st></keystone></games></presence>"#));
         assert!(out.contains(r#"<presence to="room@lobby"><show>chat</show></presence>"#));
         assert!(!out.contains("league_of_legends"));
+    }
+
+    #[test]
+    fn away_and_busy_keep_the_game() {
+        let input = r#"<presence id="1"><show>chat</show><games><league_of_legends><st>chat</st><p>x</p></league_of_legends></games></presence>"#;
+        let busy = rewrite_presences(input, ChatStatus::Busy);
+        assert!(busy.contains("<show>dnd</show>") && busy.contains("<st>dnd</st>"));
+        assert!(busy.contains("league_of_legends"));
+        let mobile = rewrite_presences(input, ChatStatus::Mobile);
+        assert!(mobile.contains("<show>mobile</show>") && !mobile.contains("league_of_legends"));
+        assert_eq!(rewrite_presences(input, ChatStatus::Online), input);
     }
 
     #[test]

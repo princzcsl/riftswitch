@@ -20,6 +20,7 @@ RiftSwitch fonctionne entièrement sur ton ordinateur. Tes identifiants, session
 | `authenticate.riotgames.com` | À la bascule vers un compte | Identifiant et mot de passe du compte (TLS), envoyés uniquement à Riot, comme le ferait le Riot Client |
 | `ddragon.leagueoflegends.com`, `raw.communitydragon.org`, `valorant-api.com` | Affichage d'icônes (champions, agents), runes, patchs | Requêtes publiques, sans compte |
 | `github.com` | Au démarrage si « Rechercher les mises à jour » est activé, ou sur demande | Requête publique du manifeste de version ; le paquet téléchargé est vérifié par signature avant installation |
+| `eu.aptabase.com` (UE) | Une fois par jour au plus, seulement si les statistiques anonymes sont activées | Le résumé visible dans « Voir ce qui est envoyé » ; Aptabase ne conserve pas l’adresse IP |
 | Serveurs Riot de configuration et de chat | Uniquement en mode hors ligne | Le trafic que le Riot Client enverrait de toute façon, relayé localement |
 
 ## Statistiques anonymes (opt-in)

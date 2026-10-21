@@ -99,6 +99,14 @@
       <strong class="grow ellipsis">{p.name}</strong>
       {#if ss}<img class="style small-s" src={runeIcon(ss.icon)} alt={ss.name} />{/if}
     </div>
+    {#if kind === "lib" && p.sourceAccount}
+      {@const src = app.accounts.find((a) => a.id === p.sourceAccount)}
+      {#if src}
+        <span class="source faint small" title={t("runes.source")}>
+          <span class="dot" style="background:{src.color}"></span>{src.label || src.gameName}
+        </span>
+      {/if}
+    {/if}
     <div class="perks">
       {#each p.selectedPerkIds.slice(0, 6) as id, i}
         {@const r = perk(id)}
@@ -202,5 +210,16 @@
     padding: 12px 14px;
     border-radius: var(--radius-md);
     color: var(--text-2);
+  }
+  .source {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: -2px;
+  }
+  .source .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
   }
 </style>

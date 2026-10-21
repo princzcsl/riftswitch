@@ -290,6 +290,7 @@ export function installMock() {
           activeAccountId: "a1",
           proxyRunning: false,
           offline: false,
+          chatStatus: null,
           busy: null,
         };
       case "list_accounts":
@@ -303,7 +304,7 @@ export function installMock() {
       case "list_val_dirs":
         return [{ name: "p3-eu", puuid: "p3", shard: "eu", modified: now, hasKeybinds: true }];
       case "runes_library":
-        return [{ id: "r1", name: "Ahri électrocution", primaryStyleId: 8100, subStyleId: 8200, selectedPerkIds: [8112, 8139, 8138, 8135, 8226, 8210, 5008, 5008, 5001], champion: null, sourceAccount: null, createdAt: now }];
+        return [{ id: "r1", name: "Ahri électrocution", primaryStyleId: 8100, subStyleId: 8200, selectedPerkIds: [8112, 8139, 8138, 8135, 8226, 8210, 5008, 5008, 5001], champion: null, sourceAccount: "a1", createdAt: now }];
       case "runes_client_pages":
         throw { code: "lol_client_closed", detail: "" };
       case "play":

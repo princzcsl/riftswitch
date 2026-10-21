@@ -196,7 +196,8 @@
     "loginNeeded": "Añade usuario y contraseña para cambiar a esta cuenta con un clic.",
     "hoursInGame": "Horas en partida",
     "hoursLauncher": "Horas en el launcher",
-    "hoursTotal": "Total"
+    "hoursTotal": "Total",
+    "usernameNotEmail": "Es tu nombre de usuario de Riot, no tu correo."
   },
   "icon": {
     "set": "Iconos",
@@ -395,7 +396,8 @@
     "saved": "Página añadida a tu biblioteca",
     "pushed": "Página enviada al cliente de LoL",
     "codeCopied": "Código de runas copiado",
-    "imported": "Página importada"
+    "imported": "Página importada",
+    "source": "Guardada desde esta cuenta"
   },
   "shops": {
     "subtitle": "Vistas previas de las tiendas, solo dentro de la app.",
@@ -638,7 +640,9 @@
     "redeem_failed": "El Riot Client no aceptó el inicio de sesión a tiempo.",
     "captcha_failed": "Riot sigue pidiendo la verificación. Inténtalo de nuevo en unos minutos.",
     "login_bad_credentials": "Riot rechaza el usuario o la contraseña. Revísalos en la pestaña Seguridad de la cuenta.",
-    "login_rate_limited": "Demasiados intentos de inicio de sesión: Riot los bloquea por ahora. Espera unos 15 minutos y vuelve a intentarlo."
+    "login_rate_limited": "Demasiados intentos de inicio de sesión: Riot los bloquea por ahora. Espera unos 15 minutos y vuelve a intentarlo.",
+    "login_email_username": "El usuario guardado es un correo: Riot solo acepta el nombre de usuario (visible en los ajustes del Riot Client). Corrígelo en la pestaña Seguridad de la cuenta.",
+    "login_invalid_request": "Riot rechazó la solicitud. Comprueba que el usuario sea tu nombre de usuario de Riot (no tu correo), sin espacios de más."
   },
   "mfa": {
     "title": "Código 2FA",
@@ -680,6 +684,15 @@
     "current": "Versión instalada: {v}",
     "screenTitle": "Actualizando",
     "screenText": "RiftSwitch {v} se está instalando y se reiniciará solo.",
-    "preparing": "Preparando…"
+    "preparing": "Preparando…",
+    "searching": "Buscando actualizaciones…"
+  },
+  "chatStatus": {
+    "title": "Estado visible para tus amigos",
+    "online": "Conectado",
+    "away": "Ausente",
+    "busy": "Ocupado",
+    "mobile": "Móvil",
+    "offline": "Desconectado"
   }
 }

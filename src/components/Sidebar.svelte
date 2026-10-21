@@ -1,8 +1,10 @@
 <script lang="ts">
-  import { api } from "../lib/api";
   import { app, type Page } from "../lib/app.svelte";
   import { t } from "../lib/i18n.svelte";
+  import ChatStatusMenu from "./ChatStatusMenu.svelte";
   import Icon from "./Icon.svelte";
+
+  let statusMenu = $state({ open: false, x: 0, y: 0 });
 
   const items: { page: Page; icon: string }[] = [
     { page: "accounts", icon: "users" },
@@ -30,13 +32,14 @@
   {#if app.status.proxyRunning}
     <button
       class="nav"
-      class:warn={app.status.offline}
-      title={app.status.offline ? t("offline.goOnline") : t("offline.goOffline")}
-      onclick={() => api.setOffline(!app.status.offline)}
+      class:ghost={app.status.offline}
+      title={t("chatStatus.title")}
+      onclick={(e) => ((statusMenu = { open: true, x: e.clientX + 12, y: e.clientY - 220 }))}
     >
       <span class="ic"><Icon name="ghost" size={20} /></span>
-      <span class="lbl">{app.status.offline ? t("offline.short") : t("offline.online")}</span>
+      <span class="lbl">{t(`chatStatus.${app.status.chatStatus ?? "online"}`)}</span>
     </button>
+    <ChatStatusMenu bind:open={statusMenu.open} x={statusMenu.x} y={statusMenu.y} />
   {/if}
   {#if lockable}
     <button class="nav" onclick={() => app.lock()} title={t("nav.lock")}>
@@ -100,8 +103,9 @@
   .nav.active .ic {
     color: var(--accent);
   }
-  .nav.warn {
-    color: var(--warning);
+  /* Fantôme : couleur du texte du thème (blanc en sombre, noir en clair). */
+  .nav.ghost {
+    color: var(--text);
   }
   .ic {
     position: relative;

@@ -25,6 +25,8 @@ pub struct RiotStatus {
     pub active_account_id: Option<String>,
     pub proxy_running: bool,
     pub offline: bool,
+    /// Statut affiché aux amis quand le client passe par le proxy : online, away, busy, mobile, offline.
+    pub chat_status: Option<String>,
     /// Opération en cours : "switching" | "waiting_login" | None.
     pub busy: Option<String>,
 }

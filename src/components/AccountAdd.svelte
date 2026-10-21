@@ -95,7 +95,7 @@
     }
     saving = true;
     try {
-      await api.saveAccount({ ...$state.snapshot(form), email: form.email || null });
+      await api.saveAccount({ ...$state.snapshot(form), username: form.username?.trim() ?? "", email: form.email || null });
       app.toast("success", t("add.done"));
       open = false;
       app.refreshAccounts();
@@ -148,6 +148,7 @@
           <div class="field">
             <label for="au">{t("editor.username")}</label>
             <input id="au" class="input" autocomplete="off" placeholder={t("editor.usernamePh")} bind:value={form.username} />
+            {#if form.username?.includes("@")}<span class="small" style="color:var(--warning)">{t("editor.usernameNotEmail")}</span>{/if}
           </div>
           <div class="field">
             <label for="ap">{t("editor.password")}</label>

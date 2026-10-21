@@ -12,6 +12,8 @@ class UpdaterState {
   dismissed = $state(false);
   /** Mise à jour automatique en cours : l'écran « Mise à jour en cours » couvre l'app. */
   updating = $state(false);
+  /** Recherche de mise à jour au démarrage : l'écran de démarrage masque l'app. */
+  startup = $state(!import.meta.env.DEV);
   #update: Update | null = null;
 
   /**
@@ -19,15 +21,27 @@ class UpdaterState {
    * affiché à l'écran, puis installation silencieuse ; l'installateur relance RiftSwitch.
    */
   async autoUpdate() {
-    if (import.meta.env.DEV) return;
-    if (!(await this.check())) return;
+    if (import.meta.env.DEV) {
+      this.startup = false;
+      return;
+    }
+    // L'app n'est affichée qu'après la recherche, limitée à 4 s pour ne jamais bloquer.
+    const search = this.check();
+    const found = await Promise.race([search, new Promise<boolean>((r) => setTimeout(() => r(false), 4000))]);
+    this.startup = false;
+    if (!(found || (await search))) return;
     this.updating = true;
     try {
       await this.install();
     } catch {
-      // Hors ligne, signature refusée… : on laisse l'app démarrer normalement.
+      // Hors ligne, signature refusée : l'app reste utilisable normalement.
       this.updating = false;
     }
+  }
+
+  /** Mises à jour automatiques désactivées : pas d'écran de recherche au démarrage. */
+  skipStartup() {
+    this.startup = false;
   }
 
   /** Renvoie true si une mise à jour est disponible. Lève une erreur seulement si `manual`. */

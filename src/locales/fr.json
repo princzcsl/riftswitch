@@ -196,7 +196,8 @@
     "loginNeeded": "Ajoute identifiant et mot de passe pour basculer vers ce compte en un clic.",
     "hoursInGame": "Heures en partie",
     "hoursLauncher": "Heures dans le launcher",
-    "hoursTotal": "Total"
+    "hoursTotal": "Total",
+    "usernameNotEmail": "C’est ton nom d’utilisateur Riot, pas ton adresse email."
   },
   "icon": {
     "set": "Icônes",
@@ -395,7 +396,8 @@
     "saved": "Page ajoutée à ta bibliothèque",
     "pushed": "Page envoyée au client LoL",
     "codeCopied": "Code de runes copié",
-    "imported": "Page importée"
+    "imported": "Page importée",
+    "source": "Enregistrée depuis ce compte"
   },
   "shops": {
     "subtitle": "Aperçus des boutiques, uniquement dans l'app.",
@@ -638,7 +640,9 @@
     "redeem_failed": "Le Riot Client n’a pas accepté la connexion à temps.",
     "captcha_failed": "Riot redemande sans cesse la vérification. Réessaie dans quelques minutes.",
     "login_bad_credentials": "Riot refuse l’identifiant ou le mot de passe. Vérifie-les dans l’onglet Sécurité du compte.",
-    "login_rate_limited": "Trop de tentatives de connexion : Riot les bloque pour le moment. Attends environ 15 minutes, puis réessaie."
+    "login_rate_limited": "Trop de tentatives de connexion : Riot les bloque pour le moment. Attends environ 15 minutes, puis réessaie.",
+    "login_email_username": "L’identifiant enregistré est une adresse email : Riot n’accepte que le nom d’utilisateur (visible dans les paramètres du Riot Client). Corrige-le dans l’onglet Sécurité du compte.",
+    "login_invalid_request": "Riot a refusé la requête. Vérifie que l’identifiant est ton nom d’utilisateur Riot (pas ton email), sans espaces en trop."
   },
   "mfa": {
     "title": "Code A2F",
@@ -680,6 +684,15 @@
     "current": "Version installée : {v}",
     "screenTitle": "Mise à jour en cours",
     "screenText": "RiftSwitch {v} s’installe et redémarre tout seul.",
-    "preparing": "Préparation…"
+    "preparing": "Préparation…",
+    "searching": "Recherche de mises à jour…"
+  },
+  "chatStatus": {
+    "title": "Statut affiché à tes amis",
+    "online": "Connecté",
+    "away": "Absent",
+    "busy": "Occupé",
+    "mobile": "Mobile",
+    "offline": "Hors ligne"
   }
 }

@@ -267,6 +267,9 @@ pub fn spawn(app: AppHandle) {
                 pending_target = Some(c);
             }
 
+            // ── Statistiques anonymes (opt-in, une fois par jour) ──
+            crate::telemetry::maybe_send(&app).await;
+
             // ── Verrouillage automatique ──
             if settings.auto_lock_minutes > 0 && state.is_unlocked() {
                 let idle = now_ms() - state.last_activity.load(Ordering::Relaxed);
@@ -293,6 +296,10 @@ pub fn spawn(app: AppHandle) {
                         && state.client_via_proxy.load(Ordering::Relaxed),
                     offline: proxy.as_ref().is_some_and(|p| p.is_offline())
                         && state.client_via_proxy.load(Ordering::Relaxed),
+                    chat_status: proxy
+                        .as_ref()
+                        .filter(|_| state.client_via_proxy.load(Ordering::Relaxed))
+                        .map(|p| p.status().as_str().to_string()),
                     busy: current.busy.clone(),
                 }
             };

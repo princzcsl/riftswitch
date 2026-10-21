@@ -196,7 +196,8 @@
     "loginNeeded": "Add username and password to switch to this account in one click.",
     "hoursInGame": "Hours in game",
     "hoursLauncher": "Hours in the launcher",
-    "hoursTotal": "Total"
+    "hoursTotal": "Total",
+    "usernameNotEmail": "This is your Riot username, not your email address."
   },
   "icon": {
     "set": "Icons",
@@ -395,7 +396,8 @@
     "saved": "Page saved to your library",
     "pushed": "Page sent to the League client",
     "codeCopied": "Rune code copied",
-    "imported": "Page imported"
+    "imported": "Page imported",
+    "source": "Saved from this account"
   },
   "shops": {
     "subtitle": "Store previews, inside the app only.",
@@ -638,7 +640,9 @@
     "redeem_failed": "The Riot Client did not accept the sign-in in time.",
     "captcha_failed": "Riot keeps asking for verification. Try again in a few minutes.",
     "login_bad_credentials": "Riot rejected the username or password. Check them in the account’s Security tab.",
-    "login_rate_limited": "Too many sign-in attempts: Riot is blocking them for now. Wait about 15 minutes, then try again."
+    "login_rate_limited": "Too many sign-in attempts: Riot is blocking them for now. Wait about 15 minutes, then try again.",
+    "login_email_username": "Your Riot username is an email address: Riot only accepts the username (shown in the Riot Client settings). Fix it in the account’s Security tab.",
+    "login_invalid_request": "Riot rejected the request. Check that the username is your Riot username, not your email, with no extra spaces."
   },
   "mfa": {
     "title": "Two-factor code",
@@ -680,6 +684,15 @@
     "current": "Installed version: {v}",
     "screenTitle": "Updating",
     "screenText": "RiftSwitch {v} is installing and will restart on its own.",
-    "preparing": "Preparing…"
+    "preparing": "Preparing…",
+    "searching": "Checking for updates…"
+  },
+  "chatStatus": {
+    "title": "Status shown to friends",
+    "online": "Online",
+    "away": "Away",
+    "busy": "Busy",
+    "mobile": "Mobile",
+    "offline": "Offline"
   }
 }

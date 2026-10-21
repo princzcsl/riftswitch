@@ -118,6 +118,7 @@ export interface RiotStatus {
   activeAccountId: string | null;
   proxyRunning: boolean;
   offline: boolean;
+  chatStatus: string | null;
   busy: "switching" | "waiting_login" | null;
 }
 

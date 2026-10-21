@@ -41,6 +41,8 @@ pub struct Settings {
     /// Télémétrie : opt-in, décochée par défaut. Rien n'est envoyé tant qu'elle est désactivée.
     pub telemetry: bool,
     pub telemetry_install_id: String,
+    /// Jour (depuis l'époque Unix) du dernier résumé envoyé. Géré par le cœur uniquement.
+    pub telemetry_last_day: String,
     /// Vérifie au démarrage si une nouvelle version est publiée (GitHub Releases).
     pub check_updates: bool,
     /// Éclats offerts en plus de ceux des succès (réglage manuel, absent de l'interface).
@@ -76,6 +78,7 @@ impl Default for Settings {
             third_party_ranks_opt_in: false,
             telemetry: false,
             telemetry_install_id: String::new(),
+            telemetry_last_day: String::new(),
             check_updates: true,
             bonus_shards: 0,
             last_game: "lol".into(),

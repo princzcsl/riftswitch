@@ -121,7 +121,7 @@
         championPool: list(poolText),
         agentPool: list(agentText),
         email: email ? email : null,
-        username: username ? username : null,
+        username: username.trim() ? username.trim() : null,
         password: clearPassword ? "" : password ? password : null,
       };
       if (account && valRank.tier !== (account.ranks.val?.tier ?? "")) {
@@ -294,6 +294,7 @@
       <div class="field">
         <label class="lbl-row" for="un">{t("editor.username")}{#if account?.hasUsername}<span class="saved"><Icon name="check" size={11} />{t("editor.storedBadge")}</span>{/if}</label>
         <input id="un" class="input" autocomplete="off" placeholder={account?.hasUsername ? t("editor.keepCurrent") : t("editor.usernamePh")} bind:value={username} />
+        {#if username.includes("@")}<span class="small" style="color:var(--warning)">{t("editor.usernameNotEmail")}</span>{/if}
       </div>
       <div class="field">
         <label class="lbl-row" for="pw">{t("editor.password")}{#if account?.hasPassword}<span class="saved"><Icon name="check" size={11} />{t("editor.storedBadge")}</span>{/if}</label>

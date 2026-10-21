@@ -58,9 +58,10 @@
   // Mise à jour automatique dès le démarrage (avant même le déverrouillage), une fois par lancement.
   let updateChecked = false;
   $effect(() => {
-    if (!app.boot || updateChecked || !app.settings?.checkUpdates) return;
+    if (!app.boot || updateChecked) return;
     updateChecked = true;
-    updater.autoUpdate();
+    if (app.settings?.checkUpdates) updater.autoUpdate();
+    else updater.skipStartup();
   });
 </script>
 

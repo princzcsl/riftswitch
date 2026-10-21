@@ -4,6 +4,7 @@
   import { app } from "../lib/app.svelte";
   import { t } from "../lib/i18n.svelte";
   import { displayRiotId } from "../lib/format";
+  import ChatStatusMenu from "./ChatStatusMenu.svelte";
   import Icon from "./Icon.svelte";
 
   const win = getCurrentWindow();
@@ -18,6 +19,7 @@
   });
 
   const status = $derived(app.status);
+  let statusMenu = $state({ open: false, x: 0, y: 0 });
   const active = $derived(app.activeAccount);
   const streamer = $derived(app.settings?.streamerMode ?? false);
   const label = $derived.by(() => {
@@ -57,8 +59,16 @@
     {#if status.busy === "waiting_login"}
       <button class="chip cancel" onclick={() => api.cancelLogin()}>{t("common.cancel")}</button>
     {/if}
-    {#if status.offline}
-      <span class="chip ghost" title={t("offline.active")}><Icon name="ghost" size={12} /> {t("offline.short")}</span>
+    {#if status.chatStatus}
+      <button
+        class="chip ghost status-chip"
+        title={t("chatStatus.title")}
+        onclick={(e) => (statusMenu = { open: true, x: e.clientX - 60, y: e.clientY + 14 })}
+      >
+        {#if status.chatStatus === "offline"}<Icon name="ghost" size={12} />{:else}<span class="status-dot {status.chatStatus}"></span>{/if}
+        {t(`chatStatus.${status.chatStatus}`)}
+      </button>
+      <ChatStatusMenu bind:open={statusMenu.open} x={statusMenu.x} y={statusMenu.y} />
     {/if}
   </div>
 
@@ -151,5 +161,11 @@
   .tb-btn.close:hover {
     background: #e81123;
     color: #fff;
+  }
+  .status-chip {
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
   }
 </style>

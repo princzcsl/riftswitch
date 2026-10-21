@@ -196,7 +196,8 @@
     "loginNeeded": "Gib Benutzername und Passwort ein, um mit einem Klick zu diesem Konto zu wechseln.",
     "hoursInGame": "Stunden im Spiel",
     "hoursLauncher": "Stunden im Launcher",
-    "hoursTotal": "Gesamt"
+    "hoursTotal": "Gesamt",
+    "usernameNotEmail": "Das ist dein Riot-Benutzername, nicht deine E-Mail-Adresse."
   },
   "icon": {
     "set": "Symbole",
@@ -395,7 +396,8 @@
     "saved": "Seite zur Bibliothek hinzugefügt",
     "pushed": "Seite an den LoL-Client gesendet",
     "codeCopied": "Runen-Code kopiert",
-    "imported": "Seite importiert"
+    "imported": "Seite importiert",
+    "source": "Von diesem Konto gespeichert"
   },
   "shops": {
     "subtitle": "Shop-Vorschauen, nur in der App.",
@@ -638,7 +640,9 @@
     "redeem_failed": "Der Riot Client hat die Anmeldung nicht rechtzeitig akzeptiert.",
     "captcha_failed": "Riot verlangt immer wieder die Überprüfung. Versuche es in ein paar Minuten erneut.",
     "login_bad_credentials": "Riot lehnt Benutzername oder Passwort ab. Prüfe sie im Tab Sicherheit des Kontos.",
-    "login_rate_limited": "Zu viele Anmeldeversuche: Riot blockiert sie vorerst. Warte etwa 15 Minuten und versuche es dann erneut."
+    "login_rate_limited": "Zu viele Anmeldeversuche: Riot blockiert sie vorerst. Warte etwa 15 Minuten und versuche es dann erneut.",
+    "login_email_username": "Der gespeicherte Benutzername ist eine E-Mail-Adresse: Riot akzeptiert nur den Benutzernamen (in den Einstellungen des Riot Client). Korrigiere ihn im Tab Sicherheit des Kontos.",
+    "login_invalid_request": "Riot hat die Anfrage abgelehnt. Prüfe, dass der Benutzername dein Riot-Benutzername ist (nicht deine E-Mail), ohne zusätzliche Leerzeichen."
   },
   "mfa": {
     "title": "2FA-Code",
@@ -680,6 +684,15 @@
     "current": "Installierte Version: {v}",
     "screenTitle": "Update läuft",
     "screenText": "RiftSwitch {v} wird installiert und startet von selbst neu.",
-    "preparing": "Wird vorbereitet…"
+    "preparing": "Wird vorbereitet…",
+    "searching": "Suche nach Updates…"
+  },
+  "chatStatus": {
+    "title": "Status für Freunde",
+    "online": "Online",
+    "away": "Abwesend",
+    "busy": "Beschäftigt",
+    "mobile": "Mobil",
+    "offline": "Offline"
   }
 }

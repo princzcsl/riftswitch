@@ -196,7 +196,8 @@
     "loginNeeded": "Aggiungi nome utente e password per passare a questo account con un clic.",
     "hoursInGame": "Ore in partita",
     "hoursLauncher": "Ore nel launcher",
-    "hoursTotal": "Totale"
+    "hoursTotal": "Totale",
+    "usernameNotEmail": "È il tuo nome utente Riot, non la tua email."
   },
   "icon": {
     "set": "Icone",
@@ -395,7 +396,8 @@
     "saved": "Pagina aggiunta alla libreria",
     "pushed": "Pagina inviata al client di LoL",
     "codeCopied": "Codice delle rune copiato",
-    "imported": "Pagina importata"
+    "imported": "Pagina importata",
+    "source": "Salvata da questo account"
   },
   "shops": {
     "subtitle": "Anteprime dei negozi, solo nell'app.",
@@ -638,7 +640,9 @@
     "redeem_failed": "Il Riot Client non ha accettato l’accesso in tempo.",
     "captcha_failed": "Riot continua a chiedere la verifica. Riprova tra qualche minuto.",
     "login_bad_credentials": "Riot rifiuta nome utente o password. Controllali nella scheda Sicurezza dell’account.",
-    "login_rate_limited": "Troppi tentativi di accesso: Riot li blocca per ora. Attendi circa 15 minuti, poi riprova."
+    "login_rate_limited": "Troppi tentativi di accesso: Riot li blocca per ora. Attendi circa 15 minuti, poi riprova.",
+    "login_email_username": "Il nome utente salvato è un’email: Riot accetta solo il nome utente (visibile nelle impostazioni del Riot Client). Correggilo nella scheda Sicurezza dell’account.",
+    "login_invalid_request": "Riot ha rifiutato la richiesta. Controlla che il nome utente sia quello Riot (non l’email), senza spazi in più."
   },
   "mfa": {
     "title": "Codice 2FA",
@@ -680,6 +684,15 @@
     "current": "Versione installata: {v}",
     "screenTitle": "Aggiornamento in corso",
     "screenText": "RiftSwitch {v} si sta installando e si riavvierà da solo.",
-    "preparing": "Preparazione…"
+    "preparing": "Preparazione…",
+    "searching": "Ricerca aggiornamenti…"
+  },
+  "chatStatus": {
+    "title": "Stato mostrato agli amici",
+    "online": "Online",
+    "away": "Assente",
+    "busy": "Occupato",
+    "mobile": "Mobile",
+    "offline": "Offline"
   }
 }

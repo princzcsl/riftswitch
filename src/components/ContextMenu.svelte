@@ -4,7 +4,7 @@
   let el = $state<HTMLDivElement>();
   // Repositionne pour ne pas déborder de la fenêtre.
   const left = $derived(Math.min(x, window.innerWidth - 220));
-  const top = $derived(Math.min(y, window.innerHeight - 160));
+  const top = $derived(Math.min(y, window.innerHeight - 250));
   function onDoc(e: MouseEvent) {
     if (open && el && !el.contains(e.target as Node)) open = false;
   }

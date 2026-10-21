@@ -11,6 +11,7 @@ mod riot;
 mod runes;
 mod settings;
 mod state;
+mod telemetry;
 mod tray;
 mod util;
 mod vault;
@@ -108,6 +109,7 @@ pub fn run() {
             accounts::reorder_folders,
             play::play,
             play::set_offline,
+            play::set_chat_status,
             play::riot_status,
             play::quit_riot,
             play::capture_current,

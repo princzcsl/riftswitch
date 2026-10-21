@@ -19,6 +19,15 @@
       <span class="faint small">{pct ? `${pct} %` : t("update.preparing")}</span>
     </div>
   </div>
+{:else if updater.startup}
+  <div class="screen" role="status" aria-live="polite">
+    <div class="glow"></div>
+    <div class="box">
+      <img src="/logo.svg" alt="" width="84" height="84" />
+      <span class="faint small">{t("update.searching")}</span>
+      <div class="bar indeterminate slim"><div></div></div>
+    </div>
+  </div>
 {/if}
 
 <style>
@@ -71,6 +80,10 @@
     width: 35%;
     animation: slide 1.2s ease-in-out infinite !important;
     animation-duration: 1.2s !important;
+  }
+  .bar.slim {
+    width: 160px;
+    height: 3px;
   }
   @keyframes slide {
     from {

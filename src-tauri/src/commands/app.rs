@@ -46,6 +46,7 @@ pub fn save_settings(
     settings: Settings,
 ) -> AppResult<Settings> {
     let mut s = settings.sanitized();
+    s.telemetry_last_day = state.settings().telemetry_last_day;
     if s.telemetry && s.telemetry_install_id.is_empty() {
         s.telemetry_install_id = uuid::Uuid::new_v4().to_string();
     }
@@ -224,6 +225,10 @@ pub async fn import_backup(
 /// Ce qui serait envoyé si la télémétrie était activée (écran « Voir ce qui est envoyé »).
 #[tauri::command]
 pub fn telemetry_preview(app: AppHandle, state: State<'_, AppState>) -> serde_json::Value {
+    build_preview(&app, &state)
+}
+
+pub fn build_preview(app: &AppHandle, state: &AppState) -> serde_json::Value {
     let s = state.settings();
     let (count, launches, hours) = state
         .with_vault(|v| {

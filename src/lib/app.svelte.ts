@@ -22,6 +22,7 @@ const emptyStatus: RiotStatus = {
   activeAccountId: null,
   proxyRunning: false,
   offline: false,
+  chatStatus: null,
   busy: null,
 };
 
