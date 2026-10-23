@@ -1,0 +1,55 @@
+name: Proxy certificate
+
+# Certificate for riftswitch.duckdns.org (points to 127.0.0.1), used by the local chat proxy
+# in ghost mode. Renewed monthly and published on the proxy-cert pre-release.
+on:
+  schedule:
+    - cron: "0 4 1 * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  DOMAIN: riftswitch.duckdns.org
+  LEGO_VERSION: v5.5.2
+
+jobs:
+  renew:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Keep the domain on 127.0.0.1
+        env:
+          DUCKDNS_TOKEN: ${{ secrets.DUCKDNS_TOKEN }}
+        run: |
+          result="$(curl -fsS "https://www.duckdns.org/update?domains=${DOMAIN%%.*}&token=$DUCKDNS_TOKEN&ip=127.0.0.1")"
+          [ "$result" = "OK" ] || { echo "::error::DuckDNS update failed: $result"; exit 1; }
+
+      - name: Install lego
+        run: |
+          curl -fsSL "https://github.com/go-acme/lego/releases/download/$LEGO_VERSION/lego_${LEGO_VERSION}_linux_amd64.tar.gz" | tar -xz lego
+          ./lego --version
+
+      - name: Get the certificate
+        env:
+          DUCKDNS_TOKEN: ${{ secrets.DUCKDNS_TOKEN }}
+          DUCKDNS_PROPAGATION_TIMEOUT: "300"
+        run: |
+          ./lego run --accept-tos --email "63497342+princzcsl@users.noreply.github.com" \
+            --dns duckdns --domains "$DOMAIN" --key-type rsa2048 --path .lego
+          crt="$(find .lego -name "$DOMAIN.crt" | head -n 1)"
+          key="$(find .lego -name "$DOMAIN.key" | head -n 1)"
+          [ -s "$crt" ] && [ -s "$key" ] || { echo "::error::Certificate files not found"; find .lego; exit 1; }
+          cp "$crt" riftswitch-localhost.crt
+          cp "$key" riftswitch-localhost.key
+          openssl x509 -in riftswitch-localhost.crt -noout -subject -enddate
+
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if ! gh release view proxy-cert --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            gh release create proxy-cert --repo "$GITHUB_REPOSITORY" --prerelease --latest=false \
+              --title "Proxy certificate" --notes "Certificate used by the local chat proxy in ghost mode. Renewed automatically."
+          fi
+          gh release upload proxy-cert riftswitch-localhost.crt riftswitch-localhost.key --clobber --repo "$GITHUB_REPOSITORY"
