@@ -303,12 +303,18 @@ pub fn spawn(app: AppHandle) {
                     busy: current.busy.clone(),
                 }
             };
-            let changed = {
+            let (changed, tray_dirty) = {
                 let mut current = state.status.lock().unwrap();
                 let c = *current != next;
+                // Le menu de la zone de notification montre le statut et le compte connecté.
+                let t = current.chat_status != next.chat_status
+                    || current.active_account_id != next.active_account_id;
                 *current = next.clone();
-                c
+                (c, t)
             };
+            if tray_dirty {
+                crate::tray::refresh(&app);
+            }
             if changed && visible {
                 let _ = app.emit("riot-status", next);
             }

@@ -127,7 +127,7 @@
           <span class="faint">{app.accounts.filter((a) => a.folderId === f.id).length}</span>
         </button>
       {/each}
-      <button class="fchip ghost" onclick={() => (foldersOpen = true)} title={t("folders.title")}><Icon name="folder" size={14} />{t("folders.manage")}</button>
+      <button class="fchip ghost" onclick={() => (foldersOpen = true)}><Icon name="folder" size={14} />{t("folders.manage")}</button>
     </div>
 
     {#if hero}<HeroCard account={hero} />{/if}

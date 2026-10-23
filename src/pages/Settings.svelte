@@ -220,6 +220,10 @@
           <Toggle checked={s.closeRiotClient} onchange={(v) => set("closeRiotClient", v)} />
         </div>
         <div class="setting">
+          <div><strong>{t("settings.rememberGhost")}</strong><p>{t("settings.rememberGhostText")}</p></div>
+          <Toggle checked={s.rememberGhost} onchange={(v) => set("rememberGhost", v)} />
+        </div>
+        <div class="setting">
           <div><strong>{t("settings.autoProfiles")}</strong><p>{t("settings.autoProfilesText")}</p></div>
           <Toggle checked={s.autoApplyProfiles} onchange={(v) => set("autoApplyProfiles", v)} />
         </div>

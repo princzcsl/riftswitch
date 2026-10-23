@@ -545,7 +545,9 @@
     "resetConfirm2": "Última confirmación: no se puede deshacer.",
     "resetFinal": "Borrar todo",
     "closeRiotClient": "Cerrar el Riot Client tras el lanzamiento",
-    "closeRiotClientText": "Cuando el juego está abierto, su ventana se cierra como con la X. El cliente sigue funcionando en segundo plano."
+    "closeRiotClientText": "Cuando el juego está abierto, su ventana se cierra como con la X. El cliente sigue funcionando en segundo plano.",
+    "rememberGhost": "Recordar el modo fantasma",
+    "rememberGhostText": "Mantiene el modo fantasma activado o no la próxima vez que se inicie RiftSwitch. Si no, se desactiva en cada inicio."
   },
   "setup": {
     "welcome": "Bienvenido a RiftSwitch",
@@ -703,5 +705,13 @@
     "mobile": "Móvil",
     "offline": "Desconectado",
     "awayHint": "Se muestra ausente en VALORANT y League of Legends."
+  },
+  "exit": {
+    "title": "Cerrar RiftSwitch",
+    "ghostText": "El modo fantasma está activo: salir de RiftSwitch también cerrará el juego.",
+    "openText": "Hay un juego abierto. ¿Salir de RiftSwitch de todos modos? El juego seguirá abierto.",
+    "abandon": "La partida en curso se abandonará.",
+    "quitClose": "Salir y cerrar el juego",
+    "quit": "Salir"
   }
 }

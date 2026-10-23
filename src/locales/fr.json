@@ -545,7 +545,9 @@
     "resetConfirm2": "Dernière confirmation : c'est irréversible.",
     "resetFinal": "Tout effacer",
     "closeRiotClient": "Fermer le Riot Client après le lancement",
-    "closeRiotClientText": "Une fois le jeu ouvert, sa fenêtre est fermée comme avec la croix. Le client continue de tourner en arrière-plan."
+    "closeRiotClientText": "Une fois le jeu ouvert, sa fenêtre est fermée comme avec la croix. Le client continue de tourner en arrière-plan.",
+    "rememberGhost": "Retenir le mode fantôme",
+    "rememberGhostText": "Garde le mode fantôme activé ou non au prochain démarrage de RiftSwitch. Sinon, il est désactivé à chaque démarrage."
   },
   "setup": {
     "welcome": "Bienvenue dans RiftSwitch",
@@ -703,5 +705,13 @@
     "mobile": "Mobile",
     "offline": "Hors ligne",
     "awayHint": "Affiché absent sur VALORANT et League of Legends."
+  },
+  "exit": {
+    "title": "Fermer RiftSwitch",
+    "ghostText": "Le mode fantôme est actif : quitter RiftSwitch fermera aussi le jeu.",
+    "openText": "Un jeu est ouvert. Quitter RiftSwitch quand même ? Le jeu reste ouvert.",
+    "abandon": "La partie en cours sera abandonnée.",
+    "quitClose": "Quitter et fermer le jeu",
+    "quit": "Quitter"
   }
 }

@@ -67,7 +67,7 @@
         {#if account.riotId}{displayRiotId(account, streamer)}{:else}<span class="faint">{t("accounts.noRiotId")}</span>{/if}
       </div>
     </div>
-    <button class="btn ghost icon sm fav" class:on={account.favorite} onclick={onfavorite} title={t("accounts.favorite")}>
+    <button class="btn ghost icon sm fav" class:on={account.favorite} onclick={onfavorite}>
       <Icon name={account.favorite ? "starFill" : "star"} size={17} />
     </button>
     <Popover bind:open={menu} width={230}>

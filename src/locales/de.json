@@ -545,7 +545,9 @@
     "resetConfirm2": "Letzte Bestätigung: Das kann nicht rückgängig gemacht werden.",
     "resetFinal": "Alles löschen",
     "closeRiotClient": "Riot Client nach dem Start schließen",
-    "closeRiotClientText": "Sobald das Spiel offen ist, wird sein Fenster wie mit dem X geschlossen. Der Client läuft im Hintergrund weiter."
+    "closeRiotClientText": "Sobald das Spiel offen ist, wird sein Fenster wie mit dem X geschlossen. Der Client läuft im Hintergrund weiter.",
+    "rememberGhost": "Geistermodus merken",
+    "rememberGhostText": "Behält den Geistermodus beim nächsten Start von RiftSwitch bei. Sonst ist er bei jedem Start aus."
   },
   "setup": {
     "welcome": "Willkommen bei RiftSwitch",
@@ -703,5 +705,13 @@
     "mobile": "Mobil",
     "offline": "Offline",
     "awayHint": "Wird in VALORANT und League of Legends als abwesend angezeigt."
+  },
+  "exit": {
+    "title": "RiftSwitch beenden",
+    "ghostText": "Der Geistermodus ist aktiv: Beim Beenden von RiftSwitch wird auch das Spiel geschlossen.",
+    "openText": "Ein Spiel ist geöffnet. RiftSwitch trotzdem beenden? Das Spiel bleibt geöffnet.",
+    "abandon": "Das laufende Match wird abgebrochen.",
+    "quitClose": "Beenden und Spiel schließen",
+    "quit": "Beenden"
   }
 }

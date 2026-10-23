@@ -34,6 +34,10 @@ pub struct AppState {
     pub client_via_proxy: AtomicBool,
     /// Émetteur du code A2F attendu pendant une connexion (rempli par la commande `submit_mfa`).
     pub pending_otp: tokio::sync::Mutex<Option<tokio::sync::oneshot::Sender<String>>>,
+    /// Confirmation de fermeture affichée par l'interface : (contenu, réponse attendue).
+    pub pending_exit: Mutex<Option<(serde_json::Value, tokio::sync::oneshot::Sender<bool>)>>,
+    /// Lancement demandé depuis la zone de notification, exécuté par l'interface : (compte, jeu).
+    pub pending_tray_play: Mutex<Option<(String, String)>>,
 }
 
 impl AppState {
@@ -55,6 +59,8 @@ impl AppState {
             force_sync: AtomicBool::new(true),
             client_via_proxy: AtomicBool::new(false),
             pending_otp: tokio::sync::Mutex::new(None),
+            pending_exit: Mutex::new(None),
+            pending_tray_play: Mutex::new(None),
             paths,
         }
     }

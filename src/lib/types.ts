@@ -16,6 +16,7 @@ export interface Settings {
   startMinimized: boolean;
   blockSwitchInGame: boolean;
   closeRiotClient: boolean;
+  rememberGhost: boolean;
   autoApplyProfiles: boolean;
   discordRpc: boolean;
   discordShowRiotId: boolean;

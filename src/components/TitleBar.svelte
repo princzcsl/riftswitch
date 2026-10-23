@@ -63,7 +63,10 @@
       <button
         class="chip ghost status-chip"
         title={t("chatStatus.title")}
-        onclick={(e) => (statusMenu = { open: true, x: e.clientX - 60, y: e.clientY + 14 })}
+        onclick={(e) => {
+          const r = e.currentTarget.getBoundingClientRect();
+          statusMenu = { open: true, x: r.left, y: r.bottom + 6 };
+        }}
       >
         {#if status.chatStatus === "offline"}<Icon name="ghost" size={12} />{:else}<span class="status-dot {status.chatStatus}"></span>{/if}
         {t(`chatStatus.${status.chatStatus}`)}

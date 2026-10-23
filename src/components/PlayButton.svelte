@@ -24,7 +24,7 @@
 <Popover bind:open width={250} align="end">
   {#snippet trigger()}
     <div class="split {size}" class:launching>
-      <button class="main" disabled={busy} onclick={() => play(defaultGame)} title={t("play.playGame", { game: t(`games.${defaultGame}`) })}>
+      <button class="main" disabled={busy} onclick={() => play(defaultGame)}>
         {#if launching}
           <svg class="spin" width="16" height="16" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" /></svg>
         {:else}
@@ -42,7 +42,7 @@
   <div class="menu">
     <div class="tiles">
       {#each games as g}
-        <button class="tile" class:current={g === defaultGame} onclick={() => play(g)} title={t(`games.${g}`)}>
+        <button class="tile" class:current={g === defaultGame} onclick={() => play(g)}>
           <GameIcon game={g} size={30} />
           {#if app.settings?.playMenuLabels}<span>{t(`games.short_${g}`)}</span>{/if}
         </button>

@@ -97,6 +97,9 @@ pub fn run() {
             appcmd::telemetry_preview,
             appcmd::close_window,
             appcmd::quit_app,
+            appcmd::exit_prompt,
+            appcmd::answer_exit,
+            appcmd::take_tray_play,
             appcmd::open_data_dir,
             accounts::list_accounts,
             accounts::save_account,
@@ -170,45 +173,25 @@ pub fn run() {
 
 static EXITING: AtomicBool = AtomicBool::new(false);
 
-/// Textes de la confirmation de fermeture : (titre, texte, bouton de validation, annuler).
-fn exit_texts(lang: &str, ghost: bool, in_match: bool) -> (String, String, String, String) {
-    let l = lang.get(..2).unwrap_or("en");
-    let (title, ghost_text, open_text, quit_close, quit, cancel, abandon) = match l {
-        "fr" => ("Fermer RiftSwitch", "Le mode fantôme est actif : quitter RiftSwitch fermera aussi le jeu.", "Un jeu est ouvert. Quitter RiftSwitch quand même ? Le jeu reste ouvert.", "Quitter et fermer le jeu", "Quitter", "Annuler", "La partie en cours sera abandonnée."),
-        "es" => ("Cerrar RiftSwitch", "El modo fantasma está activo: salir de RiftSwitch también cerrará el juego.", "Hay un juego abierto. ¿Salir de RiftSwitch de todos modos? El juego seguirá abierto.", "Salir y cerrar el juego", "Salir", "Cancelar", "La partida en curso se abandonará."),
-        "it" => ("Chiudi RiftSwitch", "La modalità fantasma è attiva: uscire da RiftSwitch chiuderà anche il gioco.", "Un gioco è aperto. Uscire comunque da RiftSwitch? Il gioco resterà aperto.", "Esci e chiudi il gioco", "Esci", "Annulla", "La partita in corso verrà abbandonata."),
-        "de" => ("RiftSwitch beenden", "Der Geistermodus ist aktiv: Beim Beenden von RiftSwitch wird auch das Spiel geschlossen.", "Ein Spiel ist geöffnet. RiftSwitch trotzdem beenden? Das Spiel bleibt geöffnet.", "Beenden und Spiel schließen", "Beenden", "Abbrechen", "Das laufende Match wird abgebrochen."),
-        _ => ("Quit RiftSwitch", "Ghost mode is on: quitting RiftSwitch also closes the game.", "A game is open. Quit RiftSwitch anyway? The game stays open.", "Quit and close the game", "Quit", "Cancel", "The current match will be abandoned."),
-    };
-    let text = if ghost && in_match {
-        format!("{ghost_text} {abandon}")
-    } else if ghost {
-        ghost_text.to_string()
-    } else {
-        open_text.to_string()
-    };
-    let ok = if ghost { quit_close } else { quit };
-    (title.into(), text, ok.into(), cancel.into())
-}
-
+/// Confirmation dans la fenêtre de l'app (réaffichée si besoin), au style de RiftSwitch.
 async fn confirm_exit(app: tauri::AppHandle, ghost: bool, game_open: bool) {
-    use tauri_plugin_dialog::{DialogExt, MessageDialogButtons, MessageDialogKind};
+    use tauri::Emitter;
     if game_open {
         let in_match = riot::presence::with_match_state(riot::process::snapshot())
             .await
             .game_in_progress();
-        let lang = app.state::<AppState>().settings().language;
-        let (title, text, yes, no) = exit_texts(&lang, ghost, in_match);
+        let payload = serde_json::json!({ "ghost": ghost, "inMatch": in_match });
         let (tx, rx) = tokio::sync::oneshot::channel();
-        app.dialog()
-            .message(text)
-            .title(title)
-            .kind(MessageDialogKind::Warning)
-            .buttons(MessageDialogButtons::OkCancelCustom(yes, no))
-            .show(move |ok| {
-                let _ = tx.send(ok);
-            });
-        if !rx.await.unwrap_or(false) {
+        *app.state::<AppState>().pending_exit.lock().unwrap() = Some((payload.clone(), tx));
+        tray::show_main(&app);
+        let _ = app.emit("exit-confirm", payload);
+        let ok = tokio::time::timeout(std::time::Duration::from_secs(300), rx)
+            .await
+            .ok()
+            .and_then(Result::ok)
+            .unwrap_or(false);
+        app.state::<AppState>().pending_exit.lock().unwrap().take();
+        if !ok {
             EXITING.store(false, Ordering::Relaxed);
             return;
         }

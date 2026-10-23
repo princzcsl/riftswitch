@@ -545,7 +545,9 @@
     "resetConfirm2": "Last confirmation: this cannot be undone.",
     "resetFinal": "Erase everything",
     "closeRiotClient": "Close the Riot Client after launch",
-    "closeRiotClientText": "Once the game is open, its window is closed like with the X button. The client keeps running in the background."
+    "closeRiotClientText": "Once the game is open, its window is closed like with the X button. The client keeps running in the background.",
+    "rememberGhost": "Remember ghost mode",
+    "rememberGhostText": "Keep ghost mode on or off the next time RiftSwitch starts. Otherwise it is off at every start."
   },
   "setup": {
     "welcome": "Welcome to RiftSwitch",
@@ -703,5 +705,13 @@
     "mobile": "Mobile",
     "offline": "Offline",
     "awayHint": "Shown as away on VALORANT and League of Legends."
+  },
+  "exit": {
+    "title": "Quit RiftSwitch",
+    "ghostText": "Ghost mode is on: quitting RiftSwitch also closes the game.",
+    "openText": "A game is open. Quit RiftSwitch anyway? The game stays open.",
+    "abandon": "The current match will be abandoned.",
+    "quitClose": "Quit and close the game",
+    "quit": "Quit"
   }
 }

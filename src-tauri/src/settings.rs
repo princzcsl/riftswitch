@@ -30,6 +30,8 @@ pub struct Settings {
     pub block_switch_in_game: bool,
     /// Ferme la fenêtre du Riot Client (comme la croix) une fois le jeu ouvert.
     pub close_riot_client: bool,
+    /// Garde le mode fantôme choisi d'un lancement de RiftSwitch à l'autre (désactivé par défaut).
+    pub remember_ghost: bool,
     /// Appliquer automatiquement le profil de config associé au compte au lancement.
     pub auto_apply_profiles: bool,
     pub discord_rpc: bool,
@@ -70,6 +72,7 @@ impl Default for Settings {
             start_minimized: false,
             block_switch_in_game: true,
             close_riot_client: true,
+            remember_ghost: false,
             auto_apply_profiles: true,
             discord_rpc: false,
             discord_show_riot_id: false,

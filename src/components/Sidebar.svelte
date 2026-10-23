@@ -23,7 +23,7 @@
 
 <nav class="sidebar">
   {#each items as item}
-    <button class="nav" class:active={app.page === item.page} onclick={() => (app.page = item.page)} title={t(`nav.${item.page}`)}>
+    <button class="nav" class:active={app.page === item.page} onclick={() => (app.page = item.page)}>
       <span class="ic"><Icon name={item.icon} size={20} />{#if badges[item.page]}<i class="badge"></i>{/if}</span>
       <span class="lbl">{t(`nav.${item.page}`)}</span>
     </button>
@@ -33,20 +33,21 @@
     <button
       class="nav"
       class:ghost={app.status.offline}
-      title={t("chatStatus.title")}
-      onclick={(e) => ((statusMenu = { open: true, x: e.clientX + 12, y: e.clientY - 220 }))}
+      onclick={(e) => {
+        const r = e.currentTarget.getBoundingClientRect();
+        statusMenu = { open: true, x: r.right + 8, y: r.bottom };
+      }}
     >
       <span class="ic"><Icon name="ghost" size={20} /></span>
       <span class="lbl">{t(`chatStatus.${app.status.chatStatus ?? "online"}`)}</span>
     </button>
-    <ChatStatusMenu bind:open={statusMenu.open} x={statusMenu.x} y={statusMenu.y} />
+    <ChatStatusMenu bind:open={statusMenu.open} x={statusMenu.x} y={statusMenu.y} fromBottom />
   {:else}
     <!-- Hors jeu : active ou désactive le mode fantôme pour le prochain lancement. -->
     <button
       class="nav"
       class:ghost={app.preferOffline}
       class:off={!app.preferOffline}
-      title={app.preferOffline ? t("offline.nextOn") : t("offline.nextOff")}
       onclick={() => app.setPreferOffline(!app.preferOffline)}
     >
       <span class="ic"><Icon name="ghost" size={20} /></span>
@@ -54,12 +55,12 @@
     </button>
   {/if}
   {#if lockable}
-    <button class="nav" onclick={() => app.lock()} title={t("nav.lock")}>
+    <button class="nav" onclick={() => app.lock()}>
       <span class="ic"><Icon name="lock" size={20} /></span>
       <span class="lbl">{t("nav.lock")}</span>
     </button>
   {/if}
-  <button class="nav" class:active={app.page === "settings"} onclick={() => (app.page = "settings")} title={t("nav.settings")}>
+  <button class="nav" class:active={app.page === "settings"} onclick={() => (app.page = "settings")}>
     <span class="ic"><Icon name="settings" size={20} /></span>
     <span class="lbl">{t("nav.settings")}</span>
   </button>

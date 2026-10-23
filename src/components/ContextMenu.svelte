@@ -1,10 +1,29 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
-  let { open = $bindable(false), x = 0, y = 0, children }: { open?: boolean; x?: number; y?: number; children: Snippet } = $props();
+  let {
+    open = $bindable(false),
+    x = 0,
+    y = 0,
+    fromBottom = false,
+    children,
+  }: { open?: boolean; x?: number; y?: number; fromBottom?: boolean; children: Snippet } = $props();
   let el = $state<HTMLDivElement>();
-  // Repositionne pour ne pas déborder de la fenêtre.
-  const left = $derived(Math.min(x, window.innerWidth - 220));
-  const top = $derived(Math.min(y, window.innerHeight - 250));
+  let pos = $state<{ left: number; top: number } | null>(null);
+
+  // Placé après mesure : `fromBottom` aligne le bas du menu sur `y`, et il reste dans la fenêtre.
+  $effect(() => {
+    if (!open || !el) {
+      pos = null;
+      return;
+    }
+    const { width, height } = el.getBoundingClientRect();
+    const top = fromBottom ? y - height : y;
+    pos = {
+      left: Math.max(8, Math.min(x, window.innerWidth - width - 8)),
+      top: Math.max(8, Math.min(top, window.innerHeight - height - 8)),
+    };
+  });
+
   function onDoc(e: MouseEvent) {
     if (open && el && !el.contains(e.target as Node)) open = false;
   }
@@ -13,7 +32,12 @@
 <svelte:window onmousedown={onDoc} onkeydown={(e) => e.key === "Escape" && (open = false)} onblur={() => (open = false)} />
 
 {#if open}
-  <div bind:this={el} class="ctx glass-strong fade-in" style="left:{left}px;top:{top}px" role="menu">
+  <div
+    bind:this={el}
+    class="ctx glass-strong fade-in"
+    style="left:{pos?.left ?? 0}px;top:{pos?.top ?? 0}px;visibility:{pos ? 'visible' : 'hidden'}"
+    role="menu"
+  >
     {@render children()}
   </div>
 {/if}

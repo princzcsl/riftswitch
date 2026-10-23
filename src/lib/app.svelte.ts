@@ -1,6 +1,5 @@
 // État global réactif de l'interface (Svelte 5 runes).
 import { listen } from "@tauri-apps/api/event";
-import { ask } from "@tauri-apps/plugin-dialog";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
 import { api } from "./api";
 import { latestVersion } from "./ddragon";
@@ -44,6 +43,37 @@ class AppStore {
   playSteps = $state<string[]>([]);
   /** Hors ligne par défaut dans le menu Jouer (mémorisé). */
   preferOffline = $state(false);
+  /** Confirmation affichée par ConfirmDialog ; `confirm()` attend la réponse. */
+  confirmState = $state<{ title: string; text: string; ok: string; cancel?: string; danger?: boolean } | null>(null);
+  #confirmResolve: ((ok: boolean) => void) | null = null;
+
+  confirm(opts: { title: string; text: string; ok: string; cancel?: string; danger?: boolean }): Promise<boolean> {
+    this.#confirmResolve?.(false);
+    this.confirmState = opts;
+    return new Promise((resolve) => (this.#confirmResolve = resolve));
+  }
+
+  /** Lancement demandé depuis la zone de notification : même parcours qu'un clic sur Jouer. */
+  async trayPlay() {
+    const req = await api.takeTrayPlay().catch(() => null);
+    if (!req) return;
+    if (!this.accounts.length && this.unlocked) await this.refreshAccounts();
+    const account = this.accounts.find((a) => a.id === req[0]);
+    if (account) this.play(account, req[1] as Game, this.preferOffline);
+  }
+
+  async askExit(p: { ghost: boolean; inMatch: boolean }) {
+    const text = p.ghost ? t("exit.ghostText") + (p.inMatch ? " " + t("exit.abandon") : "") : t("exit.openText");
+    const ok = await this.confirm({ title: t("exit.title"), text, ok: t(p.ghost ? "exit.quitClose" : "exit.quit"), danger: p.ghost });
+    await api.answerExit(ok);
+  }
+
+  answerConfirm(ok: boolean) {
+    const resolve = this.#confirmResolve;
+    this.#confirmResolve = null;
+    this.confirmState = null;
+    resolve?.(ok);
+  }
   loginHint = $state(false);
   /** Demande d'A2F en cours pendant une connexion (null = aucune). */
   mfa = $state<{ methods: string[]; email: string | null } | null>(null);
@@ -57,7 +87,8 @@ class AppStore {
     this.settings = boot.settings;
     this.unlocked = boot.unlocked;
     try {
-      this.preferOffline = localStorage.getItem("rs.offline") === "1";
+      // Désactivé à chaque lancement, sauf si l'utilisateur a choisi de le retenir.
+      this.preferOffline = !!this.settings?.rememberGhost && localStorage.getItem("rs.offline") === "1";
     } catch {
       /* stockage indisponible */
     }
@@ -80,6 +111,13 @@ class AppStore {
     await listen<string>("session-expired", (e) => this.toast("info", t("play.sessionExpired", { name: e.payload }), 12000));
     await listen<{ methods: string[]; email: string | null }>("login-mfa", (e) => (this.mfa = e.payload));
     await listen<string>("play-step", (e) => (this.playSteps = [...this.playSteps, e.payload]));
+    await listen<{ ghost: boolean; inMatch: boolean }>("exit-confirm", (e) => this.askExit(e.payload));
+    await listen("tray-play", () => this.trayPlay());
+    this.trayPlay();
+    // Fenêtre recréée pour une fermeture en attente : la confirmation est reprise ici.
+    api.exitPrompt()
+      .then((p) => p && this.askExit(p))
+      .catch(() => {});
     await listen("play-error", (e) => this.toast("error", errorText(e.payload)));
     this.status = await api.riotStatus();
     if (this.unlocked) await this.loadAll();
@@ -167,11 +205,11 @@ class AppStore {
   /** Lance un jeu sur un compte (bascule si nécessaire). */
   async play(account: Account, game: Game, offline: boolean) {
     if (this.launching) return;
-    // Le jeu ouvert va être fermé (bascule ou relance en mode fantôme) : on demande d'abord.
+    // Le jeu ouvert va être fermé : on demande seulement en mode fantôme ou en pleine partie.
     const check = await api.playCheck(account.id, offline).catch(() => null);
-    if (check?.restart && check.gameOpen) {
+    if (check?.restart && check.gameOpen && (offline || check.inMatch)) {
       const text = t(offline ? "play.confirmRestartOffline" : "play.confirmRestart") + (check.inMatch ? " " + t("play.confirmMatch") : "");
-      const ok = await ask(text, { title: t("play.confirmTitle"), kind: "warning", okLabel: t("play.confirmOk"), cancelLabel: t("common.cancel") }).catch(() => true);
+      const ok = await this.confirm({ title: t("play.confirmTitle"), text, ok: t("play.confirmOk"), danger: true });
       if (!ok) return;
     }
     this.launching = account.id;

@@ -246,6 +246,7 @@ let settings = {
   startMinimized: false,
   blockSwitchInGame: true,
   closeRiotClient: true,
+  rememberGhost: false,
   autoApplyProfiles: true,
   discordRpc: false,
   discordShowRiotId: false,

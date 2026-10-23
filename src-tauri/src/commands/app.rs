@@ -283,6 +283,25 @@ pub fn close_window(app: AppHandle, state: State<'_, AppState>) {
     }
 }
 
+/// Confirmation de fermeture en attente (la fenêtre vient peut-être d'être recréée).
+#[tauri::command]
+pub fn exit_prompt(state: State<'_, AppState>) -> Option<serde_json::Value> {
+    state.pending_exit.lock().unwrap().as_ref().map(|(p, _)| p.clone())
+}
+
+/// Lancement demandé depuis la zone de notification (compte, jeu), pris en charge une seule fois.
+#[tauri::command]
+pub fn take_tray_play(state: State<'_, AppState>) -> Option<(String, String)> {
+    state.pending_tray_play.lock().unwrap().take()
+}
+
+#[tauri::command]
+pub fn answer_exit(state: State<'_, AppState>, ok: bool) {
+    if let Some((_, tx)) = state.pending_exit.lock().unwrap().take() {
+        let _ = tx.send(ok);
+    }
+}
+
 #[tauri::command]
 pub fn quit_app(app: AppHandle) {
     app.exit(0);

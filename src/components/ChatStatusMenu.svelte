@@ -6,7 +6,12 @@
   import ContextMenu from "./ContextMenu.svelte";
   import Icon from "./Icon.svelte";
 
-  let { open = $bindable(false), x = 0, y = 0 }: { open?: boolean; x?: number; y?: number } = $props();
+  let {
+    open = $bindable(false),
+    x = 0,
+    y = 0,
+    fromBottom = false,
+  }: { open?: boolean; x?: number; y?: number; fromBottom?: boolean } = $props();
 
   const STATUSES = ["online", "away", "mobile", "offline"] as const;
 
@@ -20,7 +25,7 @@
   }
 </script>
 
-<ContextMenu bind:open {x} {y}>
+<ContextMenu bind:open {x} {y} {fromBottom}>
   {#each STATUSES as s}
     <button class="menu-item" onclick={() => pick(s)} title={s === "away" ? t("chatStatus.awayHint") : undefined}>
       <span class="status-dot {s}"></span>

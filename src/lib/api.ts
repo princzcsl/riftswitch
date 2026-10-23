@@ -42,6 +42,9 @@ export const api = {
 
   play: (accountId: string, game: Game, offline: boolean, notice: { title: string; body: string } | null) =>
     invoke<{ switched: boolean }>("play", { accountId, game, offline, notice }),
+  exitPrompt: () => invoke<{ ghost: boolean; inMatch: boolean } | null>("exit_prompt"),
+  answerExit: (ok: boolean) => invoke<void>("answer_exit", { ok }),
+  takeTrayPlay: () => invoke<[string, string] | null>("take_tray_play"),
   playCheck: (accountId: string, offline: boolean) =>
     invoke<{ restart: boolean; gameOpen: boolean; inMatch: boolean } | null>("play_check", { accountId, offline }),
   setOffline: (offline: boolean) => invoke<boolean>("set_offline", { offline }),
