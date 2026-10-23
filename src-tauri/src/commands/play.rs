@@ -165,7 +165,7 @@ async fn ensure_proxy(state: &AppState, offline: bool) -> AppResult<std::sync::A
         p.set_offline(offline);
         return Ok(p);
     }
-    let p = OfflineProxy::start(offline).await?;
+    let p = OfflineProxy::start(offline, &state.paths.cache_dir()).await?;
     *state.offline.lock().unwrap() = Some(p.clone());
     Ok(p)
 }

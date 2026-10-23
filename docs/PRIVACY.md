@@ -21,6 +21,7 @@ RiftSwitch fonctionne entièrement sur ton ordinateur. Tes identifiants, session
 | `ddragon.leagueoflegends.com`, `raw.communitydragon.org`, `valorant-api.com` | Affichage d'icônes (champions, agents), runes, patchs | Requêtes publiques, sans compte |
 | `github.com` | Au démarrage si « Rechercher les mises à jour » est activé, ou sur demande | Requête publique du manifeste de version ; le paquet téléchargé est vérifié par signature avant installation |
 | `eu.aptabase.com` (UE) | Une fois par jour au plus, seulement si les statistiques anonymes sont activées | Le résumé visible dans « Voir ce qui est envoyé » ; Aptabase ne conserve pas l’adresse IP |
+| `github.com` (certificat du mode fantôme) | Au lancement en mode fantôme, au plus une fois par semaine | Requête publique ; le certificat de `riftswitch.duckdns.org`, nom qui désigne ton propre PC (127.0.0.1) |
 | Serveurs Riot de configuration et de chat | Uniquement en mode hors ligne | Le trafic que le Riot Client enverrait de toute façon, relayé localement |
 
 ## Statistiques anonymes (opt-in)

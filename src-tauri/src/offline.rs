@@ -1,9 +1,11 @@
-//! Mode hors ligne : proxy XMPP local inspiré de Deceive (molenzwiebel/deceive, MIT).
+//! Mode hors ligne : proxy XMPP local, sur le principe de Deceive (molenzwiebel/deceive).
 //!
 //! 1. Le Riot Client est lancé avec `--client-config-url=http://127.0.0.1:<port>` : notre proxy de
-//!    configuration relaie les requêtes vers les serveurs Riot et remplace l'hôte du chat par 127.0.0.1.
-//! 2. Le client se connecte alors à notre proxy de chat (TLS local), qui relaie vers le vrai serveur
-//!    et réécrit uniquement les présences diffusées (`<show>offline</show>`, statut de jeu retiré).
+//!    configuration relaie les requêtes vers les serveurs Riot et remplace l'hôte du chat par
+//!    `riftswitch.duckdns.org`, qui pointe vers 127.0.0.1.
+//! 2. Le client se connecte alors à notre proxy de chat. Le Riot Client refusant les certificats
+//!    maison, le proxy présente le certificat public de ce domaine (renouvelé chaque mois par le
+//!    workflow certificate.yml), puis relaie vers le vrai serveur en réécrivant les présences.
 //!
 //! Aucun message automatique n'est injecté dans le chat. Rien ne touche au processus du jeu.
 
@@ -17,6 +19,13 @@ use tokio::sync::mpsc;
 
 use crate::error::{AppError, AppResult};
 use crate::util::log;
+use rustls::pki_types::pem::PemObject;
+use rustls::pki_types::{CertificateDer, PrivateKeyDer};
+
+/// Pointe vers 127.0.0.1 ; certificat public publié sur la pré-version proxy-cert.
+const PROXY_DOMAIN: &str = "riftswitch.duckdns.org";
+const CERT_URL: &str =
+    "https://github.com/princzcsl/riftswitch/releases/download/proxy-cert/riftswitch-localhost";
 
 const CONFIG_UPSTREAM: &str = "https://clientconfig.rpg.riotgames.com";
 const PAS_URL: &str = "https://riot-geo.pas.si.riotgames.com/pas/v1/service/chat";
@@ -31,7 +40,8 @@ pub struct OfflineProxy {
 }
 
 impl OfflineProxy {
-    pub async fn start(offline: bool) -> AppResult<Arc<Self>> {
+    pub async fn start(offline: bool, cache_dir: &std::path::Path) -> AppResult<Arc<Self>> {
+        let (certs, key) = proxy_certificate(cache_dir).await?;
         let chat_listener = TcpListener::bind("127.0.0.1:0").await?;
         let chat_port = chat_listener.local_addr()?.port();
         let http = tiny_http::Server::http("127.0.0.1:0")
@@ -57,7 +67,7 @@ impl OfflineProxy {
         });
 
         // Proxy de chat.
-        let tls = server_tls()?;
+        let tls = server_tls(certs, key)?;
         let p = proxy.clone();
         tauri::async_runtime::spawn(async move {
             loop {
@@ -207,13 +217,13 @@ impl OfflineProxy {
             }
             let local: serde_json::Map<String, serde_json::Value> = aff
                 .keys()
-                .map(|k| (k.clone(), serde_json::Value::String("127.0.0.1".into())))
+                .map(|k| (k.clone(), serde_json::Value::String(PROXY_DOMAIN.into())))
                 .collect();
             obj.insert("chat.affinities".into(), serde_json::Value::Object(local));
         }
         if let Some(h) = host {
             *self.chat_target.lock().unwrap() = Some((h, port));
-            obj.insert("chat.host".into(), "127.0.0.1".into());
+            obj.insert("chat.host".into(), PROXY_DOMAIN.into());
             obj.insert("chat.port".into(), self.chat_port.into());
             obj.insert("chat.allow_bad_cert.enabled".into(), true.into());
             log("offline: configuration du chat redirigée vers le proxy local");
@@ -341,18 +351,61 @@ fn provider() -> Arc<rustls::crypto::CryptoProvider> {
         .clone()
 }
 
-fn server_tls() -> AppResult<Arc<rustls::ServerConfig>> {
-    let ck = rcgen::generate_simple_self_signed(vec!["127.0.0.1".into(), "localhost".into()])
-        .map_err(|e| AppError::new("offline_proxy", e.to_string()))?;
-    let cert = ck.cert.der().clone();
-    let key = rustls::pki_types::PrivateKeyDer::Pkcs8(rustls::pki_types::PrivatePkcs8KeyDer::from(
-        ck.key_pair.serialize_der(),
-    ));
+/// Certificat du domaine, en cache local rafraîchi chaque semaine. Le cache sert de secours
+/// si GitHub est injoignable.
+async fn proxy_certificate(
+    cache_dir: &std::path::Path,
+) -> AppResult<(Vec<CertificateDer<'static>>, PrivateKeyDer<'static>)> {
+    let dir = cache_dir.join("proxy-cert");
+    let (crt_path, key_path) = (dir.join("localhost.crt"), dir.join("localhost.key"));
+    let fresh = std::fs::metadata(&crt_path)
+        .and_then(|m| m.modified())
+        .ok()
+        .and_then(|t| t.elapsed().ok())
+        .is_some_and(|age| age < std::time::Duration::from_secs(7 * 86_400));
+    if !fresh {
+        match download_certificate().await {
+            Ok((crt, key)) => {
+                let _ = std::fs::create_dir_all(&dir);
+                let _ = std::fs::write(&crt_path, crt);
+                let _ = std::fs::write(&key_path, key);
+                log("offline: certificat du proxy téléchargé");
+            }
+            Err(e) => log(format!("offline: certificat non téléchargé ({}), cache utilisé", e.detail)),
+        }
+    }
+    let crt = std::fs::read(&crt_path).map_err(|_| AppError::code("offline_cert"))?;
+    let key = std::fs::read(&key_path).map_err(|_| AppError::code("offline_cert"))?;
+    let certs = CertificateDer::pem_slice_iter(&crt)
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| AppError::new("offline_cert", e.to_string()))?;
+    let key = PrivateKeyDer::from_pem_slice(&key).map_err(|e| AppError::new("offline_cert", e.to_string()))?;
+    Ok((certs, key))
+}
+
+async fn download_certificate() -> AppResult<(Vec<u8>, Vec<u8>)> {
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(15))
+        .build()?;
+    let get = |ext: &'static str| {
+        let client = client.clone();
+        async move {
+            let r = client.get(format!("{CERT_URL}.{ext}")).send().await?.error_for_status()?;
+            Ok::<_, AppError>(r.bytes().await?.to_vec())
+        }
+    };
+    Ok((get("crt").await?, get("key").await?))
+}
+
+fn server_tls(
+    certs: Vec<CertificateDer<'static>>,
+    key: PrivateKeyDer<'static>,
+) -> AppResult<Arc<rustls::ServerConfig>> {
     let cfg = rustls::ServerConfig::builder_with_provider(provider())
         .with_safe_default_protocol_versions()
         .map_err(|e| AppError::new("offline_proxy", e.to_string()))?
         .with_no_client_auth()
-        .with_single_cert(vec![cert], key)
+        .with_single_cert(certs, key)
         .map_err(|e| AppError::new("offline_proxy", e.to_string()))?;
     Ok(Arc::new(cfg))
 }

@@ -642,7 +642,8 @@
     "login_bad_credentials": "Riot rifiuta nome utente o password. Controllali nella scheda Sicurezza dell’account.",
     "login_rate_limited": "Troppi tentativi di accesso: Riot li blocca per ora. Attendi circa 15 minuti, poi riprova.",
     "login_email_username": "Il nome utente salvato è un’email: Riot accetta solo il nome utente (visibile nelle impostazioni del Riot Client). Correggilo nella scheda Sicurezza dell’account.",
-    "login_invalid_request": "Riot ha rifiutato la richiesta. Controlla che il nome utente sia quello Riot (non l’email), senza spazi in più."
+    "login_invalid_request": "Riot ha rifiutato la richiesta. Controlla che il nome utente sia quello Riot (non l’email), senza spazi in più.",
+    "offline_cert": "La modalità fantasma richiede un certificato che non è stato possibile scaricare. Controlla la connessione e riprova."
   },
   "mfa": {
     "title": "Codice 2FA",

@@ -642,7 +642,8 @@
     "login_bad_credentials": "Riot refuse l’identifiant ou le mot de passe. Vérifie-les dans l’onglet Sécurité du compte.",
     "login_rate_limited": "Trop de tentatives de connexion : Riot les bloque pour le moment. Attends environ 15 minutes, puis réessaie.",
     "login_email_username": "L’identifiant enregistré est une adresse email : Riot n’accepte que le nom d’utilisateur (visible dans les paramètres du Riot Client). Corrige-le dans l’onglet Sécurité du compte.",
-    "login_invalid_request": "Riot a refusé la requête. Vérifie que l’identifiant est ton nom d’utilisateur Riot (pas ton email), sans espaces en trop."
+    "login_invalid_request": "Riot a refusé la requête. Vérifie que l’identifiant est ton nom d’utilisateur Riot (pas ton email), sans espaces en trop.",
+    "offline_cert": "Le mode fantôme a besoin d’un certificat qui n’a pas pu être téléchargé. Vérifie ta connexion internet et réessaie."
   },
   "mfa": {
     "title": "Code A2F",
