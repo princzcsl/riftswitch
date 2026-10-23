@@ -49,10 +49,10 @@
       {/each}
     </div>
     <div class="mode">
-      <button class:on={!app.preferOffline} onclick={() => app.setPreferOffline(false)}>
+      <button class:on={!app.preferOffline} onclick={() => app.setGhost(false)}>
         <span class="dot" style="color:var(--success)"></span>{t("play.online")}
       </button>
-      <button class:on={app.preferOffline} onclick={() => app.setPreferOffline(true)}>
+      <button class:on={app.preferOffline} onclick={() => app.setGhost(true)}>
         <Icon name="ghost" size={14} />{t("play.offline")}
       </button>
     </div>

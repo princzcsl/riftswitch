@@ -23,20 +23,18 @@ pub fn loop_state(private_b64: &str) -> Option<String> {
 
 /// Le compte connecté est-il en partie VALORANT (`INGAME`) ?
 pub async fn valorant_in_match() -> bool {
-    let Some(api) = identity::riot_client_api() else {
-        return false;
-    };
-    let Some(puuid) = api
+    valorant_state().await.as_deref() == Some("INGAME")
+}
+
+/// État VALORANT du compte connecté : MENUS, PREGAME (sélection des agents) ou INGAME.
+pub async fn valorant_state() -> Option<String> {
+    let api = identity::riot_client_api()?;
+    let puuid = api
         .get("/chat/v1/session")
         .await
         .ok()
-        .and_then(|v| v.get("puuid").and_then(|p| p.as_str()).map(str::to_string))
-    else {
-        return false;
-    };
-    let Ok(v) = api.get("/chat/v4/presences").await else {
-        return false;
-    };
+        .and_then(|v| v.get("puuid").and_then(|p| p.as_str()).map(str::to_string))?;
+    let v = api.get("/chat/v4/presences").await.ok()?;
     v.get("presences")
         .and_then(|p| p.as_array())
         .into_iter()
@@ -44,7 +42,7 @@ pub async fn valorant_in_match() -> bool {
         .filter(|p| p.get("puuid").and_then(|x| x.as_str()) == Some(puuid.as_str()))
         .filter(|p| p.get("product").and_then(|x| x.as_str()) == Some("valorant"))
         .filter_map(|p| p.get("private").and_then(|x| x.as_str()).and_then(loop_state))
-        .any(|s| s == "INGAME")
+        .next()
 }
 
 /// Complète un instantané de processus avec l'état de partie VALORANT (requête seulement si le jeu tourne).

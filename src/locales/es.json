@@ -95,7 +95,11 @@
     "confirmRestartOffline": "El juego abierto se cerrará y se volverá a abrir en modo fantasma.",
     "confirmRestart": "El juego abierto se cerrará para cambiar a esta cuenta.",
     "confirmMatch": "Hay una partida en curso y se abandonará.",
-    "confirmOk": "Continuar"
+    "confirmOk": "Continuar",
+    "confirmOther": "Solo un juego a la vez: {game} se cerrará.",
+    "confirmRestartOnline": "El juego abierto se cerrará y se volverá a abrir en línea.",
+    "confirmSelect": "Estás en la selección de campeones o agentes: salir cuenta como una esquiva.",
+    "conflictClosed": "{game} se cerró: solo un juego a la vez, para que el modo fantasma funcione."
   },
   "hero": {
     "resume": "Continuar",
@@ -704,7 +708,8 @@
     "away": "Ausente",
     "mobile": "Móvil",
     "offline": "Desconectado",
-    "awayHint": "Se muestra ausente en VALORANT y League of Legends."
+    "awayHint": "Se muestra ausente en VALORANT y League of Legends.",
+    "disable": "Desactivar el modo desconectado"
   },
   "exit": {
     "title": "Cerrar RiftSwitch",

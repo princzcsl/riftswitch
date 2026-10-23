@@ -90,6 +90,39 @@ pub fn snapshot() -> ProcSnapshot {
     s
 }
 
+/// Jeu auquel appartient un processus : "lol" (client ou partie) ou "val".
+fn product_of(n: &str) -> Option<&'static str> {
+    if LOL_CLIENT.contains(&n) || LOL_GAME.contains(&n) {
+        Some("lol")
+    } else if VAL_GAME.contains(&n) {
+        Some("val")
+    } else {
+        None
+    }
+}
+
+/// Ferme les processus d'un jeu ("lol" ou "val"), sans toucher au Riot Client.
+pub fn kill_product(product: &str) -> usize {
+    refreshed()
+        .processes()
+        .values()
+        .filter(|p| product_of(&normalize(p.name())) == Some(product) && p.kill())
+        .count()
+}
+
+/// LoL et VALORANT ouverts en même temps : renvoie le dernier lancé.
+pub fn newest_product() -> Option<&'static str> {
+    let (mut lol, mut val) = (0u64, 0u64);
+    for p in refreshed().processes().values() {
+        match product_of(&normalize(p.name())) {
+            Some("lol") => lol = lol.max(p.start_time()),
+            Some("val") => val = val.max(p.start_time()),
+            _ => {}
+        }
+    }
+    (lol > 0 && val > 0).then_some(if val >= lol { "val" } else { "lol" })
+}
+
 /// Tue tous les processus Riot restants (après une demande d'arrêt propre).
 pub fn kill_all() -> usize {
     let sys = refreshed();

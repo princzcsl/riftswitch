@@ -95,7 +95,11 @@
     "confirmRestartOffline": "The open game will be closed, then relaunched in ghost mode.",
     "confirmRestart": "The open game will be closed to switch to this account.",
     "confirmMatch": "A match is in progress and will be abandoned.",
-    "confirmOk": "Continue"
+    "confirmOk": "Continue",
+    "confirmOther": "Only one game at a time: {game} will be closed.",
+    "confirmRestartOnline": "The open game will be closed, then relaunched online.",
+    "confirmSelect": "You are in champion or agent select: leaving counts as a dodge.",
+    "conflictClosed": "{game} was closed: only one game at a time, to keep ghost mode working."
   },
   "hero": {
     "resume": "Pick up where you left off",
@@ -704,7 +708,8 @@
     "away": "Away",
     "mobile": "Mobile",
     "offline": "Offline",
-    "awayHint": "Shown as away on VALORANT and League of Legends."
+    "awayHint": "Shown as away on VALORANT and League of Legends.",
+    "disable": "Turn off ghost mode"
   },
   "exit": {
     "title": "Quit RiftSwitch",

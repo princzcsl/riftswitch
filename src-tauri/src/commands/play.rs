@@ -178,13 +178,14 @@ pub async fn play(
     game: String,
     offline: bool,
     notice: Option<Notice>,
+    force: Option<bool>,
 ) -> AppResult<PlayOutcome> {
     state.touch();
     let game = normalize_game(&game)?;
     let _guard = state.busy.try_lock().map_err(|_| AppError::code("busy"))?;
     state.cancel_login.store(false, Ordering::Relaxed);
     set_busy(&app, &state, Some("switching"));
-    let result = do_play(&app, &state, &account_id, game, offline).await;
+    let result = do_play(&app, &state, &account_id, game, offline, force.unwrap_or(false)).await;
     set_busy(&app, &state, None);
     if result.is_ok() && offline {
         if let Some(n) = notice {
@@ -209,6 +210,7 @@ async fn do_play(
     account_id: &str,
     game: &'static str,
     offline: bool,
+    force: bool,
 ) -> AppResult<PlayOutcome> {
     let settings = state.settings();
     let exe = paths::riot_client_services(&settings.riot_client_path)
@@ -238,15 +240,28 @@ async fn do_play(
         .as_ref()
         .is_some_and(|i| target.matches_identity(i.puuid.as_deref(), &i.game_name, &i.tag_line));
     let via_proxy = state.client_via_proxy.load(Ordering::Relaxed) && state.proxy().is_some();
-    let restart = !procs.riot_client || !target_active || (offline && !via_proxy);
+    // Relance aussi pour repasser en ligne : sinon le client resterait derrière le proxy.
+    let restart = !procs.riot_client || !target_active || offline != via_proxy;
     log(format!(
         "play: jeu={game} hors_ligne={offline} client={} authentifié={} cible_active={target_active} redémarrage={restart}",
         procs.riot_client,
         ident.is_some()
     ));
 
+    let blocked = procs.game_in_progress() && settings.block_switch_in_game && !force;
+    // Un seul jeu à la fois : l'autre jeu est fermé (la relance, elle, ferme tout).
+    let other = other_product(game, &procs);
+    if let (Some(product), false) = (other, restart) {
+        if blocked {
+            return Err(AppError::code("game_in_progress"));
+        }
+        log(format!("play: fermeture de {product} (un seul jeu à la fois)"));
+        process::kill_product(product);
+        tokio::time::sleep(Duration::from_millis(1500)).await;
+    }
+
     if restart {
-        if procs.game_in_progress() && settings.block_switch_in_game {
+        if blocked {
             return Err(AppError::code("game_in_progress"));
         }
         emit_step(app, "prepare");
@@ -688,7 +703,7 @@ pub fn play_external(app: AppHandle, account_id: String, game: String) {
         };
         state.cancel_login.store(false, Ordering::Relaxed);
         set_busy(&app, &state, Some("switching"));
-        let r = do_play(&app, &state, &account_id, game, false).await;
+        let r = do_play(&app, &state, &account_id, game, false, false).await;
         set_busy(&app, &state, None);
         if let Err(e) = r {
             log(format!("play (externe): échec {}", e.code));
@@ -705,6 +720,34 @@ pub struct PlayCheck {
     /// Client LoL, partie LoL ou VALORANT ouvert.
     pub game_open: bool,
     pub in_match: bool,
+    /// Sélection des champions ou des agents : partir compte comme une esquive.
+    pub in_select: bool,
+    /// L'autre jeu est ouvert et sera fermé (un seul jeu à la fois).
+    pub other_open: bool,
+}
+
+/// Jeu à fermer avant d'en lancer un autre : "lol" pour VALORANT, "val" pour LoL ou TFT.
+fn other_product(game: &str, procs: &process::ProcSnapshot) -> Option<&'static str> {
+    if game == "val" {
+        (procs.lol_client || procs.lol_game).then_some("lol")
+    } else {
+        procs.val_game.then_some("val")
+    }
+}
+
+/// Sélection des champions (LoL) ou des agents (VALORANT) en cours.
+async fn in_selection(lol_path: &str, procs: &process::ProcSnapshot) -> bool {
+    if procs.val_game && presence::valorant_state().await.as_deref() == Some("PREGAME") {
+        return true;
+    }
+    if procs.lol_client {
+        if let Some(api) = lcu::api(lol_path) {
+            if let Ok(v) = api.get("/lol-gameflow/v1/gameflow-phase").await {
+                return v.as_str() == Some("ChampSelect");
+            }
+        }
+    }
+    false
 }
 
 /// Avant un lancement : le client va-t-il être relancé alors qu'un jeu est ouvert ?
@@ -712,8 +755,10 @@ pub struct PlayCheck {
 pub async fn play_check(
     state: State<'_, AppState>,
     account_id: String,
+    game: String,
     offline: bool,
 ) -> AppResult<PlayCheck> {
+    let game = normalize_game(&game)?;
     let target: Account = state.with_vault(|v| {
         let idx = v.index_of(&account_id)?;
         Ok(v.data.accounts[idx].clone())
@@ -729,9 +774,11 @@ pub async fn play_check(
         .is_some_and(|i| target.matches_identity(i.puuid.as_deref(), &i.game_name, &i.tag_line));
     let via_proxy = state.client_via_proxy.load(Ordering::Relaxed) && state.proxy().is_some();
     Ok(PlayCheck {
-        restart: !procs.riot_client || !target_active || (offline && !via_proxy),
+        restart: !procs.riot_client || !target_active || offline != via_proxy,
         game_open: procs.lol_client || procs.lol_game || procs.val_game,
         in_match: procs.game_in_progress(),
+        in_select: in_selection(&state.settings().lol_path, &procs).await,
+        other_open: other_product(game, &procs).is_some(),
     })
 }
 

@@ -100,6 +100,17 @@ fn build_menu(app: &AppHandle) -> tauri::Result<Menu<Wry>> {
     )?)?;
     menu.append(&PredefinedMenuItem::separator(app)?)?;
 
+    // Statut affiché aux amis, quand le jeu passe par le mode fantôme.
+    if let Some(current) = state.status.lock().unwrap().chat_status.clone() {
+        let items = ["online", "away", "mobile", "offline"]
+            .iter()
+            .map(|s| CheckMenuItem::with_id(app, format!("status:{s}"), tr(&lang, s), true, current == *s, None::<&str>))
+            .collect::<tauri::Result<Vec<_>>>()?;
+        let refs: Vec<&dyn tauri::menu::IsMenuItem<Wry>> = items.iter().map(|i| i as &dyn tauri::menu::IsMenuItem<Wry>).collect();
+        menu.append(&Submenu::with_items(app, tr(&lang, "status"), true, &refs)?)?;
+        menu.append(&PredefinedMenuItem::separator(app)?)?;
+    }
+
     // Jusqu'à 3 comptes : favoris d'abord, puis les plus récemment utilisés.
     let active = state.status.lock().unwrap().active_account_id.clone();
     let accounts = state
@@ -145,17 +156,6 @@ fn build_menu(app: &AppHandle) -> tauri::Result<Menu<Wry>> {
                 menu.append(&sub)?;
             }
         }
-    }
-
-    // Statut affiché aux amis, quand le jeu passe par le mode fantôme.
-    if let Some(current) = state.status.lock().unwrap().chat_status.clone() {
-        menu.append(&PredefinedMenuItem::separator(app)?)?;
-        let items = ["online", "away", "mobile", "offline"]
-            .iter()
-            .map(|s| CheckMenuItem::with_id(app, format!("status:{s}"), tr(&lang, s), true, current == *s, None::<&str>))
-            .collect::<tauri::Result<Vec<_>>>()?;
-        let refs: Vec<&dyn tauri::menu::IsMenuItem<Wry>> = items.iter().map(|i| i as &dyn tauri::menu::IsMenuItem<Wry>).collect();
-        menu.append(&Submenu::with_items(app, tr(&lang, "status"), true, &refs)?)?;
     }
 
     menu.append(&PredefinedMenuItem::separator(app)?)?;

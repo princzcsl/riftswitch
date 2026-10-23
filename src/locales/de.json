@@ -95,7 +95,11 @@
     "confirmRestartOffline": "Das geöffnete Spiel wird geschlossen und im Geistermodus neu gestartet.",
     "confirmRestart": "Das geöffnete Spiel wird geschlossen, um zu diesem Konto zu wechseln.",
     "confirmMatch": "Ein Match läuft und wird abgebrochen.",
-    "confirmOk": "Weiter"
+    "confirmOk": "Weiter",
+    "confirmOther": "Nur ein Spiel gleichzeitig: {game} wird geschlossen.",
+    "confirmRestartOnline": "Das geöffnete Spiel wird geschlossen und online neu gestartet.",
+    "confirmSelect": "Du bist in der Champion- oder Agentenauswahl: Verlassen zählt als Dodge.",
+    "conflictClosed": "{game} wurde geschlossen: nur ein Spiel gleichzeitig, damit der Geistermodus funktioniert."
   },
   "hero": {
     "resume": "Weiterspielen",
@@ -704,7 +708,8 @@
     "away": "Abwesend",
     "mobile": "Mobil",
     "offline": "Offline",
-    "awayHint": "Wird in VALORANT und League of Legends als abwesend angezeigt."
+    "awayHint": "Wird in VALORANT und League of Legends als abwesend angezeigt.",
+    "disable": "Offline-Modus ausschalten"
   },
   "exit": {
     "title": "RiftSwitch beenden",

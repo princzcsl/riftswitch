@@ -149,6 +149,11 @@ pub fn run() {
     app.run(|app, event| {
         if let RunEvent::ExitRequested { api, code, .. } = event {
             let state = app.state::<AppState>();
+            // Fermeture de la mini-fenêtre de confirmation : ce n'est pas une demande de sortie.
+            if code.is_none() && CLOSING_CONFIRM.swap(false, Ordering::Relaxed) {
+                api.prevent_exit();
+                return;
+            }
             // Fenêtre fermée : on reste dans la zone de notification si l'option est active.
             if code.is_none() && state.settings().close_to_tray {
                 api.prevent_exit();
@@ -172,25 +177,55 @@ pub fn run() {
 }
 
 static EXITING: AtomicBool = AtomicBool::new(false);
+static CLOSING_CONFIRM: AtomicBool = AtomicBool::new(false);
 
-/// Confirmation dans la fenêtre de l'app (réaffichée si besoin), au style de RiftSwitch.
+/// Petite fenêtre de confirmation, seule à l'écran (la fenêtre principale reste cachée).
+fn open_confirm_window(app: &tauri::AppHandle) {
+    if let Some(w) = app.get_webview_window("confirm") {
+        let _ = w.set_focus();
+        return;
+    }
+    let _ = tauri::WebviewWindowBuilder::new(
+        app,
+        "confirm",
+        tauri::WebviewUrl::App("index.html?view=confirm".into()),
+    )
+    .title("RiftSwitch")
+    .inner_size(440.0, 220.0)
+    .resizable(false)
+    .decorations(false)
+    .transparent(true)
+    .shadow(false)
+    .always_on_top(true)
+    .center()
+    .focused(true)
+    .build();
+}
+
+fn close_confirm_window(app: &tauri::AppHandle) {
+    if let Some(w) = app.get_webview_window("confirm") {
+        CLOSING_CONFIRM.store(true, Ordering::Relaxed);
+        let _ = w.destroy();
+    }
+}
+
+/// Confirmation dans une mini-fenêtre au style de RiftSwitch.
 async fn confirm_exit(app: tauri::AppHandle, ghost: bool, game_open: bool) {
-    use tauri::Emitter;
     if game_open {
         let in_match = riot::presence::with_match_state(riot::process::snapshot())
             .await
             .game_in_progress();
         let payload = serde_json::json!({ "ghost": ghost, "inMatch": in_match });
         let (tx, rx) = tokio::sync::oneshot::channel();
-        *app.state::<AppState>().pending_exit.lock().unwrap() = Some((payload.clone(), tx));
-        tray::show_main(&app);
-        let _ = app.emit("exit-confirm", payload);
+        *app.state::<AppState>().pending_exit.lock().unwrap() = Some((payload, tx));
+        open_confirm_window(&app);
         let ok = tokio::time::timeout(std::time::Duration::from_secs(300), rx)
             .await
             .ok()
             .and_then(Result::ok)
             .unwrap_or(false);
         app.state::<AppState>().pending_exit.lock().unwrap().take();
+        close_confirm_window(&app);
         if !ok {
             EXITING.store(false, Ordering::Relaxed);
             return;

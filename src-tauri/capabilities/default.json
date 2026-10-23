@@ -3,7 +3,8 @@
   "identifier": "default",
   "description": "Permissions de la fenêtre principale",
   "windows": [
-    "main"
+    "main",
+    "confirm"
   ],
   "permissions": [
     "core:default",

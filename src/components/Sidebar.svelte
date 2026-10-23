@@ -48,7 +48,7 @@
       class="nav"
       class:ghost={app.preferOffline}
       class:off={!app.preferOffline}
-      onclick={() => app.setPreferOffline(!app.preferOffline)}
+      onclick={() => app.setGhost(!app.preferOffline)}
     >
       <span class="ic"><Icon name="ghost" size={20} /></span>
       <span class="lbl">{app.preferOffline ? t("offline.short") : t("offline.disabled")}</span>

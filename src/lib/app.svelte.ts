@@ -62,12 +62,6 @@ class AppStore {
     if (account) this.play(account, req[1] as Game, this.preferOffline);
   }
 
-  async askExit(p: { ghost: boolean; inMatch: boolean }) {
-    const text = p.ghost ? t("exit.ghostText") + (p.inMatch ? " " + t("exit.abandon") : "") : t("exit.openText");
-    const ok = await this.confirm({ title: t("exit.title"), text, ok: t(p.ghost ? "exit.quitClose" : "exit.quit"), danger: p.ghost });
-    await api.answerExit(ok);
-  }
-
   answerConfirm(ok: boolean) {
     const resolve = this.#confirmResolve;
     this.#confirmResolve = null;
@@ -111,13 +105,9 @@ class AppStore {
     await listen<string>("session-expired", (e) => this.toast("info", t("play.sessionExpired", { name: e.payload }), 12000));
     await listen<{ methods: string[]; email: string | null }>("login-mfa", (e) => (this.mfa = e.payload));
     await listen<string>("play-step", (e) => (this.playSteps = [...this.playSteps, e.payload]));
-    await listen<{ ghost: boolean; inMatch: boolean }>("exit-confirm", (e) => this.askExit(e.payload));
     await listen("tray-play", () => this.trayPlay());
+    await listen<string>("game-conflict", (e) => this.toast("info", t("play.conflictClosed", { game: e.payload === "val" ? "VALORANT" : "League of Legends" }), 8000));
     this.trayPlay();
-    // Fenêtre recréée pour une fermeture en attente : la confirmation est reprise ici.
-    api.exitPrompt()
-      .then((p) => p && this.askExit(p))
-      .catch(() => {});
     await listen("play-error", (e) => this.toast("error", errorText(e.payload)));
     this.status = await api.riotStatus();
     if (this.unlocked) await this.loadAll();
@@ -203,21 +193,30 @@ class AppStore {
   }
 
   /** Lance un jeu sur un compte (bascule si nécessaire). */
-  async play(account: Account, game: Game, offline: boolean) {
+  /**
+   * Lance un jeu. Confirmation quand un jeu ouvert va être fermé : autre jeu (un seul à la fois),
+   * relance en mode fantôme, partie en cours ou sélection des champions/agents (esquive).
+   * `confirmed` : déjà confirmé par l'appelant (activation du mode fantôme).
+   */
+  async play(account: Account, game: Game, offline: boolean, confirmed = false) {
     if (this.launching) return;
-    // Le jeu ouvert va être fermé : on demande seulement en mode fantôme ou en pleine partie.
-    const check = await api.playCheck(account.id, offline).catch(() => null);
-    if (check?.restart && check.gameOpen && (offline || check.inMatch)) {
-      const text = t(offline ? "play.confirmRestartOffline" : "play.confirmRestart") + (check.inMatch ? " " + t("play.confirmMatch") : "");
-      const ok = await this.confirm({ title: t("play.confirmTitle"), text, ok: t("play.confirmOk"), danger: true });
-      if (!ok) return;
+    let force = confirmed;
+    if (!confirmed) {
+      const c = await api.playCheck(account.id, game, offline).catch(() => null);
+      if (c && (c.otherOpen || (c.restart && c.gameOpen && (offline || c.inMatch || c.inSelect)))) {
+        const other = game === "val" ? "League of Legends" : "VALORANT";
+        const base = c.otherOpen && !c.restart ? t("play.confirmOther", { game: other }) : t(offline ? "play.confirmRestartOffline" : "play.confirmRestart");
+        const ok = await this.confirm({ title: t("play.confirmTitle"), text: base + this.penaltyText(c), ok: t("play.confirmOk"), danger: true });
+        if (!ok) return;
+        force = true;
+      }
     }
     this.launching = account.id;
     this.playSteps = [];
     try {
       const notice = offline ? { title: t("offline.notifyTitle"), body: t("offline.notifyBody", { game: t(`games.${game}`) }) } : null;
-      const r = await api.play(account.id, game, offline, notice);
-      this.toast("success", r.switched ? t("play.switched", { name: account.label }) : t("play.launched", { game: t(`games.${game}`) }));
+      const r = await api.play(account.id, game, offline, notice, force);
+      this.toast("success", r.switched ? t("play.switched", { name: account.label || account.gameName }) : t("play.launched", { game: t(`games.${game}`) }));
     } catch (e) {
       this.toast("error", errorText(e), 6000);
     } finally {
@@ -225,6 +224,40 @@ class AppStore {
       this.playSteps = [];
       this.refreshAccounts();
     }
+  }
+
+  penaltyText(c: { inMatch: boolean; inSelect: boolean }): string {
+    if (c.inMatch) return " " + t("play.confirmMatch");
+    if (c.inSelect) return " " + t("play.confirmSelect");
+    return "";
+  }
+
+  /** Jeu ouvert (pour le relancer), ou null s'il n'y en a pas. */
+  openGame(): Game | null {
+    const p = this.status.procs;
+    if (p.valGame) return "val";
+    if (p.lolGame || p.lolClient) return this.activeAccount?.lastGame === "tft" ? "tft" : "lol";
+    return null;
+  }
+
+  /**
+   * Active ou désactive le mode fantôme. Si un jeu est ouvert, il doit être relancé (à travers le
+   * proxy, ou sans) : on le confirme puis on relance tout de suite sur le compte connecté.
+   */
+  async setGhost(on: boolean) {
+    const game = this.openGame();
+    const account = this.activeAccount;
+    const running = on ? !this.status.proxyRunning : this.status.proxyRunning;
+    if (!game || !account || !running) {
+      this.setPreferOffline(on);
+      return;
+    }
+    const c = await api.playCheck(account.id, game, on).catch(() => null);
+    const text = t(on ? "play.confirmRestartOffline" : "play.confirmRestartOnline") + (c ? this.penaltyText(c) : "");
+    const ok = await this.confirm({ title: t("play.confirmTitle"), text, ok: t("play.confirmOk"), danger: true });
+    if (!ok) return;
+    this.setPreferOffline(on);
+    await this.play(account, game, on, true);
   }
 
   get activeAccount(): Account | undefined {

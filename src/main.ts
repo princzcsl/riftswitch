@@ -17,6 +17,13 @@ async function start() {
     const { installMock } = await import("./lib/mock");
     installMock();
   }
+  // Mini-fenêtre de confirmation (fermeture de l'app) : seulement la carte, sans l'interface.
+  if (new URLSearchParams(location.search).get("view") === "confirm") {
+    document.documentElement.classList.add("confirm-window");
+    const { default: ConfirmWindow } = await import("./ConfirmWindow.svelte");
+    mount(ConfirmWindow, { target: document.getElementById("app")! });
+    return;
+  }
   mount(App, { target: document.getElementById("app")! });
 }
 

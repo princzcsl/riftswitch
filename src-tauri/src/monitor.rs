@@ -82,6 +82,16 @@ pub fn spawn(app: AppHandle) {
             // VALORANT tourne dès le menu : l'état de présence dit s'il y a vraiment une partie.
             let procs = presence::with_match_state(procs).await;
 
+            // Un seul jeu à la fois, même lancé à la main : le dernier ouvert est fermé.
+            // Jamais pendant une bascule de l'app, qui gère elle-même la fermeture.
+            if (procs.lol_client || procs.lol_game) && procs.val_game && state.busy.try_lock().is_ok() {
+                if let Some(newest) = process::newest_product() {
+                    let n = process::kill_product(newest);
+                    log(format!("monitor: {newest} fermé, un seul jeu à la fois ({n} processus)"));
+                    let _ = app.emit("game-conflict", newest);
+                }
+            }
+
             // ── Compte connecté au Riot Client ──
             if procs.riot_client {
                 let stale = ident_checked.elapsed()

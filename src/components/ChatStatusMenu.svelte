@@ -33,9 +33,28 @@
       {#if app.status.chatStatus === s}<Icon name="check" size={14} />{/if}
     </button>
   {/each}
+  <div class="sep"></div>
+  <button
+    class="menu-item muted-item"
+    onclick={() => {
+      open = false;
+      app.setGhost(false);
+    }}
+  >
+    <Icon name="ghost" size={14} />
+    <span class="grow">{t("chatStatus.disable")}</span>
+  </button>
 </ContextMenu>
 
 <style>
+  .sep {
+    height: 1px;
+    margin: 6px 4px;
+    background: var(--border);
+  }
+  .muted-item {
+    color: var(--text-2) !important;
+  }
   :global(.status-dot) {
     width: 9px;
     height: 9px;

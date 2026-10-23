@@ -40,13 +40,13 @@ export const api = {
   deleteFolder: (id: string) => invoke<void>("delete_folder", { id }),
   reorderFolders: (ids: string[]) => invoke<void>("reorder_folders", { ids }),
 
-  play: (accountId: string, game: Game, offline: boolean, notice: { title: string; body: string } | null) =>
-    invoke<{ switched: boolean }>("play", { accountId, game, offline, notice }),
+  play: (accountId: string, game: Game, offline: boolean, notice: { title: string; body: string } | null, force = false) =>
+    invoke<{ switched: boolean }>("play", { accountId, game, offline, notice, force }),
   exitPrompt: () => invoke<{ ghost: boolean; inMatch: boolean } | null>("exit_prompt"),
   answerExit: (ok: boolean) => invoke<void>("answer_exit", { ok }),
   takeTrayPlay: () => invoke<[string, string] | null>("take_tray_play"),
-  playCheck: (accountId: string, offline: boolean) =>
-    invoke<{ restart: boolean; gameOpen: boolean; inMatch: boolean } | null>("play_check", { accountId, offline }),
+  playCheck: (accountId: string, game: Game, offline: boolean) =>
+    invoke<{ restart: boolean; gameOpen: boolean; inMatch: boolean; inSelect: boolean; otherOpen: boolean } | null>("play_check", { accountId, game, offline }),
   setOffline: (offline: boolean) => invoke<boolean>("set_offline", { offline }),
   setChatStatus: (status: string) => invoke<boolean>("set_chat_status", { status }),
   riotStatus: () => invoke<RiotStatus>("riot_status"),
