@@ -64,7 +64,7 @@
     "active": "Apareces desconectado para tus amigos",
     "goOffline": "Aparecer desconectado",
     "goOnline": "Aparecer en línea",
-    "notifyTitle": "RiftSwitch · modo desconectado",
+    "notifyTitle": "RiftSwitch · Modo desconectado",
     "notifyBody": "{game} se está iniciando. Apareces desconectado para tus amigos."
   },
   "play": {
@@ -694,6 +694,6 @@
     "away": "Ausente",
     "mobile": "Móvil",
     "offline": "Desconectado",
-    "awayHint": "Se muestra ausente en VALORANT y ocupado en League of Legends."
+    "awayHint": "Se muestra ausente en VALORANT y League of Legends."
   }
 }

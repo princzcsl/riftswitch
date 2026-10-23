@@ -64,7 +64,7 @@
     "active": "You appear offline to your friends",
     "goOffline": "Appear offline",
     "goOnline": "Appear online",
-    "notifyTitle": "RiftSwitch · offline mode",
+    "notifyTitle": "RiftSwitch · Offline mode",
     "notifyBody": "{game} is starting. You appear offline to your friends."
   },
   "play": {
@@ -694,6 +694,6 @@
     "away": "Away",
     "mobile": "Mobile",
     "offline": "Offline",
-    "awayHint": "Shown as away on VALORANT and busy on League of Legends."
+    "awayHint": "Shown as away on VALORANT and League of Legends."
   }
 }
