@@ -524,6 +524,16 @@ pub fn rewrite_presences(text: &str, status: ChatStatus) -> String {
         Regex::new(r"(?s)<(league_of_legends|valorant|bacon|lion|riot_client)>.*?</(league_of_legends|valorant|bacon|lion|riot_client)>").unwrap()
     });
     let st = ST.get_or_init(|| Regex::new(r"(?s)<st>.*?</st>").unwrap());
+    // Mobile (comme Deceive) : on garde le bloc LoL, qui porte le statut mobile, sans le détail
+    // de la partie ; les autres jeux sont retirés.
+    static OTHERS: OnceLock<Regex> = OnceLock::new();
+    static LOL_DETAIL: OnceLock<Regex> = OnceLock::new();
+    let others = OTHERS.get_or_init(|| {
+        Regex::new(r"(?s)<(valorant|bacon|lion|riot_client|keystone|teamfighttactics)>.*?</(valorant|bacon|lion|riot_client|keystone|teamfighttactics)>").unwrap()
+    });
+    let lol_detail = LOL_DETAIL.get_or_init(|| Regex::new(r"(?s)<p>.*?</p>|<m>.*?</m>").unwrap());
+    static LOL: OnceLock<Regex> = OnceLock::new();
+    let lol = LOL.get_or_init(|| Regex::new(r"(?s)<league_of_legends>.*?</league_of_legends>").unwrap());
 
     presence_re()
         .replace_all(text, |c: &regex::Captures| {
@@ -538,7 +548,13 @@ pub fn rewrite_presences(text: &str, status: ChatStatus) -> String {
             } else {
                 format!("{tag}{body}")
             };
-            if hide_game {
+            if status == ChatStatus::Mobile {
+                body = status_re.replace_all(&body, "").to_string();
+                body = others.replace_all(&body, "").to_string();
+                body = lol
+                    .replace_all(&body, |m: &regex::Captures| lol_detail.replace_all(&m[0], "").to_string())
+                    .to_string();
+            } else if hide_game {
                 body = status_re.replace_all(&body, "").to_string();
                 body = games.replace_all(&body, "").to_string();
             }
@@ -571,7 +587,9 @@ mod tests {
         assert!(away.contains("<league_of_legends><st>away</st>"));
         assert!(away.contains("<valorant><st>away</st></valorant>"));
         let mobile = rewrite_presences(input, ChatStatus::Mobile);
-        assert!(mobile.contains("<show>mobile</show>") && !mobile.contains("league_of_legends"));
+        assert!(mobile.contains("<show>mobile</show>"));
+        assert!(mobile.contains("<league_of_legends><st>mobile</st></league_of_legends>"));
+        assert!(!mobile.contains("<valorant>"));
         assert_eq!(rewrite_presences(input, ChatStatus::Online), input);
     }
 
