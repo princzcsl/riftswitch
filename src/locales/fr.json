@@ -691,8 +691,8 @@
     "title": "Statut affiché à tes amis",
     "online": "Connecté",
     "away": "Absent",
-    "busy": "Occupé",
     "mobile": "Mobile",
-    "offline": "Hors ligne"
+    "offline": "Hors ligne",
+    "awayHint": "Affiché absent sur VALORANT et occupé sur League of Legends."
   }
 }

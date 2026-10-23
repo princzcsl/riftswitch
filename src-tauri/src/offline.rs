@@ -403,12 +403,12 @@ fn broadcast_presence(text: &str) -> Option<String> {
 
 /// Réécrit les présences diffusées (sans destinataire) pour apparaître hors ligne.
 /// Les présences adressées (salons de partie, lobby) restent intactes pour que le jeu fonctionne.
-/// Statut affiché aux amis. Absent et occupé gardent le jeu en cours visible.
+/// Statut affiché aux amis. Absent garde le jeu en cours visible : « absent » pour VALORANT
+/// et le Riot Client, « occupé » pour League of Legends (qui n'a pas d'absent choisi).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ChatStatus {
     Online = 0,
     Away = 1,
-    Busy = 2,
     Mobile = 3,
     Offline = 4,
 }
@@ -424,7 +424,6 @@ impl ChatStatus {
     fn from_u8(v: u8) -> Self {
         match v {
             1 => Self::Away,
-            2 => Self::Busy,
             3 => Self::Mobile,
             4 => Self::Offline,
             _ => Self::Online,
@@ -433,8 +432,7 @@ impl ChatStatus {
     pub fn parse(s: &str) -> Option<Self> {
         Some(match s {
             "online" => Self::Online,
-            "away" => Self::Away,
-            "busy" => Self::Busy,
+            "away" | "busy" => Self::Away,
             "mobile" => Self::Mobile,
             "offline" => Self::Offline,
             _ => return None,
@@ -444,7 +442,6 @@ impl ChatStatus {
         match self {
             Self::Online => "online",
             Self::Away => "away",
-            Self::Busy => "busy",
             Self::Mobile => "mobile",
             Self::Offline => "offline",
         }
@@ -454,7 +451,6 @@ impl ChatStatus {
         match self {
             Self::Online => "chat",
             Self::Away => "away",
-            Self::Busy => "dnd",
             Self::Mobile => "mobile",
             Self::Offline => "offline",
         }
@@ -476,6 +472,8 @@ pub fn rewrite_presences(text: &str, status: ChatStatus) -> String {
         Regex::new(r"(?s)<(league_of_legends|valorant|bacon|lion|riot_client)>.*?</(league_of_legends|valorant|bacon|lion|riot_client)>").unwrap()
     });
     let st = ST.get_or_init(|| Regex::new(r"(?s)<st>.*?</st>").unwrap());
+    static LOL: OnceLock<Regex> = OnceLock::new();
+    let lol = LOL.get_or_init(|| Regex::new(r"(?s)<league_of_legends>.*?</league_of_legends>").unwrap());
 
     presence_re()
         .replace_all(text, |c: &regex::Captures| {
@@ -497,6 +495,11 @@ pub fn rewrite_presences(text: &str, status: ChatStatus) -> String {
             body = st
                 .replace_all(&body, format!("<st>{}</st>", status.show()).as_str())
                 .to_string();
+            if status == ChatStatus::Away {
+                body = lol
+                    .replace_all(&body, |m: &regex::Captures| st.replace_all(&m[0], "<st>dnd</st>").to_string())
+                    .to_string();
+            }
             format!("<presence{attrs}>{body}</presence>")
         })
         .to_string()
@@ -516,11 +519,12 @@ mod tests {
     }
 
     #[test]
-    fn away_and_busy_keep_the_game() {
-        let input = r#"<presence id="1"><show>chat</show><games><league_of_legends><st>chat</st><p>x</p></league_of_legends></games></presence>"#;
-        let busy = rewrite_presences(input, ChatStatus::Busy);
-        assert!(busy.contains("<show>dnd</show>") && busy.contains("<st>dnd</st>"));
-        assert!(busy.contains("league_of_legends"));
+    fn away_keeps_the_game_and_is_busy_on_league() {
+        let input = r#"<presence id="1"><show>chat</show><games><league_of_legends><st>chat</st><p>x</p></league_of_legends><valorant><st>chat</st></valorant></games></presence>"#;
+        let away = rewrite_presences(input, ChatStatus::Away);
+        assert!(away.contains("<show>away</show>"));
+        assert!(away.contains("<league_of_legends><st>dnd</st>"));
+        assert!(away.contains("<valorant><st>away</st></valorant>"));
         let mobile = rewrite_presences(input, ChatStatus::Mobile);
         assert!(mobile.contains("<show>mobile</show>") && !mobile.contains("league_of_legends"));
         assert_eq!(rewrite_presences(input, ChatStatus::Online), input);

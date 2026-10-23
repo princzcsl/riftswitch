@@ -691,8 +691,8 @@
     "title": "Estado visible para tus amigos",
     "online": "Conectado",
     "away": "Ausente",
-    "busy": "Ocupado",
     "mobile": "Móvil",
-    "offline": "Desconectado"
+    "offline": "Desconectado",
+    "awayHint": "Se muestra ausente en VALORANT y ocupado en League of Legends."
   }
 }

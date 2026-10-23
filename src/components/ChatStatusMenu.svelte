@@ -8,7 +8,7 @@
 
   let { open = $bindable(false), x = 0, y = 0 }: { open?: boolean; x?: number; y?: number } = $props();
 
-  const STATUSES = ["online", "away", "busy", "mobile", "offline"] as const;
+  const STATUSES = ["online", "away", "mobile", "offline"] as const;
 
   async function pick(s: (typeof STATUSES)[number]) {
     open = false;
@@ -22,7 +22,7 @@
 
 <ContextMenu bind:open {x} {y}>
   {#each STATUSES as s}
-    <button class="menu-item" onclick={() => pick(s)}>
+    <button class="menu-item" onclick={() => pick(s)} title={s === "away" ? t("chatStatus.awayHint") : undefined}>
       <span class="status-dot {s}"></span>
       <span class="grow">{t(`chatStatus.${s}`)}</span>
       {#if app.status.chatStatus === s}<Icon name="check" size={14} />{/if}
@@ -42,9 +42,6 @@
   }
   :global(.status-dot.away) {
     background: var(--warning);
-  }
-  :global(.status-dot.busy) {
-    background: var(--danger);
   }
   :global(.status-dot.mobile) {
     background: var(--accent-2);

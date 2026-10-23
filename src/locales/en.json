@@ -691,8 +691,8 @@
     "title": "Status shown to friends",
     "online": "Online",
     "away": "Away",
-    "busy": "Busy",
     "mobile": "Mobile",
-    "offline": "Offline"
+    "offline": "Offline",
+    "awayHint": "Shown as away on VALORANT and busy on League of Legends."
   }
 }

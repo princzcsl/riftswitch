@@ -691,8 +691,8 @@
     "title": "Status für Freunde",
     "online": "Online",
     "away": "Abwesend",
-    "busy": "Beschäftigt",
     "mobile": "Mobil",
-    "offline": "Offline"
+    "offline": "Offline",
+    "awayHint": "Wird in VALORANT als abwesend und in League of Legends als beschäftigt angezeigt."
   }
 }
