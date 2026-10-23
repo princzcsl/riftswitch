@@ -700,7 +700,9 @@
     "screenTitle": "Update läuft",
     "screenText": "RiftSwitch {v} wird installiert und startet von selbst neu.",
     "preparing": "Wird vorbereitet…",
-    "searching": "Suche nach Updates…"
+    "searching": "Suche nach Updates…",
+    "done": "RiftSwitch wurde auf {v} aktualisiert.",
+    "installing": "Installation…"
   },
   "chatStatus": {
     "title": "Status für Freunde",

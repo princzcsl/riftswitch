@@ -4,9 +4,10 @@
   import { api } from "./lib/api";
   import { setLanguage, t } from "./lib/i18n.svelte";
   import { applyTheme } from "./lib/themes";
-  import Icon from "./components/Icon.svelte";
 
-  let prompt = $state<{ ghost: boolean; inMatch: boolean } | null>(null);
+  let prompt = $state<{ ghost: boolean; inMatch: boolean; inSelect: boolean } | null>(null);
+  // Le jeu n'est fermé qu'en mode fantôme : la pénalité ne concerne que ce cas.
+  const penalty = $derived(!prompt?.ghost ? "" : prompt.inMatch ? " " + t("exit.abandon") : prompt.inSelect ? " " + t("play.confirmSelect") : "");
 
   onMount(async () => {
     try {
@@ -27,11 +28,11 @@
 {#if prompt}
   <div class="card glass-solid fade-in" data-tauri-drag-region>
     <div class="head" data-tauri-drag-region>
-      <span class="ico" class:danger={prompt.ghost}><Icon name={prompt.ghost ? "warning" : "info"} size={20} /></span>
+      <img class="logo" src="/logo.svg" alt="" width="36" height="36" />
       <strong data-tauri-drag-region>{t("exit.title")}</strong>
     </div>
     <p data-tauri-drag-region>
-      {prompt.ghost ? t("exit.ghostText") + (prompt.inMatch ? " " + t("exit.abandon") : "") : t("exit.openText")}
+      {(prompt.ghost ? t("exit.ghostText") : t("exit.openText")) + penalty}
     </p>
     <div class="actions">
       <button class="btn" onclick={() => answer(false)}>{t("common.cancel")}</button>
@@ -65,19 +66,9 @@
     gap: 12px;
     font-size: 15px;
   }
-  .ico {
-    display: grid;
-    place-items: center;
-    width: 36px;
-    height: 36px;
+  .logo {
     flex: none;
-    border-radius: 50%;
-    background: var(--accent-soft);
-    color: var(--accent);
-  }
-  .ico.danger {
-    background: color-mix(in srgb, var(--warning) 16%, transparent);
-    color: var(--warning);
+    border-radius: 10px;
   }
   p {
     margin: 0;

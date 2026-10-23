@@ -16,7 +16,7 @@
       <div class="bar" class:indeterminate={!pct}>
         <div style={pct ? `width:${pct}%` : ""}></div>
       </div>
-      <span class="faint small">{pct ? `${pct} %` : t("update.preparing")}</span>
+      <span class="faint small">{updater.installing ? t("update.installing") : pct ? `${pct} %` : t("update.preparing")}</span>
     </div>
   </div>
 {:else if updater.startup}

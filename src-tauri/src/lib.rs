@@ -100,6 +100,7 @@ pub fn run() {
             appcmd::exit_prompt,
             appcmd::answer_exit,
             appcmd::take_tray_play,
+            appcmd::install_update,
             appcmd::open_data_dir,
             accounts::list_accounts,
             accounts::save_account,
@@ -212,10 +213,14 @@ fn close_confirm_window(app: &tauri::AppHandle) {
 /// Confirmation dans une mini-fenêtre au style de RiftSwitch.
 async fn confirm_exit(app: tauri::AppHandle, ghost: bool, game_open: bool) {
     if game_open {
-        let in_match = riot::presence::with_match_state(riot::process::snapshot())
-            .await
-            .game_in_progress();
-        let payload = serde_json::json!({ "ghost": ghost, "inMatch": in_match });
+        let procs = riot::presence::with_match_state(riot::process::snapshot()).await;
+        let lol_path = app.state::<AppState>().settings().lol_path;
+        let in_select = commands::play::in_selection(&lol_path, &procs).await;
+        let payload = serde_json::json!({
+            "ghost": ghost,
+            "inMatch": procs.game_in_progress(),
+            "inSelect": in_select,
+        });
         let (tx, rx) = tokio::sync::oneshot::channel();
         *app.state::<AppState>().pending_exit.lock().unwrap() = Some((payload, tx));
         open_confirm_window(&app);

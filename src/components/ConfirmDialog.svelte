@@ -2,7 +2,6 @@
   // Confirmation au style de l'app (remplace les boîtes de dialogue Windows).
   import { app } from "../lib/app.svelte";
   import { t } from "../lib/i18n.svelte";
-  import Icon from "./Icon.svelte";
   import Modal from "./Modal.svelte";
 
   // Ouverte tant qu'une confirmation attend ; Échap ou la croix valent « Annuler ».
@@ -16,7 +15,7 @@
   {@const c = app.confirmState}
   <Modal bind:open={getOpen, setOpen} title={c.title} width={440}>
     <div class="row" style="gap:14px;align-items:flex-start">
-      <span class="ico" class:danger={c.danger}><Icon name={c.danger ? "warning" : "info"} size={20} /></span>
+      <img class="logo" src="/logo.svg" alt="" width="38" height="38" />
       <p class="text">{c.text}</p>
     </div>
     {#snippet footer()}
@@ -27,19 +26,9 @@
 {/if}
 
 <style>
-  .ico {
-    display: grid;
-    place-items: center;
-    width: 38px;
-    height: 38px;
+  .logo {
     flex: none;
-    border-radius: 50%;
-    background: var(--accent-soft);
-    color: var(--accent);
-  }
-  .ico.danger {
-    background: color-mix(in srgb, var(--warning) 16%, transparent);
-    color: var(--warning);
+    border-radius: 10px;
   }
   .text {
     margin: 6px 0 0;

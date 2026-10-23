@@ -700,7 +700,9 @@
     "screenTitle": "Mise à jour en cours",
     "screenText": "RiftSwitch {v} s’installe et redémarre tout seul.",
     "preparing": "Préparation…",
-    "searching": "Recherche de mises à jour…"
+    "searching": "Recherche de mises à jour…",
+    "done": "RiftSwitch a été mis à jour en {v}.",
+    "installing": "Installation…"
   },
   "chatStatus": {
     "title": "Statut affiché à tes amis",

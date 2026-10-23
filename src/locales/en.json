@@ -700,7 +700,9 @@
     "screenTitle": "Updating",
     "screenText": "RiftSwitch {v} is installing and will restart on its own.",
     "preparing": "Preparing…",
-    "searching": "Checking for updates…"
+    "searching": "Checking for updates…",
+    "done": "RiftSwitch was updated to {v}.",
+    "installing": "Installing…"
   },
   "chatStatus": {
     "title": "Status shown to friends",

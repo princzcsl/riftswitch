@@ -283,6 +283,44 @@ pub fn close_window(app: AppHandle, state: State<'_, AppState>) {
     }
 }
 
+/// Télécharge et vérifie la mise à jour, puis lance l'installateur silencieux sans quitter :
+/// l'écran « Installation » reste affiché jusqu'à ce que l'installateur ferme l'app pour copier
+/// ses fichiers, puis il la relance.
+#[tauri::command]
+pub async fn install_update(app: AppHandle) -> AppResult<()> {
+    use tauri::Emitter;
+    use tauri_plugin_updater::UpdaterExt;
+    let err = |e: tauri_plugin_updater::Error| AppError::new("update", e.to_string());
+    let update = app
+        .updater()
+        .map_err(err)?
+        .check()
+        .await
+        .map_err(err)?
+        .ok_or_else(|| AppError::code("update_none"))?;
+    let handle = app.clone();
+    let mut done: u64 = 0;
+    let bytes = update
+        .download(
+            move |chunk, total| {
+                done += chunk as u64;
+                let _ = handle.emit("update-progress", (done, total));
+            },
+            || {},
+        )
+        .await
+        .map_err(err)?;
+    update.verify(&bytes).map_err(err)?;
+    let path = std::env::temp_dir().join(format!("RiftSwitch_{}_setup.exe", update.version));
+    std::fs::write(&path, &bytes)?;
+    crate::util::log(format!("update: installation de la version {}", update.version));
+    std::process::Command::new(&path)
+        .args(["/S", "/UPDATE", "/R"])
+        .spawn()
+        .map_err(|e| AppError::new("update", e.to_string()))?;
+    Ok(())
+}
+
 /// Confirmation de fermeture en attente (la fenêtre vient peut-être d'être recréée).
 #[tauri::command]
 pub fn exit_prompt(state: State<'_, AppState>) -> Option<serde_json::Value> {

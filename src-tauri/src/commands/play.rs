@@ -736,7 +736,7 @@ fn other_product(game: &str, procs: &process::ProcSnapshot) -> Option<&'static s
 }
 
 /// Sélection des champions (LoL) ou des agents (VALORANT) en cours.
-async fn in_selection(lol_path: &str, procs: &process::ProcSnapshot) -> bool {
+pub(crate) async fn in_selection(lol_path: &str, procs: &process::ProcSnapshot) -> bool {
     if procs.val_game && presence::valorant_state().await.as_deref() == Some("PREGAME") {
         return true;
     }

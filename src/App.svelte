@@ -61,7 +61,10 @@
   $effect(() => {
     if (!app.boot || updateChecked) return;
     updateChecked = true;
-    if (app.settings?.checkUpdates) updater.autoUpdate();
+    // Juste après une mise à jour : pas d'écran de recherche, un simple message.
+    const previous = app.boot.version ? updater.justUpdated(app.boot.version) : null;
+    if (previous) app.toast("success", t("update.done", { v: app.boot.version }), 6000);
+    if (app.settings?.checkUpdates) updater.autoUpdate(!previous);
     else updater.skipStartup();
   });
 </script>
