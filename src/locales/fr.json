@@ -65,7 +65,10 @@
     "goOffline": "Apparaître hors ligne",
     "goOnline": "Apparaître en ligne",
     "notifyTitle": "RiftSwitch · Mode hors ligne",
-    "notifyBody": "{game} se lance. Tu apparais hors ligne pour tes amis."
+    "notifyBody": "{game} se lance. Tu apparais hors ligne pour tes amis.",
+    "disabled": "Désactivé",
+    "nextOff": "Mode fantôme désactivé : clique pour lancer ton prochain jeu hors ligne.",
+    "nextOn": "Mode fantôme activé pour le prochain lancement : clique pour le désactiver."
   },
   "play": {
     "play": "JOUER",
@@ -87,7 +90,12 @@
     "step_signin": "Connexion du client",
     "step_launch": "Lancement du jeu",
     "step_restore": "Restauration de la session",
-    "step_manual": "En attente de ta connexion dans le Riot Client (aucun identifiant enregistré pour ce compte)"
+    "step_manual": "En attente de ta connexion dans le Riot Client (aucun identifiant enregistré pour ce compte)",
+    "confirmTitle": "Le jeu va être fermé",
+    "confirmRestartOffline": "Le jeu ouvert va être fermé, puis relancé en mode fantôme.",
+    "confirmRestart": "Le jeu ouvert va être fermé pour basculer sur ce compte.",
+    "confirmMatch": "Une partie est en cours et sera abandonnée.",
+    "confirmOk": "Continuer"
   },
   "hero": {
     "resume": "Reprendre",

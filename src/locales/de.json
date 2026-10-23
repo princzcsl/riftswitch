@@ -65,7 +65,10 @@
     "goOffline": "Offline erscheinen",
     "goOnline": "Online erscheinen",
     "notifyTitle": "RiftSwitch · Offline-Modus",
-    "notifyBody": "{game} startet. Du erscheinst für deine Freunde offline."
+    "notifyBody": "{game} startet. Du erscheinst für deine Freunde offline.",
+    "disabled": "Aus",
+    "nextOff": "Geistermodus aus: Klicke, um dein nächstes Spiel offline zu starten.",
+    "nextOn": "Geistermodus für den nächsten Start an: Klicke zum Ausschalten."
   },
   "play": {
     "play": "SPIELEN",
@@ -87,7 +90,12 @@
     "step_signin": "Client wird angemeldet",
     "step_launch": "Spiel wird gestartet",
     "step_restore": "Sitzung wird wiederhergestellt",
-    "step_manual": "Warte auf deine Anmeldung im Riot Client (keine gespeicherten Zugangsdaten für dieses Konto)"
+    "step_manual": "Warte auf deine Anmeldung im Riot Client (keine gespeicherten Zugangsdaten für dieses Konto)",
+    "confirmTitle": "Das Spiel wird geschlossen",
+    "confirmRestartOffline": "Das geöffnete Spiel wird geschlossen und im Geistermodus neu gestartet.",
+    "confirmRestart": "Das geöffnete Spiel wird geschlossen, um zu diesem Konto zu wechseln.",
+    "confirmMatch": "Ein Match läuft und wird abgebrochen.",
+    "confirmOk": "Weiter"
   },
   "hero": {
     "resume": "Weiterspielen",

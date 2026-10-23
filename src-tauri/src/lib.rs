@@ -110,6 +110,7 @@ pub fn run() {
             play::play,
             play::set_offline,
             play::set_chat_status,
+            play::play_check,
             play::riot_status,
             play::quit_riot,
             play::capture_current,
@@ -150,11 +151,18 @@ pub fn run() {
                 api.prevent_exit();
                 return;
             }
-            // Mode fantôme : sans le proxy, le chat du jeu tombe. On ferme le jeu avec l'app.
+            if EXITING.load(Ordering::Relaxed) {
+                return;
+            }
+            // Mode fantôme : sans le proxy, le chat du jeu tombe, donc le jeu est fermé avec l'app.
+            // Jeu ouvert sans mode fantôme : simple confirmation, le jeu reste ouvert.
             let ghost = state.client_via_proxy.load(Ordering::Relaxed) && state.proxy().is_some();
-            if ghost && !EXITING.swap(true, Ordering::Relaxed) {
+            let procs = riot::process::snapshot();
+            let game_open = procs.lol_client || procs.lol_game || procs.val_game;
+            if ghost || game_open {
                 api.prevent_exit();
-                tauri::async_runtime::spawn(close_games_then_exit(app.clone()));
+                EXITING.store(true, Ordering::Relaxed);
+                tauri::async_runtime::spawn(confirm_exit(app.clone(), ghost, game_open));
             }
         }
     });
@@ -162,22 +170,41 @@ pub fn run() {
 
 static EXITING: AtomicBool = AtomicBool::new(false);
 
-async fn close_games_then_exit(app: tauri::AppHandle) {
+/// Textes de la confirmation de fermeture : (titre, texte, bouton de validation, annuler).
+fn exit_texts(lang: &str, ghost: bool, in_match: bool) -> (String, String, String, String) {
+    let l = lang.get(..2).unwrap_or("en");
+    let (title, ghost_text, open_text, quit_close, quit, cancel, abandon) = match l {
+        "fr" => ("Fermer RiftSwitch", "Le mode fantôme est actif : quitter RiftSwitch fermera aussi le jeu.", "Un jeu est ouvert. Quitter RiftSwitch quand même ? Le jeu reste ouvert.", "Quitter et fermer le jeu", "Quitter", "Annuler", "La partie en cours sera abandonnée."),
+        "es" => ("Cerrar RiftSwitch", "El modo fantasma está activo: salir de RiftSwitch también cerrará el juego.", "Hay un juego abierto. ¿Salir de RiftSwitch de todos modos? El juego seguirá abierto.", "Salir y cerrar el juego", "Salir", "Cancelar", "La partida en curso se abandonará."),
+        "it" => ("Chiudi RiftSwitch", "La modalità fantasma è attiva: uscire da RiftSwitch chiuderà anche il gioco.", "Un gioco è aperto. Uscire comunque da RiftSwitch? Il gioco resterà aperto.", "Esci e chiudi il gioco", "Esci", "Annulla", "La partita in corso verrà abbandonata."),
+        "de" => ("RiftSwitch beenden", "Der Geistermodus ist aktiv: Beim Beenden von RiftSwitch wird auch das Spiel geschlossen.", "Ein Spiel ist geöffnet. RiftSwitch trotzdem beenden? Das Spiel bleibt geöffnet.", "Beenden und Spiel schließen", "Beenden", "Abbrechen", "Das laufende Match wird abgebrochen."),
+        _ => ("Quit RiftSwitch", "Ghost mode is on: quitting RiftSwitch also closes the game.", "A game is open. Quit RiftSwitch anyway? The game stays open.", "Quit and close the game", "Quit", "Cancel", "The current match will be abandoned."),
+    };
+    let text = if ghost && in_match {
+        format!("{ghost_text} {abandon}")
+    } else if ghost {
+        ghost_text.to_string()
+    } else {
+        open_text.to_string()
+    };
+    let ok = if ghost { quit_close } else { quit };
+    (title.into(), text, ok.into(), cancel.into())
+}
+
+async fn confirm_exit(app: tauri::AppHandle, ghost: bool, game_open: bool) {
     use tauri_plugin_dialog::{DialogExt, MessageDialogButtons, MessageDialogKind};
-    let procs = riot::presence::with_match_state(riot::process::snapshot()).await;
-    if procs.game_in_progress() {
-        let fr = app.state::<AppState>().settings().language.starts_with("fr");
-        let (title, text, yes, no) = if fr {
-            ("Partie en cours", "Le mode fantôme est actif : quitter RiftSwitch fermera aussi le jeu, et la partie en cours sera abandonnée.", "Quitter et fermer le jeu", "Annuler")
-        } else {
-            ("Match in progress", "Ghost mode is on: quitting RiftSwitch also closes the game, and the current match will be abandoned.", "Quit and close the game", "Cancel")
-        };
+    if game_open {
+        let in_match = riot::presence::with_match_state(riot::process::snapshot())
+            .await
+            .game_in_progress();
+        let lang = app.state::<AppState>().settings().language;
+        let (title, text, yes, no) = exit_texts(&lang, ghost, in_match);
         let (tx, rx) = tokio::sync::oneshot::channel();
         app.dialog()
             .message(text)
             .title(title)
             .kind(MessageDialogKind::Warning)
-            .buttons(MessageDialogButtons::OkCancelCustom(yes.into(), no.into()))
+            .buttons(MessageDialogButtons::OkCancelCustom(yes, no))
             .show(move |ok| {
                 let _ = tx.send(ok);
             });
@@ -186,7 +213,9 @@ async fn close_games_then_exit(app: tauri::AppHandle) {
             return;
         }
     }
-    util::log("app: fermeture en mode fantôme, fermeture du jeu");
-    riot::launch::shutdown(std::time::Duration::from_secs(8)).await;
+    if ghost {
+        util::log("app: fermeture en mode fantôme, fermeture du jeu");
+        riot::launch::shutdown(std::time::Duration::from_secs(8)).await;
+    }
     app.exit(0);
 }

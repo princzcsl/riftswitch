@@ -19,6 +19,20 @@
   } = $props();
 
   let root: HTMLDivElement;
+  let pop = $state<HTMLDivElement>();
+  // Ouverture vers le haut s'il manque de place en dessous (mesuré avant affichage).
+  let flip = $state(false);
+  let measured = $state(false);
+  $effect(() => {
+    if (!open || !pop) {
+      measured = false;
+      return;
+    }
+    const r = root.getBoundingClientRect();
+    const h = pop.offsetHeight + 16;
+    flip = window.innerHeight - r.bottom < h && r.top > h;
+    measured = true;
+  });
 
   function onDoc(e: MouseEvent) {
     if (open && root && !root.contains(e.target as Node)) open = false;
@@ -33,7 +47,12 @@
 <div class="pop-root" bind:this={root}>
   {@render trigger()}
   {#if open}
-    <div class="pop glass-strong fade-in" class:up style="{align === 'end' ? 'right:0' : 'left:0'}; width:{width}px">
+    <div
+      bind:this={pop}
+      class="pop glass-strong glass-solid fade-in"
+      class:up={up || flip}
+      style="{align === 'end' ? 'right:0' : 'left:0'}; width:{width}px; visibility:{measured ? 'visible' : 'hidden'}"
+    >
       {@render children()}
     </div>
   {/if}

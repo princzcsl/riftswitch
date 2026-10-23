@@ -65,7 +65,10 @@
     "goOffline": "Aparecer desconectado",
     "goOnline": "Aparecer en línea",
     "notifyTitle": "RiftSwitch · Modo desconectado",
-    "notifyBody": "{game} se está iniciando. Apareces desconectado para tus amigos."
+    "notifyBody": "{game} se está iniciando. Apareces desconectado para tus amigos.",
+    "disabled": "Desactivado",
+    "nextOff": "Modo fantasma desactivado: haz clic para abrir tu próximo juego desconectado.",
+    "nextOn": "Modo fantasma activado para el próximo inicio: haz clic para desactivarlo."
   },
   "play": {
     "play": "JUGAR",
@@ -87,7 +90,12 @@
     "step_signin": "Conectando el cliente",
     "step_launch": "Iniciando el juego",
     "step_restore": "Restaurando la sesión",
-    "step_manual": "Esperando a que inicies sesión en el Riot Client (no hay credenciales guardadas para esta cuenta)"
+    "step_manual": "Esperando a que inicies sesión en el Riot Client (no hay credenciales guardadas para esta cuenta)",
+    "confirmTitle": "El juego se cerrará",
+    "confirmRestartOffline": "El juego abierto se cerrará y se volverá a abrir en modo fantasma.",
+    "confirmRestart": "El juego abierto se cerrará para cambiar a esta cuenta.",
+    "confirmMatch": "Hay una partida en curso y se abandonará.",
+    "confirmOk": "Continuar"
   },
   "hero": {
     "resume": "Continuar",

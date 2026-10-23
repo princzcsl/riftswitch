@@ -1,5 +1,6 @@
 // État global réactif de l'interface (Svelte 5 runes).
 import { listen } from "@tauri-apps/api/event";
+import { ask } from "@tauri-apps/plugin-dialog";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
 import { api } from "./api";
 import { latestVersion } from "./ddragon";
@@ -166,6 +167,13 @@ class AppStore {
   /** Lance un jeu sur un compte (bascule si nécessaire). */
   async play(account: Account, game: Game, offline: boolean) {
     if (this.launching) return;
+    // Le jeu ouvert va être fermé (bascule ou relance en mode fantôme) : on demande d'abord.
+    const check = await api.playCheck(account.id, offline).catch(() => null);
+    if (check?.restart && check.gameOpen) {
+      const text = t(offline ? "play.confirmRestartOffline" : "play.confirmRestart") + (check.inMatch ? " " + t("play.confirmMatch") : "");
+      const ok = await ask(text, { title: t("play.confirmTitle"), kind: "warning", okLabel: t("play.confirmOk"), cancelLabel: t("common.cancel") }).catch(() => true);
+      if (!ok) return;
+    }
     this.launching = account.id;
     this.playSteps = [];
     try {

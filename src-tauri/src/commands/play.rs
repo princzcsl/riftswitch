@@ -697,6 +697,44 @@ pub fn play_external(app: AppHandle, account_id: String, game: String) {
     });
 }
 
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PlayCheck {
+    /// Le lancement va fermer puis relancer le client (même règle que `do_play`).
+    pub restart: bool,
+    /// Client LoL, partie LoL ou VALORANT ouvert.
+    pub game_open: bool,
+    pub in_match: bool,
+}
+
+/// Avant un lancement : le client va-t-il être relancé alors qu'un jeu est ouvert ?
+#[tauri::command]
+pub async fn play_check(
+    state: State<'_, AppState>,
+    account_id: String,
+    offline: bool,
+) -> AppResult<PlayCheck> {
+    let target: Account = state.with_vault(|v| {
+        let idx = v.index_of(&account_id)?;
+        Ok(v.data.accounts[idx].clone())
+    })?;
+    let procs = presence::with_match_state(process::snapshot()).await;
+    let ident = if procs.riot_client {
+        signed_in_identity().await
+    } else {
+        None
+    };
+    let target_active = ident
+        .as_ref()
+        .is_some_and(|i| target.matches_identity(i.puuid.as_deref(), &i.game_name, &i.tag_line));
+    let via_proxy = state.client_via_proxy.load(Ordering::Relaxed) && state.proxy().is_some();
+    Ok(PlayCheck {
+        restart: !procs.riot_client || !target_active || (offline && !via_proxy),
+        game_open: procs.lol_client || procs.lol_game || procs.val_game,
+        in_match: procs.game_in_progress(),
+    })
+}
+
 /// Statut affiché aux amis (le client doit passer par le proxy, donc avoir été lancé en mode fantôme).
 #[tauri::command]
 pub fn set_chat_status(state: State<'_, AppState>, status: String) -> AppResult<bool> {

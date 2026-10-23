@@ -40,6 +40,18 @@
       <span class="lbl">{t(`chatStatus.${app.status.chatStatus ?? "online"}`)}</span>
     </button>
     <ChatStatusMenu bind:open={statusMenu.open} x={statusMenu.x} y={statusMenu.y} />
+  {:else}
+    <!-- Hors jeu : active ou désactive le mode fantôme pour le prochain lancement. -->
+    <button
+      class="nav"
+      class:ghost={app.preferOffline}
+      class:off={!app.preferOffline}
+      title={app.preferOffline ? t("offline.nextOn") : t("offline.nextOff")}
+      onclick={() => app.setPreferOffline(!app.preferOffline)}
+    >
+      <span class="ic"><Icon name="ghost" size={20} /></span>
+      <span class="lbl">{app.preferOffline ? t("offline.short") : t("offline.disabled")}</span>
+    </button>
   {/if}
   {#if lockable}
     <button class="nav" onclick={() => app.lock()} title={t("nav.lock")}>
@@ -106,6 +118,10 @@
   /* Fantôme : couleur du texte du thème (blanc en sombre, noir en clair). */
   .nav.ghost {
     color: var(--text);
+  }
+  /* Mode fantôme désactivé : icône estompée. */
+  .nav.off .ic {
+    opacity: 0.45;
   }
   .ic {
     position: relative;

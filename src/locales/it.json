@@ -65,7 +65,10 @@
     "goOffline": "Apparire offline",
     "goOnline": "Apparire online",
     "notifyTitle": "RiftSwitch · Modalità offline",
-    "notifyBody": "{game} si sta avviando. Appari offline ai tuoi amici."
+    "notifyBody": "{game} si sta avviando. Appari offline ai tuoi amici.",
+    "disabled": "Disattivato",
+    "nextOff": "Modalità fantasma disattivata: clicca per avviare il prossimo gioco offline.",
+    "nextOn": "Modalità fantasma attiva per il prossimo avvio: clicca per disattivarla."
   },
   "play": {
     "play": "GIOCA",
@@ -87,7 +90,12 @@
     "step_signin": "Accesso del client",
     "step_launch": "Avvio del gioco",
     "step_restore": "Ripristino della sessione",
-    "step_manual": "In attesa del tuo accesso nel Riot Client (nessuna credenziale salvata per questo account)"
+    "step_manual": "In attesa del tuo accesso nel Riot Client (nessuna credenziale salvata per questo account)",
+    "confirmTitle": "Il gioco verrà chiuso",
+    "confirmRestartOffline": "Il gioco aperto verrà chiuso e riavviato in modalità fantasma.",
+    "confirmRestart": "Il gioco aperto verrà chiuso per passare a questo account.",
+    "confirmMatch": "È in corso una partita che verrà abbandonata.",
+    "confirmOk": "Continua"
   },
   "hero": {
     "resume": "Riprendi",
