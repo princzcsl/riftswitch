@@ -16,7 +16,7 @@ mod tray;
 mod util;
 mod vault;
 
-use std::sync::atomic::Ordering;
+use std::sync::atomic::{AtomicBool, Ordering};
 use tauri::{Manager, RunEvent, WindowEvent};
 
 use commands::{accounts, app as appcmd, configs as cfgcmd, play};
@@ -143,11 +143,50 @@ pub fn run() {
         .expect("impossible de démarrer RiftSwitch");
 
     app.run(|app, event| {
-        // Fenêtre fermée : on reste dans la zone de notification si l'option est active.
         if let RunEvent::ExitRequested { api, code, .. } = event {
-            if code.is_none() && app.state::<AppState>().settings().close_to_tray {
+            let state = app.state::<AppState>();
+            // Fenêtre fermée : on reste dans la zone de notification si l'option est active.
+            if code.is_none() && state.settings().close_to_tray {
                 api.prevent_exit();
+                return;
+            }
+            // Mode fantôme : sans le proxy, le chat du jeu tombe. On ferme le jeu avec l'app.
+            let ghost = state.client_via_proxy.load(Ordering::Relaxed) && state.proxy().is_some();
+            if ghost && !EXITING.swap(true, Ordering::Relaxed) {
+                api.prevent_exit();
+                tauri::async_runtime::spawn(close_games_then_exit(app.clone()));
             }
         }
     });
+}
+
+static EXITING: AtomicBool = AtomicBool::new(false);
+
+async fn close_games_then_exit(app: tauri::AppHandle) {
+    use tauri_plugin_dialog::{DialogExt, MessageDialogButtons, MessageDialogKind};
+    let procs = riot::presence::with_match_state(riot::process::snapshot()).await;
+    if procs.game_in_progress() {
+        let fr = app.state::<AppState>().settings().language.starts_with("fr");
+        let (title, text, yes, no) = if fr {
+            ("Partie en cours", "Le mode fantôme est actif : quitter RiftSwitch fermera aussi le jeu, et la partie en cours sera abandonnée.", "Quitter et fermer le jeu", "Annuler")
+        } else {
+            ("Match in progress", "Ghost mode is on: quitting RiftSwitch also closes the game, and the current match will be abandoned.", "Quit and close the game", "Cancel")
+        };
+        let (tx, rx) = tokio::sync::oneshot::channel();
+        app.dialog()
+            .message(text)
+            .title(title)
+            .kind(MessageDialogKind::Warning)
+            .buttons(MessageDialogButtons::OkCancelCustom(yes.into(), no.into()))
+            .show(move |ok| {
+                let _ = tx.send(ok);
+            });
+        if !rx.await.unwrap_or(false) {
+            EXITING.store(false, Ordering::Relaxed);
+            return;
+        }
+    }
+    util::log("app: fermeture en mode fantôme, fermeture du jeu");
+    riot::launch::shutdown(std::time::Duration::from_secs(8)).await;
+    app.exit(0);
 }
