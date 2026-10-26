@@ -242,8 +242,10 @@ async fn do_play(
     let via_proxy = state.client_via_proxy.load(Ordering::Relaxed) && state.proxy().is_some();
     // Relance aussi pour repasser en ligne : sinon le client resterait derrière le proxy.
     let restart = !procs.riot_client || !target_active || offline != via_proxy;
+    // Surnom du compte (ou début de son identifiant interne) : jamais le Riot ID ni l'identifiant.
+    let who = if target.label.is_empty() { target.id.chars().take(8).collect() } else { target.label.clone() };
     log(format!(
-        "play: jeu={game} hors_ligne={offline} client={} authentifié={} cible_active={target_active} redémarrage={restart}",
+        "play: compte={who} jeu={game} hors_ligne={offline} client={} authentifié={} cible_active={target_active} redémarrage={restart}",
         procs.riot_client,
         ident.is_some()
     ));
@@ -474,7 +476,10 @@ async fn solve_captcha(
         })
         .map_err(|e| AppError::new("captcha", e.to_string()))?;
     let token = rx.await.map_err(|_| AppError::code("cancelled"))??;
-    token.ok_or_else(|| AppError::code("cancelled"))
+    token.ok_or_else(|| {
+        log("captcha: fenêtre de vérification fermée avant la fin du défi");
+        AppError::code("cancelled")
+    })
 }
 
 /// Attend le code d'A2F fourni par l'utilisateur via la commande `submit_mfa`.
