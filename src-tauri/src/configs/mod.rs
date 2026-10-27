@@ -102,8 +102,25 @@ pub fn is_val_sound(key: &str) -> bool {
 
 /// Catégorie d'une clé de RiotUserSettings (VALORANT).
 pub fn val_cat(key: &str) -> &'static str {
-    if key.rsplit("::").next().unwrap_or(key).contains("Crosshair") {
+    let k = key.rsplit("::").next().unwrap_or(key);
+    const GRAPHICS: [&str; 12] = [
+        "Quality",
+        "Framerate",
+        "Vignette",
+        "Anisotropic",
+        "AntiAliasing",
+        "PlayerPerf",
+        "Bloom",
+        "Distortion",
+        "Shadow",
+        "Clarity",
+        "Sharpening",
+        "VSync",
+    ];
+    if k.contains("Crosshair") {
         "crosshair"
+    } else if GRAPHICS.iter().any(|p| k.contains(p)) {
+        "graphics"
     } else if is_val_sound(key) {
         "sound"
     } else {
@@ -114,7 +131,8 @@ pub fn val_cat(key: &str) -> &'static str {
 /// Anciennes catégories VALORANT : « settings » couvrait interface, viseur et son.
 pub fn has_cat(categories: &[String], cat: &str) -> bool {
     categories.iter().any(|c| {
-        c == cat || (c == "settings" && matches!(cat, "interface" | "sound" | "crosshair"))
+        c == cat
+            || (c == "settings" && matches!(cat, "interface" | "sound" | "crosshair" | "graphics"))
     })
 }
 
@@ -444,7 +462,7 @@ pub fn apply_val(p: &ConfigProfile, dir_name: &str) -> AppResult<Vec<String>> {
         }
     }
     // Réglages : fusion clé par clé dans le fichier du compte, sans les clés propres au PC.
-    let settings = ["interface", "sound", "crosshair"]
+    let settings = ["interface", "sound", "crosshair", "graphics"]
         .iter()
         .any(|c| has_cat(cats, c));
     let graphics = has_cat(cats, "graphics");
@@ -455,14 +473,77 @@ pub fn apply_val(p: &ConfigProfile, dir_name: &str) -> AppResult<Vec<String>> {
         let Some(text) = cfg.files.get(rel).filter(|_| wanted) else {
             continue;
         };
-        let src = IniDoc::parse(text).filtered(|_, k| !is_volatile(k) && keep(rel, k));
+        let mut src = IniDoc::parse(text).filtered(|_, k| !is_volatile(k) && keep(rel, k));
         let path = dir.join(rel);
         let mut current = IniDoc::parse(&std::fs::read_to_string(&path).unwrap_or_default());
+        merge_crosshairs(&current, &mut src);
         current.merge_sections(&src, &src.names());
         util::atomic_write(&path, current.to_text().as_bytes(), true)?;
         done.push(rel.to_string());
     }
     Ok(done)
+}
+
+const CROSSHAIRS: &str = "SavedCrosshairProfileData";
+/// Nombre de profils de viseur que VALORANT garde.
+const MAX_CROSSHAIRS: usize = 15;
+
+fn crosshair_value(doc: &IniDoc) -> Option<String> {
+    doc.sections
+        .iter()
+        .flat_map(|s| &s.entries)
+        .find(|(k, _)| k.ends_with(CROSSHAIRS))
+        .map(|(_, v)| v.clone())
+}
+
+/// Viseurs : ceux du profil sont ajoutés à ceux du compte (même nom : remplacé) au lieu de les
+/// écraser, dans la limite du jeu ; le viseur actif est celui du profil.
+fn merge_crosshairs(current: &IniDoc, src: &mut IniDoc) {
+    let parse = |v: &str| -> Option<Value> {
+        serde_json::from_str(&serde_json::from_str::<String>(v).ok()?).ok()
+    };
+    let (Some(mine), Some(theirs)) = (
+        crosshair_value(current).and_then(|v| parse(&v)),
+        crosshair_value(src).and_then(|v| parse(&v)),
+    ) else {
+        return;
+    };
+    let name = |p: &Value| {
+        p.get("profileName")
+            .and_then(Value::as_str)
+            .unwrap_or("")
+            .to_string()
+    };
+    let incoming: Vec<Value> = theirs["profiles"].as_array().cloned().unwrap_or_default();
+    let names: Vec<String> = incoming.iter().map(name).collect();
+    let mut kept: Vec<Value> = mine["profiles"]
+        .as_array()
+        .cloned()
+        .unwrap_or_default()
+        .into_iter()
+        .filter(|p| !names.contains(&name(p)))
+        .collect();
+    let room = MAX_CROSSHAIRS.saturating_sub(incoming.len());
+    if kept.len() > room {
+        kept.drain(..kept.len() - room);
+    }
+    let active = theirs["currentProfile"].as_u64().unwrap_or(0) as usize;
+    let current_profile = kept.len() + active.min(incoming.len().saturating_sub(1));
+    kept.extend(incoming);
+    kept.truncate(MAX_CROSSHAIRS);
+    let mut merged = theirs.clone();
+    merged["profiles"] = Value::Array(kept);
+    merged["currentProfile"] = Value::from(current_profile);
+    let Ok(text) = serde_json::to_string(&merged).and_then(|t| serde_json::to_string(&t)) else {
+        return;
+    };
+    for s in &mut src.sections {
+        for e in &mut s.entries {
+            if e.0.ends_with(CROSSHAIRS) {
+                e.1 = text.clone();
+            }
+        }
+    }
 }
 
 pub fn val_dir_for(puuid: Option<&str>) -> Option<String> {
@@ -527,7 +608,42 @@ mod tests {
         assert_eq!(lol_cat("General", "GameMouseSpeed"), Some("interface"));
         assert_eq!(lol_cat("General", "WindowMode"), Some("graphics"));
         assert_eq!(lol_cat("Mobile", "AppRegion"), None);
-        assert!(!has_cat(&["settings".into()], "graphics"));
+        assert_eq!(val_cat("EAresIntSettingName::MaterialQuality"), "graphics");
+        assert_eq!(
+            val_cat("EAresFloatSettingName::MaxFramerateAlways"),
+            "graphics"
+        );
+    }
+
+    #[test]
+    fn crosshairs_are_merged() {
+        let doc = |names: &[&str], current: usize| {
+            let profiles: Vec<Value> = names
+                .iter()
+                .map(|n| serde_json::json!({ "profileName": n }))
+                .collect();
+            let inner =
+                serde_json::json!({ "currentProfile": current, "profiles": profiles }).to_string();
+            IniDoc::parse(&format!(
+                "[Settings]\nEAresStringSettingName::SavedCrosshairProfileData={}\n",
+                serde_json::to_string(&inner).unwrap()
+            ))
+        };
+        let current = doc(&["A", "B"], 0);
+        let mut src = doc(&["B", "C"], 1);
+        merge_crosshairs(&current, &mut src);
+        let v: Value = serde_json::from_str(
+            &serde_json::from_str::<String>(&crosshair_value(&src).unwrap()).unwrap(),
+        )
+        .unwrap();
+        let names: Vec<&str> = v["profiles"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|p| p["profileName"].as_str().unwrap())
+            .collect();
+        assert_eq!(names, ["A", "B", "C"]);
+        assert_eq!(v["currentProfile"], 2);
     }
 
     #[test]
