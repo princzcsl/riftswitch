@@ -198,6 +198,17 @@
     }
   }
 
+  /** Remet la config d'origine sur son compte : liée à nouveau, appliquée tout de suite si possible. */
+  async function restore() {
+    if (!draft) return;
+    const a = app.accounts.find((x) => x.id === draft!.sourceAccount);
+    if (!a) return;
+    const ok = await app.confirm({ title: t("configs.restore"), text: t("configs.restoreText", { name: nameOf(a) }), ok: t("configs.restore") });
+    if (!ok) return;
+    applyIds = [a.id];
+    await doApply();
+  }
+
   async function copyCode() {
     if (!draft) return;
     shareMenu = false;
@@ -281,9 +292,6 @@
       <h1>{t("nav.configs")}</h1>
       <p class="muted small">{t("configs.subtitle")}</p>
     </div>
-    <div class="spacer"></div>
-    <button class="btn" onclick={() => (importOpen = true)}><Icon name="upload" size={16} />{t("configs.import")}</button>
-    <button class="btn primary" onclick={openCapture}><Icon name="download" size={16} />{t("configs.capture")}</button>
   </div>
 
   <div class="games">
@@ -304,6 +312,10 @@
 
   <div class="layout">
     <aside class="list">
+      <div class="list-actions">
+        <button class="btn primary grow" onclick={openCapture}><Icon name="plus" size={16} />{t("configs.add")}</button>
+        <button class="btn icon" onclick={() => (importOpen = true)} title={t("configs.importTitle")} aria-label={t("configs.importTitle")}><Icon name="upload" size={16} /></button>
+      </div>
       {#each list as p (p.id)}
         {@const users = app.accounts.filter((a) => (p.game === "lol" ? a.profiles.lol : a.profiles.val) === p.id)}
         <button class="item glass" class:sel={p.id === selectedId} onclick={() => select(p.id)}>
@@ -336,7 +348,10 @@
         <div class="dhead">
           <input class="input name" bind:value={draft.name} oninput={markDirty} />
           {#if dirty}<button class="btn primary sm" onclick={saveDraft}><Icon name="check" size={15} />{t("common.save")}</button>{/if}
-          <button class="btn sm primary" onclick={openApply} disabled={busy}><Icon name="play" size={13} />{t("configs.applyBtn")}</button>
+          {#if draft.source === "backup" && draft.sourceAccount}
+            <button class="btn sm primary" onclick={restore} disabled={busy}><Icon name="refresh" size={13} />{t("configs.restore")}</button>
+          {/if}
+          <button class="btn sm" class:primary={draft.source !== "backup"} onclick={openApply} disabled={busy}><Icon name="play" size={13} />{t("configs.applyBtn")}</button>
           <Popover bind:open={shareMenu} width={250}>
             {#snippet trigger()}
               <button class="btn sm" onclick={() => (shareMenu = !shareMenu)}><Icon name="link" size={14} />{t("configs.shareBtn")}</button>
@@ -357,7 +372,13 @@
         <div class="meta row small muted">
           {#if source || draft.sourceName}
             <span class="src">
-              <Avatar icon={source?.icon} autoIconId={source?.profileIconId ?? draft.sourceIcon} color={source?.color} size={22} label={source?.label || draft.sourceName} />
+              <Avatar
+                icon={source?.icon ?? (draft.sourceAvatar || undefined)}
+                autoIconId={source?.profileIconId ?? draft.sourceIcon}
+                color={source?.color ?? (draft.sourceColor || undefined)}
+                size={22}
+                label={source?.label || draft.sourceName}
+              />
               <strong>{source ? riotId(source) : draft.sourceName}</strong>
             </span>
           {:else}
@@ -407,7 +428,8 @@
                 <SettingsPanel
                   bind:doc={valDocs[file]}
                   groups={VAL_SCHEMA[tab] ?? []}
-                  advanced={(_, k) => tab === "graphics" || valCat(k) === tab}
+                  advanced={tab === "graphics" ? null : (_, k) => valCat(k) === tab}
+                  numericBools={false}
                   onchange={() => valChanged(file)}
                 />
               {/if}
@@ -428,10 +450,24 @@
     <p class="muted small">{game === "lol" ? t("configs.captureLolHint") : t("configs.captureValHint")}</p>
     {#if game === "val"}
       <div class="field">
-        <label for="cd">{t("configs.valAccountDir")}</label>
-        <select id="cd" class="input" bind:value={capDir} onchange={onCapDir}>
-          {#each valDirs as d}<option value={d.name}>{dirLabel(d)}</option>{/each}
-        </select>
+        <span class="label">{t("configs.valAccountDir")}</span>
+        <div class="dirs">
+          {#each valDirs as d (d.name)}
+            {@const a = byPuuid(d.puuid)}
+            <button class="dir" class:on={capDir === d.name} onclick={() => ((capDir = d.name), onCapDir())}>
+              {#if a}
+                <Avatar icon={a.icon} autoIconId={a.profileIconId} color={a.color} size={30} label={a.label} />
+              {:else}
+                <span class="unknown"><Icon name="users" size={15} /></span>
+              {/if}
+              <span class="grow dir-name">
+                <strong class="ellipsis">{a ? nameOf(a) : t("configs.unknownAccount")}</strong>
+                <span class="faint small">{a && a.gameName ? riotId(a) : d.puuid.slice(0, 8)} · {d.shard.toUpperCase()}</span>
+              </span>
+              <span class="faint small">{t("configs.lastPlayed", { when: relativeTime(d.modified) })}</span>
+            </button>
+          {/each}
+        </div>
         {#if !valDirs.length}<p class="small" style="color:var(--warning)">{t("configs.noValDirs")}</p>{/if}
       </div>
     {/if}
@@ -570,6 +606,47 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
+  }
+  .list-actions {
+    display: flex;
+    gap: 8px;
+  }
+  .dirs {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 260px;
+    overflow-y: auto;
+  }
+  .dir {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    text-align: start;
+    cursor: pointer;
+  }
+  .dir.on {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+  }
+  .dir-name {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  .unknown {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--surface-2);
+    color: var(--text-3);
   }
   .item {
     display: flex;

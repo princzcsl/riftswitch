@@ -362,6 +362,8 @@
             <h2>RiftSwitch</h2>
             <p class="muted">v{app.boot?.version}{app.boot?.portable ? " · portable" : ""}</p>
           </div>
+          <span class="spacer"></span>
+          <button class="btn" onclick={() => (app.whatsNew = "")}><Icon name="sparkle" size={15} />{t("whatsNew.title")}</button>
         </div>
         <div class="setting">
           <div><strong>{t("update.auto")}</strong><p>{t("update.autoText")}</p></div>

@@ -394,7 +394,7 @@
     "g_quality": "Grafikqualität",
     "g_minimap": "Minikarte",
     "advanced": "Erweitert",
-    "applyBtn": "Anwenden…",
+    "applyBtn": "Anwenden",
     "applyTitle": "Profil anwenden auf…",
     "applyHintLol": "Markierte Konten erhalten dieses Profil bei jedem Start über RiftSwitch. Das im LoL-Client angemeldete Konto erhält es sofort.",
     "applyHintVal": "Markierte Konten erhalten es sofort in ihrem VALORANT-Ordner und bei jedem Start über RiftSwitch. Schließe VALORANT vorher.",
@@ -402,12 +402,16 @@
     "connected": "Angemeldet",
     "noValDir": "Nie auf diesem PC gespielt",
     "appliedN": "Jetzt auf {n} Konto/Konten angewendet, mit {total} verknüpft.",
-    "source_backup": "Automatische Sicherung",
-    "backupChip": "Sicherung",
+    "source_backup": "Ursprüngliche Sicherung",
+    "backupChip": "Ursprüngliche Sicherung",
     "cat_crosshair": "Fadenkreuz",
     "crosshairHint": "Klicke auf ein Fadenkreuz, um es in diesem Profil zu aktivieren.",
     "crosshairActive": "Aktiv",
-    "crosshairEmpty": "Kein Fadenkreuzprofil in dieser Konfiguration."
+    "crosshairEmpty": "Kein Fadenkreuzprofil in dieser Konfiguration.",
+    "add": "Konfiguration hinzufügen",
+    "restore": "Wiederherstellen",
+    "restoreText": "Die ursprüngliche Konfiguration auf {name} zurücksetzen? Sie wird sofort angewendet, wenn möglich, dann bei jedem Start.",
+    "lastPlayed": "Gespielt {when}"
   },
   "kb": {
     "group_spells": "Fähigkeiten",
@@ -433,7 +437,7 @@
     "noResult": "Keine Aktion gefunden.",
     "noSettings": "Keine Einstellungen in diesen Kategorien.",
     "quickHint": "Aktiviere den Schnellzauber (Smart Cast) pro Fähigkeit oder Gegenstand.",
-    "valHint": "Eigene VALORANT-Belegungen dieses Profils. Klicke auf eine Taste, um sie zu ändern.",
+    "valHint": "Eigene Belegungen dieses Profils. „—\": Standardtaste des Spiels. Klicke auf eine Taste, um sie zu ändern.",
     "valParseError": "Diese VALORANT-Tastendatei konnte nicht gelesen werden.",
     "addBinding": "Belegung hinzufügen…",
     "quick_spells": "Fähigkeiten",
@@ -924,7 +928,7 @@
     "ResolutionSizeY": "Höhe",
     "FrameRateLimit": "FPS-Limit (0 = unbegrenzt)",
     "bUseVSync": "Vertikale Synchronisation",
-    "bShouldLetterbox": "Letterbox",
+    "bShouldLetterbox": "Schwarze Balken",
     "sg.TextureQuality": "Texturqualität",
     "sg.EffectsQuality": "Effektqualität",
     "sg.ShadowQuality": "Schattenqualität",
@@ -934,7 +938,10 @@
     "sg.FoliageQuality": "Vegetation",
     "sg.ShadingQuality": "Schattierung",
     "sg.ReflectionQuality": "Reflexionen",
-    "sg.GlobalIlluminationQuality": "Globale Beleuchtung"
+    "sg.GlobalIlluminationQuality": "Globale Beleuchtung",
+    "MuteShort": "Stumm",
+    "PushToTalkKey": "Push-to-Talk-Taste",
+    "TeamPushToTalkKey": "Team-Push-to-Talk-Taste"
   },
   "cfgopt": {
     "lolWindow_0": "Vollbild",
@@ -956,5 +963,13 @@
     "colorBlind_1": "Deuteranopie",
     "colorBlind_2": "Protanopie",
     "colorBlind_3": "Tritanopie"
+  },
+  "whatsNew": {
+    "title": "Neuigkeiten",
+    "version": "Version {v}",
+    "added": "Neu",
+    "changed": "Geändert",
+    "fixed": "Behoben",
+    "ok": "Alles klar"
   }
 }

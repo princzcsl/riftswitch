@@ -58,7 +58,7 @@ export function valCat(key: string): string {
 
 export function isValSound(key: string): boolean {
   const k = bare(key);
-  return ["Volume", "Music", "Sound", "Audio", "VoiceChat", "Speaker", "Microphone", "Mic"].some((p) => k.includes(p));
+  return ["Volume", "Music", "Sound", "Audio", "Voice", "Voip", "PushToTalk", "HRTF", "Speaker", "Microphone", "Mic"].some((p) => k.includes(p));
 }
 
 /** « EAresFloatSettingName::MouseSensitivity » → « Mouse Sensitivity », « bUseVSync » → « Use V Sync ». */

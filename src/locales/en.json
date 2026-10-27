@@ -394,7 +394,7 @@
     "g_quality": "Graphics quality",
     "g_minimap": "Minimap",
     "advanced": "Advanced",
-    "applyBtn": "Apply…",
+    "applyBtn": "Apply",
     "applyTitle": "Apply this profile to…",
     "applyHintLol": "Checked accounts get this profile every time they are launched from RiftSwitch. The account signed in to the LoL client gets it right away.",
     "applyHintVal": "Checked accounts get it right away in their VALORANT folder, then every time they are launched from RiftSwitch. Close VALORANT first.",
@@ -402,12 +402,16 @@
     "connected": "Signed in",
     "noValDir": "Never played on this PC",
     "appliedN": "Applied now to {n} account(s), linked to {total}.",
-    "source_backup": "Automatic backup",
-    "backupChip": "Backup",
+    "source_backup": "Original backup",
+    "backupChip": "Original backup",
     "cat_crosshair": "Crosshair",
     "crosshairHint": "Click a crosshair to make it the active one in this profile.",
     "crosshairActive": "Active",
-    "crosshairEmpty": "No crosshair profile in this config."
+    "crosshairEmpty": "No crosshair profile in this config.",
+    "add": "Add a config",
+    "restore": "Restore",
+    "restoreText": "Put the original config back on {name}? It is applied right away if possible, then at every launch.",
+    "lastPlayed": "Played {when}"
   },
   "kb": {
     "group_spells": "Abilities",
@@ -433,7 +437,7 @@
     "noResult": "No action found.",
     "noSettings": "No setting in these categories.",
     "quickHint": "Enable quick cast (smart cast) per ability or item.",
-    "valHint": "Custom VALORANT bindings for this profile. Click a key to change it.",
+    "valHint": "Custom bindings of this profile. \"—\" means the game's default key. Click a key to change it.",
     "valParseError": "This VALORANT keybind file could not be read.",
     "addBinding": "Add a binding…",
     "quick_spells": "Abilities",
@@ -924,7 +928,7 @@
     "ResolutionSizeY": "Height",
     "FrameRateLimit": "FPS limit (0 = unlimited)",
     "bUseVSync": "Vertical sync",
-    "bShouldLetterbox": "Letterbox",
+    "bShouldLetterbox": "Black bars",
     "sg.TextureQuality": "Texture quality",
     "sg.EffectsQuality": "Effects quality",
     "sg.ShadowQuality": "Shadow quality",
@@ -934,7 +938,10 @@
     "sg.FoliageQuality": "Foliage",
     "sg.ShadingQuality": "Shading",
     "sg.ReflectionQuality": "Reflections",
-    "sg.GlobalIlluminationQuality": "Global illumination"
+    "sg.GlobalIlluminationQuality": "Global illumination",
+    "MuteShort": "Mute",
+    "PushToTalkKey": "Push to talk key",
+    "TeamPushToTalkKey": "Team push to talk key"
   },
   "cfgopt": {
     "lolWindow_0": "Fullscreen",
@@ -956,5 +963,13 @@
     "colorBlind_1": "Deuteranopia",
     "colorBlind_2": "Protanopia",
     "colorBlind_3": "Tritanopia"
+  },
+  "whatsNew": {
+    "title": "What's new",
+    "version": "Version {v}",
+    "added": "Added",
+    "changed": "Changed",
+    "fixed": "Fixed",
+    "ok": "Got it"
   }
 }

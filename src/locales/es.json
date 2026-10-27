@@ -394,7 +394,7 @@
     "g_quality": "Calidad gráfica",
     "g_minimap": "Minimapa",
     "advanced": "Avanzado",
-    "applyBtn": "Aplicar…",
+    "applyBtn": "Aplicar",
     "applyTitle": "Aplicar este perfil a…",
     "applyHintLol": "Las cuentas marcadas reciben este perfil en cada inicio desde RiftSwitch. La cuenta conectada al cliente de LoL lo recibe al momento.",
     "applyHintVal": "Las cuentas marcadas lo reciben al momento en su carpeta de VALORANT y en cada inicio desde RiftSwitch. Cierra VALORANT antes.",
@@ -402,12 +402,16 @@
     "connected": "Conectada",
     "noValDir": "Nunca jugado en este PC",
     "appliedN": "Aplicado ahora a {n} cuenta(s), vinculado a {total}.",
-    "source_backup": "Copia automática",
-    "backupChip": "Copia",
+    "source_backup": "Copia original",
+    "backupChip": "Copia original",
     "cat_crosshair": "Mira",
     "crosshairHint": "Haz clic en una mira para activarla en este perfil.",
     "crosshairActive": "Activa",
-    "crosshairEmpty": "No hay perfiles de mira en esta configuración."
+    "crosshairEmpty": "No hay perfiles de mira en esta configuración.",
+    "add": "Añadir una configuración",
+    "restore": "Restaurar",
+    "restoreText": "¿Volver a poner su configuración original en {name}? Se aplica al momento si es posible y luego en cada inicio.",
+    "lastPlayed": "Jugado {when}"
   },
   "kb": {
     "group_spells": "Habilidades",
@@ -433,7 +437,7 @@
     "noResult": "No se encontró ninguna acción.",
     "noSettings": "No hay ajustes en estas categorías.",
     "quickHint": "Activa el lanzamiento rápido (smart cast) por habilidad u objeto.",
-    "valHint": "Asignaciones personalizadas de VALORANT de este perfil. Haz clic en una tecla para cambiarla.",
+    "valHint": "Asignaciones personalizadas de este perfil. «—»: tecla por defecto del juego. Haz clic en una tecla para cambiarla.",
     "valParseError": "No se pudo leer este archivo de teclas de VALORANT.",
     "addBinding": "Añadir una asignación…",
     "quick_spells": "Habilidades",
@@ -934,7 +938,10 @@
     "sg.FoliageQuality": "Vegetación",
     "sg.ShadingQuality": "Sombreado",
     "sg.ReflectionQuality": "Reflejos",
-    "sg.GlobalIlluminationQuality": "Iluminación global"
+    "sg.GlobalIlluminationQuality": "Iluminación global",
+    "MuteShort": "Silencio",
+    "PushToTalkKey": "Tecla pulsar para hablar",
+    "TeamPushToTalkKey": "Tecla pulsar para hablar (equipo)"
   },
   "cfgopt": {
     "lolWindow_0": "Pantalla completa",
@@ -956,5 +963,13 @@
     "colorBlind_1": "Deuteranopía",
     "colorBlind_2": "Protanopía",
     "colorBlind_3": "Tritanopía"
+  },
+  "whatsNew": {
+    "title": "Novedades",
+    "version": "Versión {v}",
+    "added": "Añadido",
+    "changed": "Cambiado",
+    "fixed": "Corregido",
+    "ok": "Entendido"
   }
 }

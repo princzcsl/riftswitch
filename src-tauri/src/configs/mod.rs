@@ -88,7 +88,10 @@ pub fn is_val_sound(key: &str) -> bool {
         "Music",
         "Sound",
         "Audio",
-        "VoiceChat",
+        "Voice",
+        "Voip",
+        "PushToTalk",
+        "HRTF",
         "Speaker",
         "Microphone",
         "Mic",
@@ -154,6 +157,9 @@ pub struct ConfigProfile {
     pub source_account: String,
     pub source_name: String,
     pub source_icon: Option<i64>,
+    /// Avatar choisi dans RiftSwitch (champion, agent, symbole) et sa couleur ; jamais une photo importée.
+    pub source_avatar: String,
+    pub source_color: String,
     pub lol: Option<LolConfig>,
     pub val: Option<ValConfig>,
 }

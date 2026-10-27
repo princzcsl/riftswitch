@@ -156,6 +156,8 @@ export interface ConfigProfile {
   sourceAccount: string;
   sourceName: string;
   sourceIcon: number | null;
+  sourceAvatar: string;
+  sourceColor: string;
   lol: { input: IniDoc; game: IniDoc } | null;
   val: { files: Record<string, string> } | null;
 }

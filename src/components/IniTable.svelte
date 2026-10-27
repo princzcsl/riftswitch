@@ -10,6 +10,7 @@
     sections,
     filter,
     group,
+    numericBools = true,
     onchange,
   }: {
     doc: IniDoc;
@@ -18,6 +19,7 @@
     filter?: (section: string, key: string) => boolean;
     /** Regroupement par clé (sinon par section). */
     group?: (key: string) => string;
+    numericBools?: boolean;
     onchange?: () => void;
   } = $props();
   let q = $state("");
@@ -65,7 +67,7 @@
       {#each rows as r (`${r.si}:${r.ei}`)}
         <label class="tr" title={r.k}>
           <span class="k">{humanize(r.k)}</span>
-          {#if Object.prototype.hasOwnProperty.call(BOOLS, r.v)}
+          {#if Object.prototype.hasOwnProperty.call(BOOLS, r.v) && (numericBools || !/^[01]$/.test(r.v))}
             <input type="checkbox" checked={isOn(r.v)} onchange={() => write(r, BOOLS[r.v])} />
           {:else}
             <input class="input v" value={shown(r.v)} onchange={(e) => write(r, e.currentTarget.value)} />

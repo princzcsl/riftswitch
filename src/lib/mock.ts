@@ -243,6 +243,8 @@ const profiles = [
     sourceAccount: "",
     sourceName: "Ami#0001",
     sourceIcon: 29,
+    sourceAvatar: "agent:add6443a-41bd-e414-f6ad-e58d267f4e95",
+    sourceColor: "#ff4655",
     lol: null,
     val: {
       files: {

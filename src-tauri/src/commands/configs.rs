@@ -63,8 +63,15 @@ pub fn duplicate_profile(
     state.profiles.save(p)
 }
 
-/// Riot ID et icône d'un compte du coffre.
-fn account_source(state: &AppState, id: &str) -> Option<(String, Option<i64>)> {
+struct Source {
+    name: String,
+    icon: Option<i64>,
+    avatar: String,
+    color: String,
+}
+
+/// Riot ID, icône d'invocateur et avatar d'un compte du coffre.
+fn account_source(state: &AppState, id: &str) -> Option<Source> {
     state
         .with_vault(|v| {
             Ok(v.data.accounts.iter().find(|a| a.id == id).map(|a| {
@@ -73,7 +80,17 @@ fn account_source(state: &AppState, id: &str) -> Option<(String, Option<i64>)> {
                 } else {
                     format!("{}#{}", a.game_name, a.tag_line)
                 };
-                (name, a.profile_icon_id)
+                Source {
+                    name,
+                    icon: a.profile_icon_id,
+                    // Une photo importée (data:) reste sur ce PC.
+                    avatar: if a.icon.starts_with("data:") {
+                        String::new()
+                    } else {
+                        a.icon.clone()
+                    },
+                    color: a.color.clone(),
+                }
             }))
         })
         .ok()
@@ -96,7 +113,7 @@ pub(crate) fn backup_once(
         state.profiles.list().iter().any(|x| {
             x.source == "backup" && x.game == applied.game && x.source_account == account_id
         });
-    let Some((name, icon)) = account_source(state, account_id).filter(|_| !exists) else {
+    let Some(src) = account_source(state, account_id).filter(|_| !exists) else {
         return;
     };
     let categories = if applied.game == "lol" {
@@ -105,13 +122,15 @@ pub(crate) fn backup_once(
         vec!["keybinds", "interface", "crosshair", "sound", "graphics"]
     };
     let p = ConfigProfile {
-        name: name.split('#').next().unwrap_or(&name).to_string(),
+        name: src.name.split('#').next().unwrap_or(&src.name).to_string(),
         game: applied.game.clone(),
         source: "backup".into(),
         categories: categories.into_iter().map(String::from).collect(),
         source_account: account_id.to_string(),
-        source_name: name,
-        source_icon: icon,
+        source_name: src.name,
+        source_icon: src.icon,
+        source_avatar: src.avatar,
+        source_color: src.color,
         created_at: now_ms(),
         lol,
         val,
@@ -147,9 +166,11 @@ pub async fn capture_profile(
         ..Default::default()
     };
     if let Some(acc) = source_account {
-        if let Some((name, icon)) = account_source(&state, &acc) {
-            p.source_name = name;
-            p.source_icon = icon;
+        if let Some(src) = account_source(&state, &acc) {
+            p.source_name = src.name;
+            p.source_icon = src.icon;
+            p.source_avatar = src.avatar;
+            p.source_color = src.color;
         }
         p.source_account = acc;
     }

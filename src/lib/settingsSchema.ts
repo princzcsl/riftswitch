@@ -3,7 +3,7 @@
 
 export type Field = {
   key: string;
-  kind: "bool" | "slider" | "select" | "number" | "mapSkins";
+  kind: "bool" | "slider" | "select" | "number" | "key" | "mapSkins";
   min?: number;
   max?: number;
   step?: number;
@@ -129,7 +129,7 @@ export const VAL_SCHEMA: Record<string, Group[]> = {
     },
     {
       id: "minimap",
-      fields: [{ key: "MinimapSize", kind: "number", step: 0.01 }, { key: "MinimapZoom", kind: "number", step: 0.01 }, ...bools("MinimapRotates", "MinimapTranslates")],
+      fields: [{ key: "MinimapSize", kind: "number", step: 0.001 }, { key: "MinimapZoom", kind: "number", step: 0.001 }, ...bools("MinimapRotates", "MinimapTranslates")],
     },
     {
       id: "gameplay",
@@ -148,6 +148,8 @@ export const VAL_SCHEMA: Record<string, Group[]> = {
       id: "voice",
       fields: [
         ...bools("VoiceChatEnabled", "PushToTalkEnabled", "VoipDucksMusicVolume"),
+        { key: "PushToTalkKey", kind: "key" },
+        { key: "TeamPushToTalkKey", kind: "key" },
         { key: "VoiceVolume", kind: "slider", min: 0, max: 100, step: 1, label: "VoiceChatVolume" },
         { key: "MicVolume", kind: "slider", min: 0, max: 100, step: 1 },
         { key: "MicSensitivityThreshold", kind: "slider", min: 0, max: 100, step: 1 },

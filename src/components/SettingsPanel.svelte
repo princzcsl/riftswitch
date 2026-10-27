@@ -4,20 +4,23 @@
   import { t } from "../lib/i18n.svelte";
   import { humanize, isVolatile } from "../lib/ini";
   import { bareKey, schemaKeys, type Field, type Group } from "../lib/settingsSchema";
-  import Icon from "./Icon.svelte";
   import IniTable from "./IniTable.svelte";
+  import KeyCapture from "./KeyCapture.svelte";
   import Toggle from "./Toggle.svelte";
 
   let {
     doc = $bindable(),
     groups,
     advanced,
+    numericBools = true,
     onchange,
   }: {
     doc: IniDoc;
     groups: Group[];
     /** Clés de la catégorie affichée, pour la partie « Avancé ». */
-    advanced: (section: string, key: string) => boolean;
+    advanced: ((section: string, key: string) => boolean) | null;
+    /** 0 / 1 lus comme des cases à cocher dans « Avancé » (LoL ; VALORANT écrit True / False). */
+    numericBools?: boolean;
     onchange?: () => void;
   } = $props();
 
@@ -50,7 +53,9 @@
     const d = Math.min((orig.split(".")[1] ?? "").length, 6);
     return d ? n.toFixed(d) : String(Math.round(n));
   }
-  const shown = (f: Field, n: number) => (f.pct ? `${Math.round(n * 100)} %` : String(Number(n.toFixed(f.step && f.step < 1 ? 2 : 0))));
+  /** Décimales affichées : celles du pas (0,001 → 3), aucune pour un pas entier. */
+  const places = (f: Field) => (f.step && f.step < 1 ? String(f.step).split(".")[1].length : 0);
+  const shown = (f: Field, n: number) => (f.pct ? `${Math.round(n * 100)} %` : String(Number(n.toFixed(places(f)))));
   const label = (f: Field) => {
     const k = `cfgk.${f.label ?? f.key}`;
     const v = t(k);
@@ -78,7 +83,7 @@
   );
 
   const known = $derived(schemaKeys(groups));
-  const extra = (s: string, k: string) => advanced(s, k) && !isVolatile(k) && !known.has(bareKey(k)) && !k.startsWith(MAP_SKIN);
+  const extra = (s: string, k: string) => !!advanced && advanced(s, k) && !isVolatile(k) && !known.has(bareKey(k)) && !k.startsWith(MAP_SKIN);
   const extraCount = $derived(doc.sections.reduce((n, s) => n + s.entries.filter(([k]) => extra(s.name, k)).length, 0));
 </script>
 
@@ -89,7 +94,7 @@
       <div class="card">
         <div class="section-title">{t(`configs.g_${g.id}`)}</div>
         {#each g.fields as { f, pos } (f.key)}
-          <div class="tr">
+          <div class="tr" class:wide={f.kind === "slider"}>
             {#if f.kind === "mapSkins"}
               <span class="k">{t("cfgk.MapSkins")}</span>
               <Toggle checked={mapSkins.every((e) => doc.sections[e.si].entries[e.ei][1] === "0")} onchange={setMapSkins} />
@@ -103,7 +108,7 @@
                 {@const muted = !!mute && isOn(val(mute))}
                 {#if mute}
                   <button class="mute" class:muted title={t("cfgk.Mute")} onclick={() => write(mute, boolText(val(mute), !muted))}>
-                    <Icon name={muted ? "x" : "signal"} size={13} />
+                    {t("cfgk.MuteShort")}
                   </button>
                 {/if}
                 <input
@@ -121,8 +126,16 @@
                 <select class="input sel" value={String(Math.round(Number(v)))} onchange={(e) => write(pos, numText(v, Number(e.currentTarget.value)))}>
                   {#each f.options ?? [] as o}<option value={String(o)}>{t(`cfgopt.${f.list}_${o}`)}</option>{/each}
                 </select>
+              {:else if f.kind === "key"}
+                <KeyCapture mode="val" valKey={{ key: v, shift: false, ctrl: false, alt: false }} onval={(k) => write(pos, k?.key ?? "None")} />
               {:else}
-                <input class="input v" type="number" step={f.step ?? 1} value={v} onchange={(e) => write(pos, e.currentTarget.value)} />
+                <input
+                  class="input v"
+                  type="number"
+                  step={f.step ?? 1}
+                  value={shown(f, Number(v))}
+                  onchange={(e) => write(pos, f.step && f.step < 1 ? e.currentTarget.value : numText(v, Number(e.currentTarget.value)))}
+                />
               {/if}
             {/if}
           </div>
@@ -133,7 +146,7 @@
   {#if extraCount}
     <details class="adv">
       <summary>{t("configs.advanced")} <span class="faint">({extraCount})</span></summary>
-      <IniTable bind:doc filter={extra} {onchange} />
+      <IniTable bind:doc filter={extra} {numericBools} {onchange} />
     </details>
   {/if}
 </div>
@@ -167,8 +180,12 @@
     color: var(--text-2);
     font-size: 13px;
   }
+  .tr.wide .k {
+    flex: 0 0 34%;
+  }
   .range {
-    width: 130px;
+    flex: 1;
+    min-width: 100px;
     accent-color: var(--accent);
   }
   .range.muted {
@@ -182,18 +199,19 @@
     font-variant-numeric: tabular-nums;
   }
   .mute {
-    display: grid;
-    place-items: center;
-    width: 24px;
     height: 24px;
-    border-radius: 6px;
+    padding: 0 8px;
+    border-radius: var(--radius-pill);
     border: 1px solid var(--border);
     background: none;
     color: var(--text-3);
+    font-size: 11px;
+    font-weight: 650;
     cursor: pointer;
   }
   .mute.muted {
-    color: var(--danger);
+    color: #fff;
+    background: var(--danger);
     border-color: var(--danger);
   }
   .sel {

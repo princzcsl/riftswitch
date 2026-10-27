@@ -394,7 +394,7 @@
     "g_quality": "Qualità grafica",
     "g_minimap": "Minimappa",
     "advanced": "Avanzate",
-    "applyBtn": "Applica…",
+    "applyBtn": "Applica",
     "applyTitle": "Applica questo profilo a…",
     "applyHintLol": "Gli account selezionati ricevono questo profilo a ogni avvio da RiftSwitch. L'account connesso al client di LoL lo riceve subito.",
     "applyHintVal": "Gli account selezionati lo ricevono subito nella cartella di VALORANT e a ogni avvio da RiftSwitch. Chiudi prima VALORANT.",
@@ -402,12 +402,16 @@
     "connected": "Connesso",
     "noValDir": "Mai giocato su questo PC",
     "appliedN": "Applicato ora a {n} account, collegato a {total}.",
-    "source_backup": "Backup automatico",
-    "backupChip": "Backup",
+    "source_backup": "Backup originale",
+    "backupChip": "Backup originale",
     "cat_crosshair": "Mirino",
     "crosshairHint": "Clicca su un mirino per renderlo attivo in questo profilo.",
     "crosshairActive": "Attivo",
-    "crosshairEmpty": "Nessun profilo mirino in questa configurazione."
+    "crosshairEmpty": "Nessun profilo mirino in questa configurazione.",
+    "add": "Aggiungi una configurazione",
+    "restore": "Ripristina",
+    "restoreText": "Rimettere la configurazione originale su {name}? Viene applicata subito se possibile, poi a ogni avvio.",
+    "lastPlayed": "Giocato {when}"
   },
   "kb": {
     "group_spells": "Abilità",
@@ -433,7 +437,7 @@
     "noResult": "Nessuna azione trovata.",
     "noSettings": "Nessuna impostazione in queste categorie.",
     "quickHint": "Attiva il lancio rapido (smart cast) per abilità o oggetto.",
-    "valHint": "Assegnazioni VALORANT personalizzate di questo profilo. Clicca su un tasto per cambiarlo.",
+    "valHint": "Assegnazioni personalizzate di questo profilo. «—»: tasto predefinito del gioco. Clicca su un tasto per cambiarlo.",
     "valParseError": "Impossibile leggere questo file di tasti VALORANT.",
     "addBinding": "Aggiungi un'assegnazione…",
     "quick_spells": "Abilità",
@@ -934,7 +938,10 @@
     "sg.FoliageQuality": "Vegetazione",
     "sg.ShadingQuality": "Ombreggiatura",
     "sg.ReflectionQuality": "Riflessi",
-    "sg.GlobalIlluminationQuality": "Illuminazione globale"
+    "sg.GlobalIlluminationQuality": "Illuminazione globale",
+    "MuteShort": "Muto",
+    "PushToTalkKey": "Tasto premi per parlare",
+    "TeamPushToTalkKey": "Tasto premi per parlare (squadra)"
   },
   "cfgopt": {
     "lolWindow_0": "Schermo intero",
@@ -956,5 +963,13 @@
     "colorBlind_1": "Deuteranopia",
     "colorBlind_2": "Protanopia",
     "colorBlind_3": "Tritanopia"
+  },
+  "whatsNew": {
+    "title": "Novità",
+    "version": "Versione {v}",
+    "added": "Aggiunto",
+    "changed": "Modificato",
+    "fixed": "Corretto",
+    "ok": "Ok"
   }
 }

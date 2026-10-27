@@ -394,7 +394,7 @@
     "g_quality": "Qualité graphique",
     "g_minimap": "Minicarte",
     "advanced": "Avancé",
-    "applyBtn": "Appliquer…",
+    "applyBtn": "Appliquer",
     "applyTitle": "Appliquer ce profil à…",
     "applyHintLol": "Les comptes cochés reçoivent ce profil à chaque lancement depuis RiftSwitch. Le compte connecté au client LoL le reçoit tout de suite.",
     "applyHintVal": "Les comptes cochés le reçoivent tout de suite dans leur dossier VALORANT, puis à chaque lancement depuis RiftSwitch. Ferme VALORANT avant.",
@@ -402,12 +402,16 @@
     "connected": "Connecté",
     "noValDir": "Jamais lancé sur ce PC",
     "appliedN": "Appliqué maintenant à {n} compte(s), lié à {total}.",
-    "source_backup": "Sauvegarde automatique",
-    "backupChip": "Sauvegarde",
+    "source_backup": "Sauvegarde d'origine",
+    "backupChip": "Sauvegarde d'origine",
     "cat_crosshair": "Viseur",
     "crosshairHint": "Clique sur un viseur pour en faire le viseur actif de ce profil.",
     "crosshairActive": "Actif",
-    "crosshairEmpty": "Aucun profil de viseur dans cette config."
+    "crosshairEmpty": "Aucun profil de viseur dans cette config.",
+    "add": "Ajouter une config",
+    "restore": "Restaurer",
+    "restoreText": "Remettre sa config d'origine sur {name} ? Elle lui sera appliquée tout de suite si possible, puis à chaque lancement.",
+    "lastPlayed": "Joué {when}"
   },
   "kb": {
     "group_spells": "Compétences",
@@ -433,7 +437,7 @@
     "noResult": "Aucune action trouvée.",
     "noSettings": "Aucun réglage dans ces catégories.",
     "quickHint": "Active l'incantation rapide (smart cast) par compétence ou objet.",
-    "valHint": "Liaisons VALORANT personnalisées de ce profil. Clique sur une touche pour la changer.",
+    "valHint": "Liaisons personnalisées de ce profil. « — » : touche par défaut du jeu. Clique sur une touche pour la changer.",
     "valParseError": "Ce fichier de touches VALORANT n'a pas pu être lu.",
     "addBinding": "Ajouter une liaison…",
     "quick_spells": "Compétences",
@@ -854,7 +858,7 @@
     "Damage_Enabled": "Dégâts infligés",
     "EnemyDamage_Enabled": "Dégâts subis",
     "Heal_Enabled": "Soins",
-    "ManaDamage_Enabled": "Dégâts de mana",
+    "ManaDamage_Enabled": "Dégâts AP",
     "Gold_Enabled": "Or",
     "Experience_Enabled": "Expérience",
     "Level_Enabled": "Montée de niveau",
@@ -924,7 +928,7 @@
     "ResolutionSizeY": "Hauteur",
     "FrameRateLimit": "Limite de FPS (0 = illimité)",
     "bUseVSync": "Synchronisation verticale",
-    "bShouldLetterbox": "Bandes noires (letterbox)",
+    "bShouldLetterbox": "Bandes noires",
     "sg.TextureQuality": "Qualité des textures",
     "sg.EffectsQuality": "Qualité des effets",
     "sg.ShadowQuality": "Qualité des ombres",
@@ -934,7 +938,10 @@
     "sg.FoliageQuality": "Végétation",
     "sg.ShadingQuality": "Ombrage",
     "sg.ReflectionQuality": "Réflexions",
-    "sg.GlobalIlluminationQuality": "Illumination globale"
+    "sg.GlobalIlluminationQuality": "Illumination globale",
+    "MuteShort": "Muet",
+    "PushToTalkKey": "Touche Push to talk",
+    "TeamPushToTalkKey": "Touche Push to talk (équipe)"
   },
   "cfgopt": {
     "lolWindow_0": "Plein écran",
@@ -956,5 +963,13 @@
     "colorBlind_1": "Deutéranopie",
     "colorBlind_2": "Protanopie",
     "colorBlind_3": "Tritanopie"
+  },
+  "whatsNew": {
+    "title": "Nouveautés",
+    "version": "Version {v}",
+    "added": "Ajouté",
+    "changed": "Modifié",
+    "fixed": "Corrigé",
+    "ok": "Super"
   }
 }
