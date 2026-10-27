@@ -49,7 +49,7 @@
     for (const p of PAGES) {
       list.push({ id: `page:${p.page}`, label: t(`nav.${p.page}`), hint: t("palette.page"), keys: norm(t(`nav.${p.page}`)), run: () => (app.page = p.page), icon: p.icon });
     }
-    if (!app.status.proxyRunning) {
+    {
       const on = !app.preferOffline;
       list.push({ id: "ghost", label: t(on ? "palette.ghostOn" : "palette.ghostOff"), hint: t("palette.action"), keys: norm(`${t("palette.ghostOn")} ${t("palette.ghostOff")} ghost fantome offline`), run: () => app.setGhost(on), icon: "ghost" });
     }
@@ -62,12 +62,12 @@
   const results = $derived.by<Item[]>(() => {
     const words = norm(query).split(/\s+/).filter(Boolean);
     if (!words.length) {
-      // Sans saisie : favoris puis comptes récents, sur leur dernier jeu.
-      return [...app.accounts]
+      // Sans saisie : favoris puis comptes récents sur leur dernier jeu, puis les actions.
+      const recent = [...app.accounts]
         .sort((a, b) => Number(b.favorite) - Number(a.favorite) || (b.lastUsedAt ?? 0) - (a.lastUsedAt ?? 0))
-        .slice(0, 6)
-        .map((a) => items.find((i) => i.id === `${a.id}:${(a.lastGame ?? "lol") as Game}`))
-        .filter((i): i is Item => !!i);
+        .slice(0, 5)
+        .map((a) => items.find((i) => i.id === `${a.id}:${(a.lastGame ?? "lol") as Game}`));
+      return [...recent, ...items.filter((i) => i.id === "ghost" || i.id === "lock")].filter((i): i is Item => !!i);
     }
     return items.filter((i) => words.every((w) => i.keys.includes(w))).slice(0, 8);
   });
@@ -138,6 +138,7 @@
       {:else}
         <p class="empty">{t("palette.empty")}</p>
       {/if}
+      <p class="tip">{t("palette.tip")}</p>
     </div>
   </div>
 {/if}
@@ -216,6 +217,13 @@
   }
   .hint {
     font-size: 12px;
+    color: var(--text-3);
+  }
+  .tip {
+    margin: 0;
+    padding: 8px 16px;
+    border-top: 1px solid var(--border);
+    font-size: 11.5px;
     color: var(--text-3);
   }
   .empty {

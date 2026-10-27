@@ -68,7 +68,8 @@
     "notifyBody": "{game} se lance. Tu apparais hors ligne pour tes amis.",
     "disabled": "Désactivé",
     "nextOff": "Mode fantôme désactivé : clique pour lancer ton prochain jeu hors ligne.",
-    "nextOn": "Mode fantôme activé pour le prochain lancement : clique pour le désactiver."
+    "nextOn": "Mode fantôme activé pour le prochain lancement : clique pour le désactiver.",
+    "tooLate": "Trop tard pour ce lancement : le Riot Client est déjà démarré."
   },
   "play": {
     "play": "JOUER",
@@ -728,7 +729,8 @@
     "page": "Page",
     "action": "Action",
     "ghostOn": "Activer le mode fantôme",
-    "ghostOff": "Désactiver le mode fantôme"
+    "ghostOff": "Désactiver le mode fantôme",
+    "tip": "Tape un compte, un jeu, une page, « fantôme » ou « verrouiller ». ↑↓ pour choisir, Entrée pour valider."
   },
   "schedule": {
     "text": "Lance automatiquement un compte et un jeu à l'heure choisie. Rien ne se passe si un jeu est déjà ouvert ou si l'app est verrouillée.",

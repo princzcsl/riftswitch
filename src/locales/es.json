@@ -68,7 +68,8 @@
     "notifyBody": "{game} se está iniciando. Apareces desconectado para tus amigos.",
     "disabled": "Desactivado",
     "nextOff": "Modo fantasma desactivado: haz clic para abrir tu próximo juego desconectado.",
-    "nextOn": "Modo fantasma activado para el próximo inicio: haz clic para desactivarlo."
+    "nextOn": "Modo fantasma activado para el próximo inicio: haz clic para desactivarlo.",
+    "tooLate": "Demasiado tarde para este inicio: el Riot Client ya se ha iniciado."
   },
   "play": {
     "play": "JUGAR",
@@ -728,7 +729,8 @@
     "page": "Página",
     "action": "Acción",
     "ghostOn": "Activar el modo fantasma",
-    "ghostOff": "Desactivar el modo fantasma"
+    "ghostOff": "Desactivar el modo fantasma",
+    "tip": "Escribe una cuenta, un juego, una página, «fantasma» o «bloquear». ↑↓ para elegir, Intro para confirmar."
   },
   "schedule": {
     "text": "Inicia automáticamente una cuenta y un juego a la hora elegida. No pasa nada si ya hay un juego abierto o la app está bloqueada.",

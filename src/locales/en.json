@@ -68,7 +68,8 @@
     "notifyBody": "{game} is starting. You appear offline to your friends.",
     "disabled": "Off",
     "nextOff": "Ghost mode off: click to launch your next game offline.",
-    "nextOn": "Ghost mode on for the next launch: click to turn it off."
+    "nextOn": "Ghost mode on for the next launch: click to turn it off.",
+    "tooLate": "Too late for this launch: the Riot Client has already started."
   },
   "play": {
     "play": "PLAY",
@@ -728,7 +729,8 @@
     "page": "Page",
     "action": "Action",
     "ghostOn": "Turn on ghost mode",
-    "ghostOff": "Turn off ghost mode"
+    "ghostOff": "Turn off ghost mode",
+    "tip": "Type an account, a game, a page, \"ghost\" or \"lock\". ↑↓ to choose, Enter to confirm."
   },
   "schedule": {
     "text": "Automatically launches an account and game at the chosen time. Nothing happens if a game is already open or the app is locked.",

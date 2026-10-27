@@ -68,7 +68,8 @@
     "notifyBody": "{game} si sta avviando. Appari offline ai tuoi amici.",
     "disabled": "Disattivato",
     "nextOff": "Modalità fantasma disattivata: clicca per avviare il prossimo gioco offline.",
-    "nextOn": "Modalità fantasma attiva per il prossimo avvio: clicca per disattivarla."
+    "nextOn": "Modalità fantasma attiva per il prossimo avvio: clicca per disattivarla.",
+    "tooLate": "Troppo tardi per questo avvio: il Riot Client è già avviato."
   },
   "play": {
     "play": "GIOCA",
@@ -728,7 +729,8 @@
     "page": "Pagina",
     "action": "Azione",
     "ghostOn": "Attiva la modalità fantasma",
-    "ghostOff": "Disattiva la modalità fantasma"
+    "ghostOff": "Disattiva la modalità fantasma",
+    "tip": "Scrivi un account, un gioco, una pagina, «fantasma» o «blocca». ↑↓ per scegliere, Invio per confermare."
   },
   "schedule": {
     "text": "Avvia automaticamente un account e un gioco all'ora scelta. Non succede nulla se un gioco è già aperto o l'app è bloccata.",

@@ -68,7 +68,8 @@
     "notifyBody": "{game} startet. Du erscheinst für deine Freunde offline.",
     "disabled": "Aus",
     "nextOff": "Geistermodus aus: Klicke, um dein nächstes Spiel offline zu starten.",
-    "nextOn": "Geistermodus für den nächsten Start an: Klicke zum Ausschalten."
+    "nextOn": "Geistermodus für den nächsten Start an: Klicke zum Ausschalten.",
+    "tooLate": "Zu spät für diesen Start: Der Riot Client läuft bereits."
   },
   "play": {
     "play": "SPIELEN",
@@ -728,7 +729,8 @@
     "page": "Seite",
     "action": "Aktion",
     "ghostOn": "Geistermodus einschalten",
-    "ghostOff": "Geistermodus ausschalten"
+    "ghostOff": "Geistermodus ausschalten",
+    "tip": "Tippe ein Konto, ein Spiel, eine Seite, „Geist\" oder „Sperren\". ↑↓ zum Wählen, Enter zum Bestätigen."
   },
   "schedule": {
     "text": "Startet ein Konto und Spiel automatisch zur gewählten Uhrzeit. Nichts passiert, wenn bereits ein Spiel offen oder die App gesperrt ist.",
@@ -736,8 +738,8 @@
     "add": "Start hinzufügen",
     "remove": "Löschen",
     "account": "Konto",
-    "ghost": "Geistmodus",
-    "ghostText": "Startet das Spiel im Geistmodus.",
+    "ghost": "Geistermodus",
+    "ghostText": "Startet das Spiel im Geistermodus.",
     "everyDay": "Täglich",
     "d0": "So",
     "d1": "Mo",
