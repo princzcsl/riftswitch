@@ -94,11 +94,65 @@
 
 <svelte:window onkeydowncapture={onKey} onmousedowncapture={onMouse} onwheel={onWheel} oncontextmenu={(e) => capturing && e.preventDefault()} onblur={stop} />
 
-<button type="button" class="slot" class:capturing class:empty={label === "—"} class:conflict onclick={start} title={conflict ? t("keys.conflict") : ""}>
-  {label}
-</button>
+{#snippet mouse(b: string)}
+  <svg class="mouse" viewBox="0 0 12 18" width="13" height="19" aria-label={t(`keys.mouse_${b}`)}>
+    <rect x="1" y="1" width="10" height="16" rx="5" fill="none" stroke="currentColor" stroke-width="1.4" />
+    <line x1="1" y1="7" x2="11" y2="7" stroke="currentColor" stroke-width="1.2" />
+    <line x1="6" y1="1" x2="6" y2="7" stroke="currentColor" stroke-width="1.2" />
+    {#if b === "L"}<path d="M6 1.6 A4.4 4.4 0 0 0 1.6 6 V7 H6 Z" fill="currentColor" />{/if}
+    {#if b === "R"}<path d="M6 1.6 A4.4 4.4 0 0 1 10.4 6 V7 H6 Z" fill="currentColor" />{/if}
+    {#if b === "M" || b === "↑" || b === "↓"}<rect x="4.8" y="2.5" width="2.4" height="3.5" rx="1.2" fill="currentColor" />{/if}
+  </svg>
+  {#if !["L", "R", "M"].includes(b)}<span class="mb">{b}</span>{/if}
+{/snippet}
+
+<span class="kc">
+  <button type="button" class="slot" class:capturing class:empty={label === "—"} class:conflict onclick={start} title={conflict ? t("keys.conflict") : ""}>
+    {#each label.split(/(🖱[^\s+]*)/) as part}
+      {#if part.startsWith("🖱")}{@render mouse(part.slice(2))}{:else}{part}{/if}
+    {/each}
+  </button>
+  {#if label !== "—" && !capturing}
+    <button type="button" class="clear" title={t("keys.unbind")} aria-label={t("keys.unbind")} onclick={emitUnbind}>×</button>
+  {/if}
+</span>
 
 <style>
+  .kc {
+    position: relative;
+    display: inline-flex;
+  }
+  .clear {
+    position: absolute;
+    top: 50%;
+    right: 4px;
+    transform: translateY(-50%);
+    width: 18px;
+    height: 18px;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--text-3);
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .kc:hover .clear {
+    opacity: 1;
+  }
+  .clear:hover {
+    background: var(--surface-2);
+    color: var(--danger);
+  }
+  .mouse {
+    vertical-align: -3px;
+  }
+  .mb {
+    margin-left: 2px;
+    font-size: 11px;
+  }
   .slot {
     min-width: 108px;
     height: 32px;

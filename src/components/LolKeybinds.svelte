@@ -62,9 +62,15 @@
         if (sec.name === "Quickbinds") continue;
         for (const [k] of sec.entries) all.push({ id: k, section: sec.name });
       }
+      // Actions connues dans l'ordre du jeu (objets 1 à 6…), puis les autres par libellé.
+      const rank = (id: string) => {
+        const i = LOL_ACTIONS.findIndex((a) => a.id === id);
+        return i >= 0 ? i : 10_000;
+      };
       return all
         .filter((r) => !s || r.id.toLowerCase().includes(s) || actionLabel(LOL_ACTIONS, r.id, i18n.lang).toLowerCase().includes(s))
-        .map((r) => r.id);
+        .map((r) => r.id)
+        .sort((a, b) => rank(a) - rank(b) || actionLabel(LOL_ACTIONS, a, i18n.lang).localeCompare(actionLabel(LOL_ACTIONS, b, i18n.lang), undefined, { numeric: true }));
     }
     return LOL_ACTIONS.filter((a) => a.group === group).map((a) => a.id);
   });

@@ -38,7 +38,7 @@ export const LOL_ACTIONS: ActionDef[] = [
   L("evtUseItem4", "items", "Item slot 4", "Objet 4"),
   L("evtUseItem5", "items", "Item slot 5", "Objet 5"),
   L("evtUseItem6", "items", "Item slot 6", "Objet 6"),
-  L("evtUseVisionItem", "items", "Ward / trinket", "Ward / balise"),
+  L("evtUseVisionItem", "items", "Trinket", "Balise"),
   L("evtUseItem7", "items", "Recall", "Rappel"),
   L("evtOpenShop", "items", "Open shop", "Ouvrir la boutique"),
   L("evtPlayerMoveClick", "movement", "Move", "Déplacement"),
@@ -77,7 +77,7 @@ export const LOL_ACTIONS: ActionDef[] = [
   L("evtShowVoicePanel", "communication", "Voice panel", "Panneau vocal"),
   L("evtShowScoreBoard", "interface", "Scoreboard", "Tableau des scores"),
   L("evtHoldShowScoreBoard", "interface", "Hold scoreboard", "Maintenir le tableau des scores"),
-  L("evtTogglePlayerStats", "interface", "Player stats", "Statistiques du joueur"),
+  L("evtTogglePlayerStats", "interface", "Toggle champion stats", "Alterner statistiques champion"),
   L("evtToggleFPSAndLatency", "interface", "FPS & ping display", "Affichage FPS et latence"),
   L("evtToggleMinionHealthBars", "interface", "Minion health bars", "Barres de vie des sbires"),
   L("evtShowHealthBars", "interface", "Health bars", "Barres de vie"),
@@ -134,9 +134,43 @@ export const VAL_ACTIONS: ActionDef[] = [
   L("ToggleMouseCursor", "interface", "Toggle cursor", "Afficher le curseur"),
 ];
 
+// Variantes d'incantation de LoL (evtSmartCastItem3…) : mode + action de base.
+const CAST_MODES: [string, string, string][] = [
+  ["SmartPlusSelfCastWithIndicator", "Incantation rapide + sur soi avec indicateur", "Quick cast + self cast with indicator"],
+  ["SmartPlusSelfCast", "Incantation rapide + sur soi", "Quick cast + self cast"],
+  ["SmartCastWithIndicator", "Incantation rapide avec indicateur", "Quick cast with indicator"],
+  ["SmartCast", "Incantation rapide", "Quick cast"],
+  ["SelfCast", "Sur soi", "Self cast"],
+  ["NormalCast", "Lancement normal", "Normal cast"],
+];
+const CAST_TARGET = (t: string) => (/^(Spell\d|AvatarSpell\d|RoleBound)$/.test(t) ? `evtCast${t}` : `evtUse${t}`);
+const OTHER: Record<string, [string, string]> = {
+  evtRadialEmoteInstantOpen: ["Ouvrir la roue d'emotes", "Open emote wheel"],
+  evtReciprocityTrigger: ["Remerciement", "Thanks"],
+  evtReciprocityMyBadTrigger: ["Excuse", "My bad"],
+  evtOnUIMouse4Pan: ["Déplacer la caméra (souris)", "Pan camera (mouse)"],
+  evtDragScrollLock: ["Verrouiller le défilement", "Drag scroll lock"],
+  evtToggleDeathRecapShowcase: ["Récapitulatif de mort", "Death recap"],
+  evtShopSwitchTabs: ["Boutique : changer d'onglet", "Shop: switch tabs"],
+  evtShopFocusSearch: ["Boutique : rechercher", "Shop: search"],
+};
+
+function composedLabel(list: ActionDef[], id: string, fr: boolean): string | null {
+  if (OTHER[id]) return OTHER[id][fr ? 0 : 1];
+  const slot = id.match(/^evtRadialEmotePlaySlot(\d)$/);
+  if (slot) return fr ? `Emote de la roue ${Number(slot[1]) + 1}` : `Wheel emote ${Number(slot[1]) + 1}`;
+  const rest = id.replace(/^evt/, "");
+  for (const [mode, f, e] of CAST_MODES) {
+    if (!rest.startsWith(mode)) continue;
+    const base = list.find((a) => a.id === CAST_TARGET(rest.slice(mode.length)));
+    if (base) return `${fr ? f : e} : ${fr ? base.fr : base.en}`;
+  }
+  return null;
+}
+
 export function actionLabel(list: ActionDef[], id: string, lang: string): string {
   const def = list.find((a) => a.id === id);
-  if (!def) return humanize(id);
+  if (!def) return composedLabel(list, id, lang.startsWith("fr")) ?? humanize(id);
   return lang.startsWith("fr") ? def.fr : def.en;
 }
 

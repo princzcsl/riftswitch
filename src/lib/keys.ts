@@ -109,7 +109,7 @@ export function prettyLol(binding: string): string {
         const c = layoutMap.get(`Digit${k}`);
         return c && c !== k ? `${c} (${k})` : k;
       }
-      if (k.startsWith("Button ")) return `🖱${k.slice(7)}`;
+      if (k.startsWith("Button ")) return `🖱${({ "1": "L", "2": "R", "3": "M" } as Record<string, string>)[k.slice(7)] ?? k.slice(7)}`;
       return k.length === 1 ? k.toUpperCase() : k;
     })
     .join(" + ");
