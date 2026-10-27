@@ -19,11 +19,19 @@
 
   // Lancements planifiés
   const DAYS = [1, 2, 3, 4, 5, 6, 0];
-  let schAccount = $state("");
-  let schGame = $state<Game>("lol");
-  let schTime = $state("20:00");
-  let schDays = $state<number[]>([1, 2, 3, 4, 5]);
-  let schOffline = $state(false);
+  // Derniers choix mémorisés pour la prochaine création.
+  const lastSch: Partial<Schedule> = (() => {
+    try {
+      return JSON.parse(localStorage.getItem("rs.lastSchedule") ?? "{}");
+    } catch {
+      return {};
+    }
+  })();
+  let schAccount = $state(app.accounts.some((a) => a.id === lastSch.accountId) ? lastSch.accountId! : "");
+  let schGame = $state<Game>(lastSch.game ?? "lol");
+  let schTime = $state(lastSch.time ?? "20:00");
+  let schDays = $state<number[]>(lastSch.days ?? [1, 2, 3, 4, 5]);
+  let schOffline = $state(lastSch.offline ?? false);
   const accountName = (id: string) => {
     const a = app.accounts.find((x) => x.id === id);
     return a ? a.label || a.gameName : "?";
@@ -32,6 +40,11 @@
     if (!schAccount || !schDays.length || !schTime) return;
     const next: Schedule = { id: crypto.randomUUID(), accountId: schAccount, game: schGame, offline: schOffline, time: schTime, days: [...schDays], enabled: true, lastRun: "" };
     set("schedules", [...s.schedules, next]);
+    try {
+      localStorage.setItem("rs.lastSchedule", JSON.stringify({ accountId: next.accountId, game: next.game, time: next.time, days: next.days, offline: next.offline }));
+    } catch {
+      /* ignoré */
+    }
   }
   function patchSchedule(id: string, patch: Partial<Schedule> | null) {
     set("schedules", patch ? s.schedules.map((x) => (x.id === id ? { ...x, ...patch } : x)) : s.schedules.filter((x) => x.id !== id));
