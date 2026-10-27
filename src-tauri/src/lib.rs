@@ -10,6 +10,7 @@ mod paths;
 mod riot;
 mod runes;
 mod settings;
+mod schedule;
 mod state;
 mod telemetry;
 mod tray;
@@ -26,7 +27,7 @@ use state::AppState;
 fn handle_args(app: &tauri::AppHandle, argv: &[String]) -> bool {
     if let Some(pos) = argv.iter().position(|a| a == "--play") {
         if let (Some(id), Some(game)) = (argv.get(pos + 1), argv.get(pos + 2)) {
-            play::play_external(app.clone(), id.clone(), game.clone());
+            play::play_external(app.clone(), id.clone(), game.clone(), false);
             return true;
         }
     }

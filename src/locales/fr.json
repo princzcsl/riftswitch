@@ -551,7 +551,8 @@
     "closeRiotClient": "Fermer le Riot Client après le lancement",
     "closeRiotClientText": "Une fois le jeu ouvert, sa fenêtre est fermée comme avec la croix. Le client continue de tourner en arrière-plan.",
     "rememberGhost": "Retenir le mode fantôme",
-    "rememberGhostText": "Garde le mode fantôme activé ou non au prochain démarrage de RiftSwitch. Sinon, il est désactivé à chaque démarrage."
+    "rememberGhostText": "Garde le mode fantôme activé ou non au prochain démarrage de RiftSwitch. Sinon, il est désactivé à chaque démarrage.",
+    "s_schedule": "Planification"
   },
   "setup": {
     "welcome": "Bienvenue dans RiftSwitch",
@@ -728,5 +729,22 @@
     "action": "Action",
     "ghostOn": "Activer le mode fantôme",
     "ghostOff": "Désactiver le mode fantôme"
+  },
+  "schedule": {
+    "text": "Lance automatiquement un compte et un jeu à l'heure choisie. Rien ne se passe si un jeu est déjà ouvert ou si l'app est verrouillée.",
+    "empty": "Aucun lancement planifié.",
+    "add": "Ajouter un lancement",
+    "remove": "Supprimer",
+    "account": "Compte",
+    "ghost": "Mode fantôme",
+    "ghostText": "Lance le jeu en mode fantôme.",
+    "everyDay": "Tous les jours",
+    "d0": "Dim",
+    "d1": "Lun",
+    "d2": "Mar",
+    "d3": "Mer",
+    "d4": "Jeu",
+    "d5": "Ven",
+    "d6": "Sam"
   }
 }

@@ -551,7 +551,8 @@
     "closeRiotClient": "Close the Riot Client after launch",
     "closeRiotClientText": "Once the game is open, its window is closed like with the X button. The client keeps running in the background.",
     "rememberGhost": "Remember ghost mode",
-    "rememberGhostText": "Keep ghost mode on or off the next time RiftSwitch starts. Otherwise it is off at every start."
+    "rememberGhostText": "Keep ghost mode on or off the next time RiftSwitch starts. Otherwise it is off at every start.",
+    "s_schedule": "Schedule"
   },
   "setup": {
     "welcome": "Welcome to RiftSwitch",
@@ -728,5 +729,22 @@
     "action": "Action",
     "ghostOn": "Turn on ghost mode",
     "ghostOff": "Turn off ghost mode"
+  },
+  "schedule": {
+    "text": "Automatically launches an account and game at the chosen time. Nothing happens if a game is already open or the app is locked.",
+    "empty": "No scheduled launch.",
+    "add": "Add a launch",
+    "remove": "Delete",
+    "account": "Account",
+    "ghost": "Ghost mode",
+    "ghostText": "Launches the game in ghost mode.",
+    "everyDay": "Every day",
+    "d0": "Sun",
+    "d1": "Mon",
+    "d2": "Tue",
+    "d3": "Wed",
+    "d4": "Thu",
+    "d5": "Fri",
+    "d6": "Sat"
   }
 }

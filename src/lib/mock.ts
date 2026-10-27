@@ -247,6 +247,7 @@ let settings = {
   blockSwitchInGame: true,
   closeRiotClient: true,
   rememberGhost: false,
+  schedules: [],
   autoApplyProfiles: true,
   discordRpc: false,
   discordShowRiotId: false,

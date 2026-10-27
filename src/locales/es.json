@@ -551,7 +551,8 @@
     "closeRiotClient": "Cerrar el Riot Client tras el lanzamiento",
     "closeRiotClientText": "Cuando el juego está abierto, su ventana se cierra como con la X. El cliente sigue funcionando en segundo plano.",
     "rememberGhost": "Recordar el modo fantasma",
-    "rememberGhostText": "Mantiene el modo fantasma activado o no la próxima vez que se inicie RiftSwitch. Si no, se desactiva en cada inicio."
+    "rememberGhostText": "Mantiene el modo fantasma activado o no la próxima vez que se inicie RiftSwitch. Si no, se desactiva en cada inicio.",
+    "s_schedule": "Programación"
   },
   "setup": {
     "welcome": "Bienvenido a RiftSwitch",
@@ -728,5 +729,22 @@
     "action": "Acción",
     "ghostOn": "Activar el modo fantasma",
     "ghostOff": "Desactivar el modo fantasma"
+  },
+  "schedule": {
+    "text": "Inicia automáticamente una cuenta y un juego a la hora elegida. No pasa nada si ya hay un juego abierto o la app está bloqueada.",
+    "empty": "Ningún inicio programado.",
+    "add": "Añadir un inicio",
+    "remove": "Eliminar",
+    "account": "Cuenta",
+    "ghost": "Modo fantasma",
+    "ghostText": "Inicia el juego en modo fantasma.",
+    "everyDay": "Todos los días",
+    "d0": "Dom",
+    "d1": "Lun",
+    "d2": "Mar",
+    "d3": "Mié",
+    "d4": "Jue",
+    "d5": "Vie",
+    "d6": "Sáb"
   }
 }

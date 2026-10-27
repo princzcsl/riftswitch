@@ -1,5 +1,16 @@
 export type Game = "lol" | "tft" | "val";
 
+export interface Schedule {
+  id: string;
+  accountId: string;
+  game: Game;
+  offline: boolean;
+  time: string;
+  days: number[];
+  enabled: boolean;
+  lastRun: string;
+}
+
 export interface Settings {
   setupDone: boolean;
   language: string;
@@ -17,6 +28,7 @@ export interface Settings {
   blockSwitchInGame: boolean;
   closeRiotClient: boolean;
   rememberGhost: boolean;
+  schedules: Schedule[];
   autoApplyProfiles: boolean;
   discordRpc: boolean;
   discordShowRiotId: boolean;

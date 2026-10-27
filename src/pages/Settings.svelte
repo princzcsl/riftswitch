@@ -9,12 +9,34 @@
   import Icon from "../components/Icon.svelte";
   import Modal from "../components/Modal.svelte";
   import Toggle from "../components/Toggle.svelte";
+  import type { Game, Schedule } from "../lib/types";
 
   const s = $derived(app.settings!);
   const balance = $derived(shards(computeAchievements(app.accounts, app.folders, app.profiles)) + (app.settings?.bonusShards ?? 0));
 
   let section = $state("general");
-  const sections = ["general", "appearance", "security", "riot", "privacy", "backup", "advanced", "about"];
+  const sections = ["general", "appearance", "security", "riot", "schedule", "privacy", "backup", "advanced", "about"];
+
+  // Lancements planifiés
+  const DAYS = [1, 2, 3, 4, 5, 6, 0];
+  let schAccount = $state("");
+  let schGame = $state<Game>("lol");
+  let schTime = $state("20:00");
+  let schDays = $state<number[]>([1, 2, 3, 4, 5]);
+  let schOffline = $state(false);
+  const accountName = (id: string) => {
+    const a = app.accounts.find((x) => x.id === id);
+    return a ? a.label || a.gameName : "?";
+  };
+  function addSchedule() {
+    if (!schAccount || !schDays.length || !schTime) return;
+    const next: Schedule = { id: crypto.randomUUID(), accountId: schAccount, game: schGame, offline: schOffline, time: schTime, days: [...schDays], enabled: true, lastRun: "" };
+    set("schedules", [...s.schedules, next]);
+  }
+  function patchSchedule(id: string, patch: Partial<Schedule> | null) {
+    set("schedules", patch ? s.schedules.map((x) => (x.id === id ? { ...x, ...patch } : x)) : s.schedules.filter((x) => x.id !== id));
+  }
+  const dayName = (d: number) => t(`schedule.d${d}`);
 
   // Mot de passe maître
   let pwOpen = $state(false);
@@ -245,6 +267,41 @@
             <Icon name="power" size={15} />{t("settings.quitRiotBtn")}
           </button>
         </div>
+      {:else if section === "schedule"}
+        <p class="muted">{t("schedule.text")}</p>
+        {#each s.schedules as sch (sch.id)}
+          <div class="setting">
+            <div>
+              <strong>{sch.time} · {accountName(sch.accountId)} · {t(`games.short_${sch.game}`)}</strong>
+              <p>{sch.days.length === 7 ? t("schedule.everyDay") : DAYS.filter((d) => sch.days.includes(d)).map(dayName).join(", ")}{sch.offline ? ` · ${t("schedule.ghost")}` : ""}</p>
+            </div>
+            <button class="btn sm ghost" title={t("schedule.remove")} onclick={() => patchSchedule(sch.id, null)}><Icon name="trash" size={14} /></button>
+            <Toggle checked={sch.enabled} onchange={(v) => patchSchedule(sch.id, { enabled: v })} />
+          </div>
+        {:else}
+          <p class="muted small">{t("schedule.empty")}</p>
+        {/each}
+        <div class="section-title">{t("schedule.add")}</div>
+        <div class="sch-form">
+          <select class="input" bind:value={schAccount}>
+            <option value="" disabled>{t("schedule.account")}</option>
+            {#each app.accounts as a (a.id)}<option value={a.id}>{a.label || a.gameName}</option>{/each}
+          </select>
+          <select class="input" bind:value={schGame}>
+            {#each ["lol", "tft", "val"] as g (g)}<option value={g}>{t(`games.${g}`)}</option>{/each}
+          </select>
+          <input class="input" type="time" bind:value={schTime} />
+        </div>
+        <div class="days">
+          {#each DAYS as d (d)}
+            <button class="day" class:on={schDays.includes(d)} onclick={() => (schDays = schDays.includes(d) ? schDays.filter((x) => x !== d) : [...schDays, d])}>{dayName(d)}</button>
+          {/each}
+        </div>
+        <div class="setting">
+          <div><strong>{t("schedule.ghost")}</strong><p>{t("schedule.ghostText")}</p></div>
+          <Toggle checked={schOffline} onchange={(v) => (schOffline = v)} />
+        </div>
+        <button class="btn primary" disabled={!schAccount || !schDays.length || !schTime} onclick={addSchedule}><Icon name="plus" size={15} />{t("schedule.add")}</button>
       {:else if section === "privacy"}
         <div class="setting">
           <div><strong>{t("streamer.title")}</strong><p>{t("streamer.text")}</p></div>
@@ -400,6 +457,30 @@
   }
   .setting select.input {
     width: 220px;
+  }
+  .sch-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr 110px;
+    gap: 8px;
+  }
+  .days {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 10px 0 4px;
+  }
+  .day {
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-2);
+    cursor: pointer;
+  }
+  .day.on {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
   }
   .col-setting {
     flex-direction: column;

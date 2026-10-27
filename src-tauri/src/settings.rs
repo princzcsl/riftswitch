@@ -32,6 +32,8 @@ pub struct Settings {
     pub close_riot_client: bool,
     /// Garde le mode fantôme choisi d'un lancement de RiftSwitch à l'autre (désactivé par défaut).
     pub remember_ghost: bool,
+    /// Lancements planifiés.
+    pub schedules: Vec<crate::schedule::Schedule>,
     /// Appliquer automatiquement le profil de config associé au compte au lancement.
     pub auto_apply_profiles: bool,
     pub discord_rpc: bool,
@@ -73,6 +75,7 @@ impl Default for Settings {
             block_switch_in_game: true,
             close_riot_client: true,
             remember_ghost: false,
+            schedules: Vec::new(),
             auto_apply_profiles: true,
             discord_rpc: false,
             discord_show_riot_id: false,

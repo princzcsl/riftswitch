@@ -279,6 +279,7 @@ pub fn spawn(app: AppHandle) {
 
             // ── Statistiques anonymes (opt-in, une fois par jour) ──
             crate::telemetry::maybe_send(&app).await;
+            crate::schedule::tick(&app);
 
             // ── Verrouillage automatique ──
             if settings.auto_lock_minutes > 0 && state.is_unlocked() {

@@ -551,7 +551,8 @@
     "closeRiotClient": "Riot Client nach dem Start schließen",
     "closeRiotClientText": "Sobald das Spiel offen ist, wird sein Fenster wie mit dem X geschlossen. Der Client läuft im Hintergrund weiter.",
     "rememberGhost": "Geistermodus merken",
-    "rememberGhostText": "Behält den Geistermodus beim nächsten Start von RiftSwitch bei. Sonst ist er bei jedem Start aus."
+    "rememberGhostText": "Behält den Geistermodus beim nächsten Start von RiftSwitch bei. Sonst ist er bei jedem Start aus.",
+    "s_schedule": "Zeitplan"
   },
   "setup": {
     "welcome": "Willkommen bei RiftSwitch",
@@ -728,5 +729,22 @@
     "action": "Aktion",
     "ghostOn": "Geistermodus einschalten",
     "ghostOff": "Geistermodus ausschalten"
+  },
+  "schedule": {
+    "text": "Startet ein Konto und Spiel automatisch zur gewählten Uhrzeit. Nichts passiert, wenn bereits ein Spiel offen oder die App gesperrt ist.",
+    "empty": "Kein geplanter Start.",
+    "add": "Start hinzufügen",
+    "remove": "Löschen",
+    "account": "Konto",
+    "ghost": "Geistmodus",
+    "ghostText": "Startet das Spiel im Geistmodus.",
+    "everyDay": "Täglich",
+    "d0": "So",
+    "d1": "Mo",
+    "d2": "Di",
+    "d3": "Mi",
+    "d4": "Do",
+    "d5": "Fr",
+    "d6": "Sa"
   }
 }

@@ -736,7 +736,7 @@ fn after_launch(app: AppHandle, account_id: String, game: &'static str) {
 }
 
 /// Lancement depuis la zone de notification ou la ligne de commande (`--play <id> <jeu>`).
-pub fn play_external(app: AppHandle, account_id: String, game: String) {
+pub fn play_external(app: AppHandle, account_id: String, game: String, offline: bool) {
     tauri::async_runtime::spawn(async move {
         let state = app.state::<AppState>();
         let Ok(game) = normalize_game(&game) else {
@@ -747,7 +747,7 @@ pub fn play_external(app: AppHandle, account_id: String, game: String) {
         };
         state.cancel_login.store(false, Ordering::Relaxed);
         set_busy(&app, &state, Some("switching"));
-        let r = do_play(&app, &state, &account_id, game, false, false).await;
+        let r = do_play(&app, &state, &account_id, game, offline, false).await;
         set_busy(&app, &state, None);
         if let Err(e) = r {
             log(format!("play (externe): échec {}", e.code));

@@ -46,7 +46,14 @@ pub fn save_settings(
     settings: Settings,
 ) -> AppResult<Settings> {
     let mut s = settings.sanitized();
-    s.telemetry_last_day = state.settings().telemetry_last_day;
+    let current = state.settings();
+    s.telemetry_last_day = current.telemetry_last_day;
+    // Dernière exécution des lancements planifiés : tenue par le cœur, pas par l'interface.
+    for sch in s.schedules.iter_mut() {
+        if let Some(c) = current.schedules.iter().find(|c| c.id == sch.id) {
+            sch.last_run = c.last_run.clone();
+        }
+    }
     if s.telemetry && s.telemetry_install_id.is_empty() {
         s.telemetry_install_id = uuid::Uuid::new_v4().to_string();
     }
