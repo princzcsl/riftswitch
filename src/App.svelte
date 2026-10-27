@@ -9,6 +9,7 @@
   import UpdateScreen from "./components/UpdateScreen.svelte";
   import ConfirmDialog from "./components/ConfirmDialog.svelte";
   import CommandPalette from "./components/CommandPalette.svelte";
+  import WhatsNew from "./components/WhatsNew.svelte";
   import { updater } from "./lib/updater.svelte";
   import Toasts from "./components/Toasts.svelte";
   import Accounts from "./pages/Accounts.svelte";
@@ -64,7 +65,10 @@
     updateChecked = true;
     // Juste après une mise à jour : pas d'écran de recherche, un simple message.
     const previous = app.boot.version ? updater.justUpdated(app.boot.version) : null;
-    if (previous) app.toast("success", t("update.done", { v: app.boot.version }), 6000);
+    if (previous) {
+      app.toast("success", t("update.done", { v: app.boot.version }), 6000);
+      app.whatsNew = previous;
+    }
     if (app.settings?.checkUpdates) updater.autoUpdate(!previous);
     else updater.skipStartup();
   });
@@ -112,6 +116,7 @@
 <UpdateScreen />
 <ConfirmDialog />
 <CommandPalette />
+<WhatsNew />
 <Toasts />
 <span class="sr-only" aria-live="polite">{app.status.busy ? t("status.switching") : ""}</span>
 

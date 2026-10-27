@@ -43,6 +43,8 @@ class AppStore {
   playSteps = $state<string[]>([]);
   /** Hors ligne par défaut dans le menu Jouer (mémorisé). */
   preferOffline = $state(false);
+  /** Nouveautés à afficher depuis cette version (vide : toutes), ou null si la fenêtre est fermée. */
+  whatsNew = $state<string | null>(null);
   /** Confirmation affichée par ConfirmDialog ; `confirm()` attend la réponse. */
   confirmState = $state<{ title: string; text: string; ok: string; cancel?: string; danger?: boolean } | null>(null);
   #confirmResolve: ((ok: boolean) => void) | null = null;
