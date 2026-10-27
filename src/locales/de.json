@@ -720,5 +720,13 @@
     "abandon": "Das laufende Match wird abgebrochen.",
     "quitClose": "Beenden und Spiel schließen",
     "quit": "Beenden"
+  },
+  "palette": {
+    "placeholder": "Konto, Spiel oder Seite suchen…",
+    "empty": "Keine Ergebnisse",
+    "page": "Seite",
+    "action": "Aktion",
+    "ghostOn": "Geistermodus einschalten",
+    "ghostOff": "Geistermodus ausschalten"
   }
 }

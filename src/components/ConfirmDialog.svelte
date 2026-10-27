@@ -13,11 +13,8 @@
 
 {#if app.confirmState}
   {@const c = app.confirmState}
-  <Modal bind:open={getOpen, setOpen} title={c.title} width={440}>
-    <div class="row" style="gap:14px;align-items:flex-start">
-      <img class="logo" src="/logo.svg" alt="" width="38" height="38" />
-      <p class="text">{c.text}</p>
-    </div>
+  <Modal bind:open={getOpen, setOpen} title={c.title} logo width={440}>
+    <p class="text">{c.text}</p>
     {#snippet footer()}
       <button class="btn" onclick={() => app.answerConfirm(false)}>{c.cancel ?? t("common.cancel")}</button>
       <button class="btn {c.danger ? 'danger solid' : 'primary'}" onclick={() => app.answerConfirm(true)}>{c.ok}</button>
@@ -26,12 +23,8 @@
 {/if}
 
 <style>
-  .logo {
-    flex: none;
-    border-radius: 10px;
-  }
   .text {
-    margin: 6px 0 0;
+    margin: 0;
     line-height: 1.5;
   }
 </style>

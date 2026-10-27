@@ -720,5 +720,13 @@
     "abandon": "The current match will be abandoned.",
     "quitClose": "Quit and close the game",
     "quit": "Quit"
+  },
+  "palette": {
+    "placeholder": "Search an account, a game, a page…",
+    "empty": "No result",
+    "page": "Page",
+    "action": "Action",
+    "ghostOn": "Turn on ghost mode",
+    "ghostOff": "Turn off ghost mode"
   }
 }

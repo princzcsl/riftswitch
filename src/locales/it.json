@@ -720,5 +720,13 @@
     "abandon": "La partita in corso verrà abbandonata.",
     "quitClose": "Esci e chiudi il gioco",
     "quit": "Esci"
+  },
+  "palette": {
+    "placeholder": "Cerca un account, un gioco, una pagina…",
+    "empty": "Nessun risultato",
+    "page": "Pagina",
+    "action": "Azione",
+    "ghostOn": "Attiva la modalità fantasma",
+    "ghostOff": "Disattiva la modalità fantasma"
   }
 }

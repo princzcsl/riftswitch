@@ -5,6 +5,7 @@
   let {
     open = $bindable(false),
     title = "",
+    logo = false,
     width = 560,
     onclose,
     children,
@@ -12,6 +13,8 @@
   }: {
     open?: boolean;
     title?: string;
+    /** Logo de l'app à gauche du titre (confirmations). */
+    logo?: boolean;
     width?: number;
     onclose?: () => void;
     children: Snippet;
@@ -38,7 +41,7 @@
   <div class="backdrop" role="presentation" onclick={(e) => e.target === e.currentTarget && close()}>
     <div class="modal glass-strong fade-in" style="width:min({width}px, calc(100vw - 48px))" role="dialog" aria-modal="true" aria-label={title}>
       <header>
-        <h2>{title}</h2>
+        <h2 class:with-logo={logo}>{#if logo}<img src="/logo.svg" alt="" width="28" height="28" />{/if}{title}</h2>
         <button class="btn ghost icon sm" onclick={close} aria-label="close"><Icon name="x" /></button>
       </header>
       <div class="body">{@render children()}</div>
@@ -83,5 +86,13 @@
     gap: 10px;
     padding: 14px 20px;
     border-top: 1px solid var(--border);
+  }
+  h2.with-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  h2.with-logo img {
+    border-radius: 8px;
   }
 </style>

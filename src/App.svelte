@@ -8,6 +8,7 @@
   import PlayOverlay from "./components/PlayOverlay.svelte";
   import UpdateScreen from "./components/UpdateScreen.svelte";
   import ConfirmDialog from "./components/ConfirmDialog.svelte";
+  import CommandPalette from "./components/CommandPalette.svelte";
   import { updater } from "./lib/updater.svelte";
   import Toasts from "./components/Toasts.svelte";
   import Accounts from "./pages/Accounts.svelte";
@@ -110,6 +111,7 @@
 <PlayOverlay />
 <UpdateScreen />
 <ConfirmDialog />
+<CommandPalette />
 <Toasts />
 <span class="sr-only" aria-live="polite">{app.status.busy ? t("status.switching") : ""}</span>
 

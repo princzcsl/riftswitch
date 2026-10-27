@@ -720,5 +720,13 @@
     "abandon": "La partida en curso se abandonará.",
     "quitClose": "Salir y cerrar el juego",
     "quit": "Salir"
+  },
+  "palette": {
+    "placeholder": "Buscar una cuenta, un juego, una página…",
+    "empty": "Sin resultados",
+    "page": "Página",
+    "action": "Acción",
+    "ghostOn": "Activar el modo fantasma",
+    "ghostOff": "Desactivar el modo fantasma"
   }
 }

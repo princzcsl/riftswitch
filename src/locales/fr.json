@@ -720,5 +720,13 @@
     "abandon": "La partie en cours sera abandonnée.",
     "quitClose": "Quitter et fermer le jeu",
     "quit": "Quitter"
+  },
+  "palette": {
+    "placeholder": "Chercher un compte, un jeu, une page…",
+    "empty": "Aucun résultat",
+    "page": "Page",
+    "action": "Action",
+    "ghostOn": "Activer le mode fantôme",
+    "ghostOff": "Désactiver le mode fantôme"
   }
 }
