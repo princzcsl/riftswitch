@@ -10,7 +10,7 @@ Choisis un compte, clique sur **Jouer**, choisis le jeu : RiftSwitch gère la ba
 - **Mode hors ligne** : proxy XMPP local inspiré de [Deceive](https://github.com/molenzwiebel/deceive), sans message automatique.
 - **Interface** Liquid Glass multi-thème (JSON), mode performance, zoom 80–150 %, 5 langues complètes (en, fr, es, it, de) + structure prête pour 9 autres.
 
-La conception complète est dans [docs/CONCEPTION.md](docs/CONCEPTION.md).
+La conception complète est dans [docs/CONCEPTION.md](docs/CONCEPTION.md), la feuille de route dans [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Installation
 

@@ -177,7 +177,6 @@ Objectif : l'app doit ressembler à un launcher de jeu (type Porofessor, Blitz),
 
 - Système multi-thème par variables CSS (couleurs, flou, transparence, rayons) ; un thème = un fichier JSON, ajout sans toucher au code.
 - Thème par défaut Liquid Glass : verre dépoli (`backdrop-filter`), reflets, bordures lumineuses ; sous Windows 11, effet Mica/Acrylic natif via `window-vibrancy`, vibrancy native sous macOS.
-- Thème « full Liquid Glass » inspiré de l'extension [ig-utils-vibe](https://github.com/princzcsl/ig-utils-vibe) à prototyper.
 - Avant de figer : produire 3 à 4 maquettes de thème (ex. Liquid Glass clair, Liquid Glass sombre, Hextech or/bleu, Néon Valorant) pour que tu choisisses.
 - Mode performance : désactive flou et animations automatiquement sur petite config ou batterie, et manuellement dans les paramètres.
 
