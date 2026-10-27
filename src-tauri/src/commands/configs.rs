@@ -9,7 +9,7 @@ use crate::error::{AppError, AppResult};
 use crate::riot::lcu;
 use crate::runes;
 use crate::state::AppState;
-use crate::util::now_ms;
+use crate::util::{log, now_ms};
 use crate::vault::model::RunePage;
 
 #[tauri::command]
@@ -63,6 +63,66 @@ pub fn duplicate_profile(
     state.profiles.save(p)
 }
 
+/// Riot ID et icône d'un compte du coffre.
+fn account_source(state: &AppState, id: &str) -> Option<(String, Option<i64>)> {
+    state
+        .with_vault(|v| {
+            Ok(v.data.accounts.iter().find(|a| a.id == id).map(|a| {
+                let name = if a.tag_line.is_empty() {
+                    a.game_name.clone()
+                } else {
+                    format!("{}#{}", a.game_name, a.tag_line)
+                };
+                (name, a.profile_icon_id)
+            }))
+        })
+        .ok()
+        .flatten()
+}
+
+/// Avant la première application d'un autre profil sur un compte : sauvegarde de sa config
+/// actuelle, une seule fois par compte et par jeu, pour pouvoir revenir en arrière.
+pub(crate) fn backup_once(
+    state: &AppState,
+    account_id: &str,
+    applied: &ConfigProfile,
+    lol: Option<LolConfig>,
+    val: Option<configs::ValConfig>,
+) {
+    if applied.source_account == account_id || applied.source == "backup" {
+        return;
+    }
+    let exists =
+        state.profiles.list().iter().any(|x| {
+            x.source == "backup" && x.game == applied.game && x.source_account == account_id
+        });
+    let Some((name, icon)) = account_source(state, account_id).filter(|_| !exists) else {
+        return;
+    };
+    let categories = if applied.game == "lol" {
+        vec!["keybinds", "interface", "sound", "graphics"]
+    } else {
+        vec!["keybinds", "interface", "crosshair", "sound", "graphics"]
+    };
+    let p = ConfigProfile {
+        name: name.split('#').next().unwrap_or(&name).to_string(),
+        game: applied.game.clone(),
+        source: "backup".into(),
+        categories: categories.into_iter().map(String::from).collect(),
+        source_account: account_id.to_string(),
+        source_name: name,
+        source_icon: icon,
+        created_at: now_ms(),
+        lol,
+        val,
+        ..Default::default()
+    };
+    let ok = state.profiles.save(p).is_ok();
+    log(format!(
+        "configs: sauvegarde automatique avant application ok={ok}"
+    ));
+}
+
 /// Crée un profil depuis la config actuelle (client LoL connecté ou fichiers ; dossier Valorant choisi).
 #[tauri::command]
 pub async fn capture_profile(
@@ -87,16 +147,7 @@ pub async fn capture_profile(
         ..Default::default()
     };
     if let Some(acc) = source_account {
-        if let Ok(Some((name, icon))) = state.with_vault(|v| {
-            Ok(v.data.accounts.iter().find(|a| a.id == acc).map(|a| {
-                let name = if a.tag_line.is_empty() {
-                    a.game_name.clone()
-                } else {
-                    format!("{}#{}", a.game_name, a.tag_line)
-                };
-                (name, a.profile_icon_id)
-            }))
-        }) {
+        if let Some((name, icon)) = account_source(&state, &acc) {
             p.source_name = name;
             p.source_icon = icon;
         }
@@ -145,6 +196,13 @@ pub async fn apply_profile(
                 Some(a) => lcu::logged_in(a).await,
                 None => false,
             };
+            let active = state.status.lock().unwrap().active_account_id.clone();
+            if let (true, Some(acc), Some(a)) = (logged, active, api.as_ref()) {
+                if let Ok((cfg, "client")) = configs::capture_lol(Some(a), &settings.lol_path).await
+                {
+                    backup_once(&state, &acc, &p, Some(cfg), None);
+                }
+            }
             configs::apply_lol(
                 &p,
                 if logged { api.as_ref() } else { None },
@@ -154,6 +212,23 @@ pub async fn apply_profile(
         }
         "val" => {
             let dir = val_dir.ok_or_else(|| AppError::code("val_dir_not_found"))?;
+            let puuid = configs::list_val_dirs()
+                .into_iter()
+                .find(|d| d.name == dir)
+                .map(|d| d.puuid);
+            let owner = state
+                .with_vault(|v| {
+                    Ok(v.data
+                        .accounts
+                        .iter()
+                        .find(|a| a.puuid.is_some() && a.puuid == puuid)
+                        .map(|a| a.id.clone()))
+                })
+                .ok()
+                .flatten();
+            if let (Some(acc), Ok(cfg)) = (owner, configs::capture_val(&dir)) {
+                backup_once(&state, &acc, &p, None, Some(cfg));
+            }
             configs::apply_val(&p, &dir)
         }
         _ => Err(AppError::new("invalid", "game")),

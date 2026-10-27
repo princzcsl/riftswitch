@@ -22,23 +22,39 @@ use crate::util::{self, log, now_ms};
 use ini::IniDoc;
 
 pub const LOL_INPUT_SECTIONS: [&str; 4] = ["GameEvents", "HUDEvents", "Quickbinds", "ShopEvents"];
-const LOL_INTERFACE: [&str; 8] = [
-    "HUD",
-    "FloatingText",
-    "LossOfControl",
-    "Chat",
-    "MapSkinOptions",
-    "ItemShop",
-    "TFT",
-    "Highlights",
+/// Clés de [General] rangées ailleurs que dans « Interface ».
+const LOL_GENERAL_GRAPHICS: [&str; 6] = [
+    "Width",
+    "Height",
+    "WindowMode",
+    "WaitForVerticalSync",
+    "ShowGodray",
+    "HideEyeCandy",
 ];
-const LOL_SOUND: [&str; 2] = ["Volume", "Voice"];
-const LOL_GRAPHICS: [&str; 2] = ["Performance", "General"];
+const LOL_GENERAL_SOUND: [&str; 5] = [
+    "EnableAudio",
+    "ThemeMusic",
+    "EnableCustomAnnouncer",
+    "EnableCosmeticArenaAudioTFT",
+    "EnableAllCosmeticArenaAudioTFT",
+];
+
+/// Catégorie d'une clé de game.cfg (None : jamais copiée, ex. réglages mobiles).
+pub fn lol_cat(section: &str, key: &str) -> Option<&'static str> {
+    match section {
+        "Volume" | "Voice" => Some("sound"),
+        "Performance" => Some("graphics"),
+        "General" if LOL_GENERAL_GRAPHICS.contains(&key) => Some("graphics"),
+        "General" if LOL_GENERAL_SOUND.contains(&key) => Some("sound"),
+        "Mobile" | "GameModes" | "Replay" => None,
+        _ => Some("interface"),
+    }
+}
 
 /// Clés propres à un PC ou à une version du jeu : jamais affichées ni copiées d'un compte à l'autre.
 pub fn is_volatile(key: &str) -> bool {
     let k = key.rsplit("::").next().unwrap_or(key);
-    const PARTS: [&str; 9] = [
+    const PARTS: [&str; 10] = [
         "DeviceID",
         "MonitorIndex",
         "Benchmark",
@@ -48,8 +64,20 @@ pub fn is_volatile(key: &str) -> bool {
         "WindowPos",
         "PreferredMonitor",
         "LastSeen",
+        "Tutorial",
     ];
-    k.ends_with("Version") || PARTS.iter().any(|p| k.contains(p))
+    // États « déjà vu / déjà accepté » et stand de tir : propres au compte, sans intérêt à copier.
+    const PREFIXES: [&str; 6] = [
+        "HasSeen",
+        "HasAccepted",
+        "HasEver",
+        "LastAccepted",
+        "ShootingRange",
+        "ContextAware",
+    ];
+    k.ends_with("Version")
+        || PARTS.iter().any(|p| k.contains(p))
+        || PREFIXES.iter().any(|p| k.starts_with(p))
 }
 
 /// Réglage VALORANT rangé dans « Son ».
@@ -69,11 +97,22 @@ pub fn is_val_sound(key: &str) -> bool {
     .any(|p| k.contains(p))
 }
 
-/// Anciennes catégories VALORANT : « settings » couvrait interface et son.
-fn has_cat(categories: &[String], cat: &str) -> bool {
-    categories
-        .iter()
-        .any(|c| c == cat || (c == "settings" && matches!(cat, "interface" | "sound")))
+/// Catégorie d'une clé de RiotUserSettings (VALORANT).
+pub fn val_cat(key: &str) -> &'static str {
+    if key.rsplit("::").next().unwrap_or(key).contains("Crosshair") {
+        "crosshair"
+    } else if is_val_sound(key) {
+        "sound"
+    } else {
+        "interface"
+    }
+}
+
+/// Anciennes catégories VALORANT : « settings » couvrait interface, viseur et son.
+pub fn has_cat(categories: &[String], cat: &str) -> bool {
+    categories.iter().any(|c| {
+        c == cat || (c == "settings" && matches!(cat, "interface" | "sound" | "crosshair"))
+    })
 }
 
 const VAL_KEYBINDS: &str = "WindowsClient/BackupKeybinds.json";
@@ -213,20 +252,6 @@ pub fn from_code(code: &str) -> AppResult<ConfigProfile> {
 
 // ── League of Legends ───────────────────────────────────────────────────────
 
-fn lol_game_sections(categories: &[String]) -> Vec<&'static str> {
-    let mut v = Vec::new();
-    if categories.iter().any(|c| c == "interface") {
-        v.extend(LOL_INTERFACE);
-    }
-    if categories.iter().any(|c| c == "sound") {
-        v.extend(LOL_SOUND);
-    }
-    if categories.iter().any(|c| c == "graphics") {
-        v.extend(LOL_GRAPHICS);
-    }
-    v
-}
-
 /// Capture la config LoL : via le client si connecté (réglages du compte), sinon via les fichiers.
 pub async fn capture_lol(
     lcu: Option<&LocalApi>,
@@ -274,8 +299,10 @@ pub async fn apply_lol(
         .lol
         .as_ref()
         .ok_or_else(|| AppError::new("invalid", "lol"))?;
-    let keybinds = p.categories.iter().any(|c| c == "keybinds");
-    let sections = lol_game_sections(&p.categories);
+    let keybinds = has_cat(&p.categories, "keybinds");
+    let game = cfg.game.filtered(|s, k| {
+        !is_volatile(k) && lol_cat(s, k).is_some_and(|c| has_cat(&p.categories, c))
+    });
     let mut done = Vec::new();
 
     if let Some(dir) = paths::lol_config_dir(lol_custom) {
@@ -285,10 +312,10 @@ pub async fn apply_lol(
             current.merge_sections(&cfg.input, &LOL_INPUT_SECTIONS);
             util::atomic_write(&path, current.to_text().as_bytes(), true)?;
         }
-        if !sections.is_empty() {
+        if !game.sections.is_empty() {
             let path = dir.join("game.cfg");
             let mut current = IniDoc::parse(&std::fs::read_to_string(&path).unwrap_or_default());
-            current.merge_sections(&cfg.game.filtered(|_, k| !is_volatile(k)), &sections);
+            current.merge_sections(&game, &game.names());
             util::atomic_write(&path, current.to_text().as_bytes(), true)?;
         }
         done.push("files".to_string());
@@ -307,16 +334,12 @@ pub async fn apply_lol(
                 .await
                 .is_ok();
         }
-        if !sections.is_empty() {
+        if !game.sections.is_empty() {
             let current = api
                 .get("/lol-game-settings/v1/game-settings")
                 .await
                 .unwrap_or(Value::Null);
-            let body = cfg
-                .game
-                .only(&sections)
-                .filtered(|_, k| !is_volatile(k))
-                .to_json_like(&current);
+            let body = game.to_json_like(&current);
             ok &= api
                 .patch("/lol-game-settings/v1/game-settings", &body)
                 .await
@@ -415,19 +438,13 @@ pub fn apply_val(p: &ConfigProfile, dir_name: &str) -> AppResult<Vec<String>> {
         }
     }
     // Réglages : fusion clé par clé dans le fichier du compte, sans les clés propres au PC.
-    let (interface, sound) = (has_cat(cats, "interface"), has_cat(cats, "sound"));
+    let settings = ["interface", "sound", "crosshair"]
+        .iter()
+        .any(|c| has_cat(cats, c));
     let graphics = has_cat(cats, "graphics");
     // Fichier, et catégorie d'une clé : interface / son pour RiotUserSettings, graphismes sinon.
-    let parts = [(VAL_SETTINGS, interface || sound), (VAL_GRAPHICS, graphics)];
-    let keep = |rel: &str, k: &str| {
-        if rel == VAL_GRAPHICS {
-            graphics
-        } else if is_val_sound(k) {
-            sound
-        } else {
-            interface
-        }
-    };
+    let parts = [(VAL_SETTINGS, settings), (VAL_GRAPHICS, graphics)];
+    let keep = |rel: &str, k: &str| rel == VAL_GRAPHICS || has_cat(cats, val_cat(k));
     for (rel, wanted) in parts {
         let Some(text) = cfg.files.get(rel).filter(|_| wanted) else {
             continue;
@@ -496,6 +513,14 @@ mod tests {
         assert!(is_val_sound("EAresFloatSettingName::OverallVolume"));
         assert!(!is_val_sound("EAresFloatSettingName::MouseSensitivity"));
         assert!(has_cat(&["settings".into()], "sound"));
+        assert!(is_volatile("EAresBoolSettingName::HasSeenBTEModal"));
+        assert_eq!(
+            val_cat("EAresStringSettingName::SavedCrosshairProfileData"),
+            "crosshair"
+        );
+        assert_eq!(lol_cat("General", "GameMouseSpeed"), Some("interface"));
+        assert_eq!(lol_cat("General", "WindowMode"), Some("graphics"));
+        assert_eq!(lol_cat("Mobile", "AppRegion"), None);
         assert!(!has_cat(&["settings".into()], "graphics"));
     }
 

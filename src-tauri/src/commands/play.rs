@@ -685,6 +685,9 @@ fn prepare_game(
                 state.profiles.get(pid),
                 configs::val_dir_for(target.puuid.as_deref()),
             ) {
+                if let Ok(cfg) = configs::capture_val(&dir) {
+                    super::configs::backup_once(state, &target.id, &p, None, Some(cfg));
+                }
                 let r = configs::apply_val(&p, &dir);
                 log(format!("play: profil Valorant appliqué ok={}", r.is_ok()));
             }
@@ -758,6 +761,11 @@ fn after_launch(app: AppHandle, account_id: String, game: &'static str) {
         while start.elapsed() < Duration::from_secs(240) {
             if let Some(api) = lcu::api(&settings.lol_path) {
                 if lcu::logged_in(&api).await {
+                    if let Ok((cfg, "client")) =
+                        configs::capture_lol(Some(&api), &settings.lol_path).await
+                    {
+                        super::configs::backup_once(&state, &account_id, &profile, Some(cfg), None);
+                    }
                     let r = configs::apply_lol(&profile, Some(&api), &settings.lol_path).await;
                     log(format!(
                         "play: profil LoL appliqué après connexion ok={}",
