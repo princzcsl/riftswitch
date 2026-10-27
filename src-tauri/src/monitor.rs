@@ -84,10 +84,15 @@ pub fn spawn(app: AppHandle) {
 
             // Un seul jeu à la fois, même lancé à la main : le dernier ouvert est fermé.
             // Jamais pendant une bascule de l'app, qui gère elle-même la fermeture.
-            if (procs.lol_client || procs.lol_game) && procs.val_game && state.busy.try_lock().is_ok() {
+            if (procs.lol_client || procs.lol_game)
+                && procs.val_game
+                && state.busy.try_lock().is_ok()
+            {
                 if let Some(newest) = process::newest_product() {
                     let n = process::kill_product(newest);
-                    log(format!("monitor: {newest} fermé, un seul jeu à la fois ({n} processus)"));
+                    log(format!(
+                        "monitor: {newest} fermé, un seul jeu à la fois ({n} processus)"
+                    ));
                     let _ = app.emit("game-conflict", newest);
                 }
             }
@@ -132,8 +137,10 @@ pub fn spawn(app: AppHandle) {
                             }
                         }
                         if a.val_shard.is_none() {
-                            if let Some(sh) =
-                                a.puuid.as_deref().and_then(crate::riot::paths::valorant_shard)
+                            if let Some(sh) = a
+                                .puuid
+                                .as_deref()
+                                .and_then(crate::riot::paths::valorant_shard)
                             {
                                 a.val_shard = Some(sh);
                                 filled = true;
@@ -141,8 +148,7 @@ pub fn spawn(app: AppHandle) {
                         }
                         let id = a.id.clone();
                         let dirty = filled
-                            || before
-                                != (a.game_name.clone(), a.tag_line.clone(), a.puuid.clone())
+                            || before != (a.game_name.clone(), a.tag_line.clone(), a.puuid.clone())
                             || v.data.last_active_account.as_deref() != Some(id.as_str());
                         v.data.last_active_account = Some(id.clone());
                         if dirty {

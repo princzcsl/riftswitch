@@ -1,11 +1,12 @@
 <script lang="ts">
   // Profils de config LoL / Valorant : capture, édition des touches, application, partage, association aux comptes.
   import { open as openDialog, save as saveDialog } from "@tauri-apps/plugin-dialog";
-  import type { ConfigProfile, ValDir } from "../lib/types";
+  import type { Account, ConfigProfile, IniDoc, ValDir } from "../lib/types";
   import { api } from "../lib/api";
   import { app } from "../lib/app.svelte";
   import { errorText, t } from "../lib/i18n.svelte";
   import { relativeTime } from "../lib/format";
+  import { iniText, isValSound, parseIni, valGroup } from "../lib/ini";
   import { loadLayout } from "../lib/keys";
   import Avatar from "../components/Avatar.svelte";
   import GameIcon from "../components/GameIcon.svelte";
@@ -16,26 +17,31 @@
   import Popover from "../components/Popover.svelte";
   import ValKeybinds from "../components/ValKeybinds.svelte";
 
-  const LOL_CATS = ["keybinds", "interface", "sound", "graphics"];
-  const VAL_CATS = ["keybinds", "settings", "graphics"];
+  // Mêmes catégories pour les deux jeux : elles filtrent l'affichage et ce qui est appliqué.
+  const CATS = ["keybinds", "interface", "sound", "graphics"];
+  const CAT_ICONS: Record<string, string> = { keybinds: "keyboard", interface: "image", sound: "signal", graphics: "sparkle" };
   const LOL_SECTIONS: Record<string, string[]> = {
     interface: ["HUD", "FloatingText", "LossOfControl", "Chat", "MapSkinOptions", "ItemShop", "TFT", "Highlights"],
     sound: ["Volume", "Voice"],
     graphics: ["Performance", "General"],
   };
   const VAL_KEYBINDS = "WindowsClient/BackupKeybinds.json";
+  const VAL_SETTINGS = "Windows/RiotUserSettings.ini";
+  const VAL_GRAPHICS = "WindowsClient/GameUserSettings.ini";
 
   let game = $state<"lol" | "val">("lol");
   let selectedId = $state<string | null>(null);
   let draft = $state<ConfigProfile | null>(null);
   let dirty = $state(false);
-  let tab = $state<"keys" | "settings">("keys");
+  let tab = $state("keybinds");
+  let valDocs = $state<Record<string, IniDoc>>({});
   let valDirs = $state<ValDir[]>([]);
   let busy = $state(false);
 
   // Modales
   let captureOpen = $state(false);
   let capName = $state("");
+  let capNameEdited = $state(false);
   let capCats = $state<string[]>([]);
   let capDir = $state("");
   let importOpen = $state(false);
@@ -45,6 +51,7 @@
   let applyOpen = $state(false);
   let applyDir = $state("");
   let shareMenu = $state(false);
+  let moreMenu = $state(false);
   let deleteOpen = $state(false);
 
   loadLayout();
@@ -60,37 +67,75 @@
     if (!list.find((p) => p.id === selectedId)) select(list[0]?.id ?? null);
   });
 
+  /** Anciens profils VALORANT : « settings » couvrait interface et son. */
+  function normalize(p: ConfigProfile): ConfigProfile {
+    if (p.categories.includes("settings")) p.categories = [...new Set(p.categories.flatMap((c) => (c === "settings" ? ["interface", "sound"] : [c])))];
+    if (!p.sourceAccount && p.notes.startsWith("account:")) p.sourceAccount = p.notes.slice(8);
+    return p;
+  }
+
   async function select(id: string | null) {
     // Pas de perte silencieuse : les modifications en cours sont enregistrées avant de changer de profil.
     if (dirty && draft) await saveDraft();
     selectedId = id;
     dirty = false;
-    tab = "keys";
-    draft = id ? await api.getProfile(id) : null;
+    draft = id ? normalize(await api.getProfile(id)) : null;
+    valDocs = {};
+    for (const f of [VAL_SETTINGS, VAL_GRAPHICS]) if (draft?.val?.files[f]) valDocs[f] = parseIni(draft.val.files[f]);
+    tab = CATS.find((c) => draft?.categories.includes(c)) ?? "keybinds";
   }
 
   function markDirty() {
     dirty = true;
   }
 
-  function accountName(puuid: string): string {
-    const a = app.accounts.find((x) => x.puuid === puuid);
-    return a ? a.label : t("configs.unknownAccount");
+  function valChanged(file: string) {
+    if (!draft?.val) return;
+    draft.val.files[file] = iniText($state.snapshot(valDocs[file]));
+    markDirty();
+  }
+
+  const riotId = (a: Account) => (a.gameName ? `${a.gameName}#${a.tagLine}` : a.label);
+  const nameOf = (a: Account | undefined) => (a ? a.label || a.gameName || t("configs.unknownAccount") : t("configs.unknownAccount"));
+  const byPuuid = (puuid: string) => app.accounts.find((x) => x.puuid === puuid);
+  const dirLabel = (d: ValDir) => {
+    const a = byPuuid(d.puuid);
+    const who = a ? (a.label && a.gameName ? `${a.label} (${riotId(a)})` : riotId(a) || nameOf(a)) : t("configs.unknownAccount");
+    return `${who} · ${d.shard.toUpperCase()} · ${relativeTime(d.modified)}`;
+  };
+
+  /** Compte d'origine d'une capture : le dossier VALORANT choisi, sinon le compte connecté ou le dernier lancé sur ce jeu. */
+  function captureSource(): Account | undefined {
+    if (game === "val") return byPuuid(valDirs.find((d) => d.name === capDir)?.puuid ?? "") ?? undefined;
+    const games = ["lol", "tft"];
+    return (
+      app.activeAccount ??
+      [...app.accounts].filter((a) => games.includes(a.lastGame ?? "")).sort((a, b) => (b.lastUsedAt ?? 0) - (a.lastUsedAt ?? 0))[0]
+    );
+  }
+
+  function defaultName(): string {
+    const a = captureSource();
+    return a?.gameName || a?.label || (game === "lol" ? t("configs.defaultNameLol") : t("configs.defaultNameVal"));
   }
 
   function openCapture() {
-    capName = game === "lol" ? t("configs.defaultNameLol") : t("configs.defaultNameVal");
     const active = app.activeAccount;
-    if (active) capName = `${active.label} — ${t("configs.keysWord")}`;
-    capCats = game === "lol" ? ["keybinds"] : ["keybinds", "settings"];
+    capCats = game === "lol" ? ["keybinds"] : ["keybinds", "interface", "sound"];
     capDir = game === "val" ? (valDirs.find((d) => d.puuid === active?.puuid)?.name ?? valDirs[0]?.name ?? "") : "";
+    capNameEdited = false;
+    capName = defaultName();
     captureOpen = true;
+  }
+
+  function onCapDir() {
+    if (!capNameEdited) capName = defaultName();
   }
 
   async function doCapture() {
     busy = true;
     try {
-      const p = await api.captureProfile(game, capName, capCats, game === "val" ? capDir : null, app.activeAccount?.id ?? null);
+      const p = await api.captureProfile(game, capName, capCats, game === "val" ? capDir : null, captureSource()?.id ?? null);
       captureOpen = false;
       await app.refreshProfiles();
       await select(p.id);
@@ -106,7 +151,7 @@
     if (!draft) return;
     try {
       const saved = await api.saveProfile($state.snapshot(draft) as ConfigProfile);
-      draft = saved;
+      draft = normalize(saved);
       dirty = false;
       await app.refreshProfiles();
       app.toast("success", t("configs.saved"));
@@ -154,6 +199,7 @@
   async function copyCode() {
     if (!draft) return;
     shareMenu = false;
+    if (dirty) await saveDraft();
     const code = await api.exportProfileCode(draft.id);
     await navigator.clipboard.writeText(code);
     app.toast("success", t("configs.codeCopied", { n: code.length }));
@@ -162,21 +208,25 @@
   async function exportFile() {
     if (!draft) return;
     shareMenu = false;
+    if (dirty) await saveDraft();
     const path = await saveDialog({ defaultPath: `${draft.name}.rsconfig`, filters: [{ name: "RiftSwitch config", extensions: ["rsconfig"] }] });
     if (!path) return;
     await api.exportProfileFile(draft.id, path);
     app.toast("success", t("configs.exported"));
   }
 
+  async function imported(p: ConfigProfile) {
+    importOpen = false;
+    importCode = "";
+    await app.refreshProfiles();
+    game = p.game;
+    await select(p.id);
+    app.toast("success", t("configs.imported"));
+  }
+
   async function importFromCode() {
     try {
-      const p = await api.importProfileCode(importCode);
-      importOpen = false;
-      importCode = "";
-      await app.refreshProfiles();
-      game = p.game;
-      await select(p.id);
-      app.toast("success", t("configs.imported"));
+      await imported(await api.importProfileCode(importCode));
     } catch (e) {
       app.toast("error", errorText(e));
     }
@@ -186,12 +236,7 @@
     const path = await openDialog({ filters: [{ name: "RiftSwitch config", extensions: ["rsconfig", "json"] }] });
     if (!path || Array.isArray(path)) return;
     try {
-      const p = await api.importProfileFile(path);
-      importOpen = false;
-      await app.refreshProfiles();
-      game = p.game;
-      await select(p.id);
-      app.toast("success", t("configs.imported"));
+      await imported(await api.importProfileFile(path));
     } catch (e) {
       app.toast("error", errorText(e));
     }
@@ -215,16 +260,17 @@
 
   function toggleCat(c: string) {
     if (!draft) return;
-    draft.categories = draft.categories.includes(c) ? draft.categories.filter((x) => x !== c) : [...draft.categories, c];
+    draft.categories = draft.categories.includes(c) ? draft.categories.filter((x) => x !== c) : CATS.filter((x) => x === c || draft!.categories.includes(x));
+    if (!draft.categories.includes(tab)) tab = draft.categories[0] ?? "keybinds";
+    else if (draft.categories.length === 1) tab = c;
     markDirty();
   }
 
   const linked = $derived(
     draft ? app.accounts.filter((a) => (draft!.game === "lol" ? a.profiles.lol : a.profiles.val) === draft!.id) : [],
   );
-  const settingsSections = $derived(
-    draft?.game === "lol" ? Object.entries(LOL_SECTIONS).filter(([c]) => draft!.categories.includes(c)).flatMap(([, s]) => s) : [],
-  );
+  const tabs = $derived(draft ? CATS.filter((c) => draft!.categories.includes(c)) : []);
+  const source = $derived(draft?.sourceAccount ? app.accounts.find((a) => a.id === draft!.sourceAccount) : undefined);
 </script>
 
 <div class="page">
@@ -234,12 +280,18 @@
       <p class="muted small">{t("configs.subtitle")}</p>
     </div>
     <div class="spacer"></div>
-    <div class="seg">
-      <button class:on={game === "lol"} onclick={() => (game = "lol")}><GameIcon game="lol" size={16} />League of Legends</button>
-      <button class:on={game === "val"} onclick={() => (game = "val")}><GameIcon game="val" size={16} />VALORANT</button>
-    </div>
     <button class="btn" onclick={() => (importOpen = true)}><Icon name="upload" size={16} />{t("configs.import")}</button>
     <button class="btn primary" onclick={openCapture}><Icon name="download" size={16} />{t("configs.capture")}</button>
+  </div>
+
+  <div class="games">
+    {#each [["lol", "League of Legends"], ["val", "VALORANT"]] as [g, label] (g)}
+      <button class="game glass" class:on={game === g} onclick={() => (game = g as "lol" | "val")}>
+        <GameIcon game={g as "lol" | "val"} size={22} />
+        <span>{label}</span>
+        <span class="count">{app.profiles.filter((p) => p.game === g).length}</span>
+      </button>
+    {/each}
   </div>
 
   <div class="info glass">
@@ -258,11 +310,11 @@
             <span class="faint small">{relativeTime(p.updatedAt)}</span>
           </div>
           <div class="row" style="flex-wrap:wrap;gap:4px">
-            {#each p.categories as c}<span class="chip">{t(`configs.cat_${c}`)}</span>{/each}
+            {#each normalize({ ...p }).categories as c}<span class="chip">{t(`configs.cat_${c}`)}</span>{/each}
           </div>
           {#if users.length}
             <div class="avatars">
-              {#each users.slice(0, 6) as u}<Avatar icon={u.icon} color={u.color} size={20} label={u.label} />{/each}
+              {#each users.slice(0, 6) as u}<Avatar icon={u.icon} autoIconId={u.profileIconId} color={u.color} size={20} label={u.label} />{/each}
               {#if users.length > 6}<span class="faint small">+{users.length - 6}</span>{/if}
             </div>
           {/if}
@@ -283,60 +335,85 @@
           {#if dirty}<button class="btn primary sm" onclick={saveDraft}><Icon name="check" size={15} />{t("common.save")}</button>{/if}
           <button class="btn sm primary" onclick={apply} disabled={busy}><Icon name="play" size={13} />{t("configs.applyNow")}</button>
           <button class="btn sm" onclick={openAssign}><Icon name="users" size={15} />{t("configs.assign")}</button>
-          <Popover bind:open={shareMenu} width={240}>
+          <Popover bind:open={shareMenu} width={250}>
             {#snippet trigger()}
-              <button class="btn sm icon" onclick={() => (shareMenu = !shareMenu)} title={t("configs.share")}><Icon name="more" /></button>
+              <button class="btn sm" onclick={() => (shareMenu = !shareMenu)}><Icon name="link" size={14} />{t("configs.shareBtn")}</button>
             {/snippet}
             <button class="menu-item" onclick={copyCode}><Icon name="copy" size={16} />{t("configs.copyCode")}</button>
             <button class="menu-item" onclick={exportFile}><Icon name="download" size={16} />{t("configs.exportFile")}</button>
-            <button class="menu-item" onclick={() => ((shareMenu = false), duplicate())}><Icon name="copy" size={16} />{t("configs.duplicate")}</button>
+          </Popover>
+          <Popover bind:open={moreMenu} width={200}>
+            {#snippet trigger()}
+              <button class="btn sm icon" onclick={() => (moreMenu = !moreMenu)} title={t("common.more")}><Icon name="more" /></button>
+            {/snippet}
+            <button class="menu-item" onclick={() => ((moreMenu = false), duplicate())}><Icon name="copy" size={16} />{t("configs.duplicate")}</button>
             <div class="divider"></div>
-            <button class="menu-item danger" onclick={() => ((shareMenu = false), (deleteOpen = true))}><Icon name="trash" size={16} />{t("common.delete")}</button>
+            <button class="menu-item danger" onclick={() => ((moreMenu = false), (deleteOpen = true))}><Icon name="trash" size={16} />{t("common.delete")}</button>
           </Popover>
         </div>
 
         <div class="meta row small muted">
           <span>{t(`configs.source_${draft.source}`)}</span>
+          {#if source || draft.sourceName}
+            <span class="src">
+              <Avatar icon={source?.icon} autoIconId={source?.profileIconId ?? draft.sourceIcon} color={source?.color} size={20} label={source?.label || draft.sourceName} />
+              <strong>{source ? riotId(source) : draft.sourceName}</strong>
+            </span>
+          {/if}
           {#if linked.length}
             <span>·</span><span>{t("configs.usedBy", { n: linked.length })}</span>
-            <span class="avatars">{#each linked.slice(0, 5) as u}<Avatar icon={u.icon} color={u.color} size={18} label={u.label} />{/each}</span>
+            <span class="avatars">{#each linked.slice(0, 5) as u}<Avatar icon={u.icon} autoIconId={u.profileIconId} color={u.color} size={18} label={u.label} />{/each}</span>
           {/if}
         </div>
 
         <div class="cats">
           <span class="label">{t("configs.appliesTo")}</span>
-          {#each draft.game === "lol" ? LOL_CATS : VAL_CATS as c}
+          {#each CATS as c}
             <button class="chip" class:accent={draft.categories.includes(c)} style="cursor:pointer" onclick={() => toggleCat(c)}>
               {#if draft.categories.includes(c)}<Icon name="check" size={12} />{/if}{t(`configs.cat_${c}`)}
             </button>
           {/each}
         </div>
 
-        <div class="tabs">
-          <button class:on={tab === "keys"} onclick={() => (tab = "keys")}><Icon name="keyboard" size={15} />{t("configs.tabKeys")}</button>
-          <button class:on={tab === "settings"} onclick={() => (tab = "settings")}><Icon name="settings" size={15} />{t("configs.tabSettings")}</button>
-        </div>
-
-        <div class="tab-body">
-          {#if tab === "keys"}
-            {#if draft.lol}
-              <LolKeybinds bind:input={draft.lol.input} onchange={markDirty} />
-            {:else if draft.val}
-              <ValKeybinds bind:json={draft.val.files[VAL_KEYBINDS]} onchange={markDirty} />
-            {/if}
-          {:else if draft.lol}
-            {#if settingsSections.length}
-              <IniTable bind:doc={draft.lol.game} sections={settingsSections} onchange={markDirty} />
-            {:else}
-              <p class="faint small">{t("configs.noCategory")}</p>
-            {/if}
-          {:else if draft.val}
-            {#each Object.entries(draft.val.files).filter(([k]) => k !== VAL_KEYBINDS) as [file, text]}
-              <div class="section-title" style="margin-top:4px">{file}</div>
-              <pre class="raw mono small">{text.slice(0, 4000)}</pre>
+        {#if tabs.length}
+          <div class="tabs">
+            {#each tabs as c (c)}
+              <button class:on={tab === c} onclick={() => (tab = c)}><Icon name={CAT_ICONS[c]} size={15} />{t(`configs.cat_${c}`)}</button>
             {/each}
-          {/if}
-        </div>
+          </div>
+
+          <div class="tab-body">
+            {#if tab === "keybinds"}
+              {#if draft.lol}
+                <LolKeybinds bind:input={draft.lol.input} onchange={markDirty} />
+              {:else if draft.val?.files[VAL_KEYBINDS]}
+                <ValKeybinds bind:json={draft.val.files[VAL_KEYBINDS]} onchange={markDirty} />
+              {:else}
+                <p class="faint small">{t("configs.notCaptured")}</p>
+              {/if}
+            {:else if draft.lol}
+              <IniTable bind:doc={draft.lol.game} sections={LOL_SECTIONS[tab]} onchange={markDirty} />
+            {:else if draft.val}
+              {@const file = tab === "graphics" ? VAL_GRAPHICS : VAL_SETTINGS}
+              {#if valDocs[file]}
+                {#if tab === "graphics"}
+                  <IniTable bind:doc={valDocs[file]} group={() => "display"} onchange={() => valChanged(file)} />
+                {:else}
+                  <IniTable
+                    bind:doc={valDocs[file]}
+                    filter={(_, k) => isValSound(k) === (tab === "sound")}
+                    group={tab === "sound" ? () => "sound" : valGroup}
+                    onchange={() => valChanged(file)}
+                  />
+                {/if}
+              {:else}
+                <p class="faint small">{t("configs.notCaptured")}</p>
+              {/if}
+            {/if}
+          </div>
+        {:else}
+          <p class="faint small">{t("configs.noCategory")}</p>
+        {/if}
       </section>
     {:else if list.length}
       <section class="detail glass empty"><p>{t("configs.pick")}</p></section>
@@ -347,22 +424,22 @@
 <Modal bind:open={captureOpen} title={t("configs.captureTitle")} width={500}>
   <div class="col">
     <p class="muted small">{game === "lol" ? t("configs.captureLolHint") : t("configs.captureValHint")}</p>
-    <div class="field">
-      <label for="cn">{t("configs.name")}</label>
-      <input id="cn" class="input" bind:value={capName} />
-    </div>
     {#if game === "val"}
       <div class="field">
         <label for="cd">{t("configs.valAccountDir")}</label>
-        <select id="cd" class="input" bind:value={capDir}>
-          {#each valDirs as d}<option value={d.name}>{accountName(d.puuid)} · {d.shard.toUpperCase()} · {relativeTime(d.modified)}</option>{/each}
+        <select id="cd" class="input" bind:value={capDir} onchange={onCapDir}>
+          {#each valDirs as d}<option value={d.name}>{dirLabel(d)}</option>{/each}
         </select>
         {#if !valDirs.length}<p class="small" style="color:var(--warning)">{t("configs.noValDirs")}</p>{/if}
       </div>
     {/if}
+    <div class="field">
+      <label for="cn">{t("configs.name")}</label>
+      <input id="cn" class="input" bind:value={capName} oninput={() => (capNameEdited = true)} />
+    </div>
     <span class="label">{t("configs.categories")}</span>
     <div class="row" style="flex-wrap:wrap;gap:6px">
-      {#each game === "lol" ? LOL_CATS : VAL_CATS as c}
+      {#each CATS as c}
         <button
           class="chip"
           class:accent={capCats.includes(c)}
@@ -406,8 +483,11 @@
           checked={assignIds.includes(a.id)}
           onchange={(e) => (assignIds = e.currentTarget.checked ? [...assignIds, a.id] : assignIds.filter((x) => x !== a.id))}
         />
-        <Avatar icon={a.icon} color={a.color} size={28} label={a.label} />
-        <span class="grow">{a.label}</span>
+        <Avatar icon={a.icon} autoIconId={a.profileIconId} color={a.color} size={28} label={a.label} />
+        <span class="grow ellipsis">
+          {nameOf(a)}
+          {#if a.label && a.gameName}<span class="faint small">{riotId(a)}</span>{:else if a.tagLine}<span class="faint small">#{a.tagLine}</span>{/if}
+        </span>
         <span class="faint small">{a.region}</span>
       </label>
     {/each}
@@ -422,7 +502,7 @@
   <div class="field">
     <label for="ad">{t("configs.valAccountDir")}</label>
     <select id="ad" class="input" bind:value={applyDir}>
-      {#each valDirs as d}<option value={d.name}>{accountName(d.puuid)} · {d.shard.toUpperCase()}</option>{/each}
+      {#each valDirs as d}<option value={d.name}>{dirLabel(d)}</option>{/each}
     </select>
   </div>
   <p class="faint small">{t("configs.valWarn")}</p>
@@ -441,30 +521,40 @@
 </Modal>
 
 <style>
-  .seg {
-    display: flex;
-    padding: 3px;
-    border-radius: var(--radius-sm);
-    background: var(--surface);
-    border: 1px solid var(--border);
+  .games {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 12px;
   }
-  .seg button {
+  .game {
     display: flex;
     align-items: center;
-    gap: 7px;
-    height: 30px;
-    padding: 0 12px;
-    border: none;
-    border-radius: calc(var(--radius-sm) - 2px);
-    background: transparent;
+    gap: 10px;
+    height: 48px;
+    padding: 0 16px;
+    border-radius: var(--radius-md);
     color: var(--text-2);
+    font-size: 15px;
+    font-weight: 650;
     cursor: pointer;
-    font-weight: 600;
+    text-align: start;
   }
-  .seg button.on {
-    background: var(--surface-2);
+  .game span:nth-child(2) {
+    flex: 1;
+  }
+  .game.on {
     color: var(--text);
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+    border-color: var(--accent);
+    background: var(--accent-soft);
+  }
+  .count {
+    min-width: 22px;
+    padding: 1px 7px;
+    border-radius: 999px;
+    background: var(--surface-2);
+    font-size: 12px;
+    text-align: center;
   }
   .info {
     display: flex;
@@ -508,6 +598,12 @@
     display: flex;
     align-items: center;
     gap: 2px;
+  }
+  .src {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text);
   }
   .empty {
     display: flex;
@@ -563,16 +659,6 @@
     color: var(--text);
     border-bottom-color: var(--accent);
   }
-  .raw {
-    max-height: 260px;
-    overflow: auto;
-    padding: 10px;
-    border-radius: var(--radius-sm);
-    background: var(--surface);
-    border: 1px solid var(--border);
-    white-space: pre-wrap;
-    user-select: text;
-  }
   .assign {
     display: flex;
     flex-direction: column;
@@ -590,5 +676,8 @@
   }
   .arow:hover {
     background: var(--surface-hover);
+  }
+  .arow .faint {
+    margin-left: 6px;
   }
 </style>

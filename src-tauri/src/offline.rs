@@ -77,7 +77,10 @@ impl OfflineProxy {
                 let (p, tls) = (p.clone(), tls.clone());
                 tauri::async_runtime::spawn(async move {
                     if let Err(e) = p.handle_chat(sock, tls).await {
-                        log(format!("offline: connexion chat terminée ({}: {})", e.code, e.detail));
+                        log(format!(
+                            "offline: connexion chat terminée ({}: {})",
+                            e.code, e.detail
+                        ));
                     }
                 });
             }
@@ -371,7 +374,10 @@ async fn proxy_certificate(
                 let _ = std::fs::write(&key_path, key);
                 log("offline: certificat du proxy téléchargé");
             }
-            Err(e) => log(format!("offline: certificat non téléchargé ({}), cache utilisé", e.detail)),
+            Err(e) => log(format!(
+                "offline: certificat non téléchargé ({}), cache utilisé",
+                e.detail
+            )),
         }
     }
     let crt = std::fs::read(&crt_path).map_err(|_| AppError::code("offline_cert"))?;
@@ -379,7 +385,8 @@ async fn proxy_certificate(
     let certs = CertificateDer::pem_slice_iter(&crt)
         .collect::<Result<Vec<_>, _>>()
         .map_err(|e| AppError::new("offline_cert", e.to_string()))?;
-    let key = PrivateKeyDer::from_pem_slice(&key).map_err(|e| AppError::new("offline_cert", e.to_string()))?;
+    let key = PrivateKeyDer::from_pem_slice(&key)
+        .map_err(|e| AppError::new("offline_cert", e.to_string()))?;
     Ok((certs, key))
 }
 
@@ -390,7 +397,11 @@ async fn download_certificate() -> AppResult<(Vec<u8>, Vec<u8>)> {
     let get = |ext: &'static str| {
         let client = client.clone();
         async move {
-            let r = client.get(format!("{CERT_URL}.{ext}")).send().await?.error_for_status()?;
+            let r = client
+                .get(format!("{CERT_URL}.{ext}"))
+                .send()
+                .await?
+                .error_for_status()?;
             Ok::<_, AppError>(r.bytes().await?.to_vec())
         }
     };
@@ -519,7 +530,8 @@ pub fn rewrite_presences(text: &str, status: ChatStatus) -> String {
     static GAMES: OnceLock<Regex> = OnceLock::new();
     static ST: OnceLock<Regex> = OnceLock::new();
     let show = SHOW.get_or_init(|| Regex::new(r"(?s)<show>.*?</show>").unwrap());
-    let status_re = STATUS.get_or_init(|| Regex::new(r"(?s)<status>.*?</status>|<status/>").unwrap());
+    let status_re =
+        STATUS.get_or_init(|| Regex::new(r"(?s)<status>.*?</status>|<status/>").unwrap());
     let games = GAMES.get_or_init(|| {
         Regex::new(r"(?s)<(league_of_legends|valorant|bacon|lion|riot_client)>.*?</(league_of_legends|valorant|bacon|lion|riot_client)>").unwrap()
     });
@@ -533,7 +545,8 @@ pub fn rewrite_presences(text: &str, status: ChatStatus) -> String {
     });
     let lol_detail = LOL_DETAIL.get_or_init(|| Regex::new(r"(?s)<p>.*?</p>|<m>.*?</m>").unwrap());
     static LOL: OnceLock<Regex> = OnceLock::new();
-    let lol = LOL.get_or_init(|| Regex::new(r"(?s)<league_of_legends>.*?</league_of_legends>").unwrap());
+    let lol =
+        LOL.get_or_init(|| Regex::new(r"(?s)<league_of_legends>.*?</league_of_legends>").unwrap());
 
     presence_re()
         .replace_all(text, |c: &regex::Captures| {
@@ -552,7 +565,9 @@ pub fn rewrite_presences(text: &str, status: ChatStatus) -> String {
                 body = status_re.replace_all(&body, "").to_string();
                 body = others.replace_all(&body, "").to_string();
                 body = lol
-                    .replace_all(&body, |m: &regex::Captures| lol_detail.replace_all(&m[0], "").to_string())
+                    .replace_all(&body, |m: &regex::Captures| {
+                        lol_detail.replace_all(&m[0], "").to_string()
+                    })
                     .to_string();
             } else if hide_game {
                 body = status_re.replace_all(&body, "").to_string();

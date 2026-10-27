@@ -55,7 +55,10 @@ pub async fn redeem(login_token: &str, remember: bool) -> AppResult<()> {
             wait_authenticated(&api).await
         }
         Err(e) => {
-            log(format!("redeem: lifecycle a refusé ({} {})", e.code, e.detail));
+            log(format!(
+                "redeem: lifecycle a refusé ({} {})",
+                e.code, e.detail
+            ));
             false
         }
     };
@@ -64,7 +67,9 @@ pub async fn redeem(login_token: &str, remember: bool) -> AppResult<()> {
     if !authed {
         let scheme = uri_scheme(&api).await;
         let url = format!("{scheme}://auth/v1/{}", *token);
-        log(format!("redeem: repli par le gestionnaire de protocole ({scheme}://auth/v1/…)"));
+        log(format!(
+            "redeem: repli par le gestionnaire de protocole ({scheme}://auth/v1/…)"
+        ));
         if open_url(&url).is_ok() {
             authed = wait_authenticated(&api).await;
         }
@@ -88,7 +93,10 @@ pub async fn redeem(login_token: &str, remember: bool) -> AppResult<()> {
 
 /// Demande au client le schéma de son gestionnaire de protocole (défaut : `riotclient`).
 async fn uri_scheme(api: &LocalApi) -> String {
-    if let Ok(v) = api.post("/riot-client-app-command/v1/uri-handler", &Value::Null).await {
+    if let Ok(v) = api
+        .post("/riot-client-app-command/v1/uri-handler", &Value::Null)
+        .await
+    {
         if let Some(obj) = v.as_object() {
             if let Some(s) = obj.values().find_map(|x| x.as_str()) {
                 if !s.is_empty() {

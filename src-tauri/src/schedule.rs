@@ -74,7 +74,11 @@ pub fn tick(app: &AppHandle) {
     };
     {
         let mut settings = state.settings.lock().unwrap();
-        for s in settings.schedules.iter_mut().filter(|s| due.iter().any(|d| d.id == s.id)) {
+        for s in settings
+            .schedules
+            .iter_mut()
+            .filter(|s| due.iter().any(|d| d.id == s.id))
+        {
             s.last_run = now.date.clone();
         }
         let _ = settings.save(&state.paths);
@@ -88,7 +92,10 @@ pub fn tick(app: &AppHandle) {
         log("schedule: lancement sauté, un jeu est déjà ouvert");
         return;
     }
-    log(format!("schedule: lancement planifié de {} à {}", first.game, now.time));
+    log(format!(
+        "schedule: lancement planifié de {} à {}",
+        first.game, now.time
+    ));
     let _ = app.emit("schedule-run", first.account_id.clone());
     crate::commands::play::play_external(app.clone(), first.account_id, first.game, first.offline);
 }
@@ -105,11 +112,39 @@ mod tests {
             enabled: true,
             ..Default::default()
         };
-        let now = LocalNow { weekday: 1, time: "21:00".into(), date: "2026-10-26".into() };
+        let now = LocalNow {
+            weekday: 1,
+            time: "21:00".into(),
+            date: "2026-10-26".into(),
+        };
         assert!(is_due(&s, &now));
-        assert!(!is_due(&Schedule { last_run: "2026-10-26".into(), ..s.clone() }, &now));
-        assert!(!is_due(&s, &LocalNow { weekday: 2, ..now.clone() }));
-        assert!(!is_due(&s, &LocalNow { time: "21:01".into(), ..now.clone() }));
-        assert!(!is_due(&Schedule { enabled: false, ..s }, &now));
+        assert!(!is_due(
+            &Schedule {
+                last_run: "2026-10-26".into(),
+                ..s.clone()
+            },
+            &now
+        ));
+        assert!(!is_due(
+            &s,
+            &LocalNow {
+                weekday: 2,
+                ..now.clone()
+            }
+        ));
+        assert!(!is_due(
+            &s,
+            &LocalNow {
+                time: "21:01".into(),
+                ..now.clone()
+            }
+        ));
+        assert!(!is_due(
+            &Schedule {
+                enabled: false,
+                ..s
+            },
+            &now
+        ));
     }
 }

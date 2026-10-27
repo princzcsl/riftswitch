@@ -40,7 +40,10 @@ pub enum Outcome {
     /// Connexion réussie : jeton de connexion à faire consommer par le client.
     Success { login_token: String },
     /// A2F requise : l'utilisateur doit fournir un code.
-    Mfa { methods: Vec<String>, email: Option<String> },
+    Mfa {
+        methods: Vec<String>,
+        email: Option<String>,
+    },
     /// Nouveau défi captcha requis (ex. captcha manqué).
     Challenge { challenge: Challenge },
     /// Échec (identifiants invalides, compte verrouillé…).
@@ -63,7 +66,12 @@ impl LoginSession {
         Ok(Self { client })
     }
 
-    async fn send(&self, method: reqwest::Method, path: &str, body: Option<Value>) -> AppResult<Value> {
+    async fn send(
+        &self,
+        method: reqwest::Method,
+        path: &str,
+        body: Option<Value>,
+    ) -> AppResult<Value> {
         let mut req = self
             .client
             .request(method, format!("{BASE}{path}"))
@@ -79,7 +87,9 @@ impl LoginSession {
     /// Démarre une session d'authentification et renvoie l'éventuel défi captcha.
     pub async fn start(&self, remember: bool) -> AppResult<Challenge> {
         // DELETE réinitialise une session résiduelle, POST en démarre une neuve.
-        let _ = self.send(reqwest::Method::DELETE, "/api/v1/login", None).await;
+        let _ = self
+            .send(reqwest::Method::DELETE, "/api/v1/login", None)
+            .await;
         let body = json!({
             "apple": null, "campaign": null, "clientId": "riot-client", "code": null,
             "facebook": null, "gamecenter": null, "google": null, "language": "",
@@ -91,7 +101,9 @@ impl LoginSession {
             },
             "riot_identity_signup": null, "rso": null, "sdkVersion": "", "type": "auth", "xbox": null
         });
-        let v = self.send(reqwest::Method::POST, "/api/v1/login", Some(body)).await?;
+        let v = self
+            .send(reqwest::Method::POST, "/api/v1/login", Some(body))
+            .await?;
         Ok(parse_challenge(captcha_node(&v)))
     }
 
@@ -111,7 +123,9 @@ impl LoginSession {
             },
             "type": "auth"
         });
-        let v = self.send(reqwest::Method::PUT, "/api/v1/login", Some(body)).await?;
+        let v = self
+            .send(reqwest::Method::PUT, "/api/v1/login", Some(body))
+            .await?;
         let outcome = parse_outcome(&v);
         if !matches!(outcome, Outcome::Success { .. }) {
             crate::util::log(format!("login: réponse Riot {}", describe(&v)));
@@ -126,13 +140,18 @@ impl LoginSession {
             "multifactor": { "action": null, "otp": otp, "rememberDevice": remember_device },
             "riot_identity": null, "type": "multifactor"
         });
-        let v = self.send(reqwest::Method::PUT, "/api/v1/login", Some(body)).await?;
+        let v = self
+            .send(reqwest::Method::PUT, "/api/v1/login", Some(body))
+            .await?;
         Ok(parse_outcome(&v))
     }
 }
 
 fn str_of(v: &Value, k: &str) -> Option<String> {
-    v.get(k).and_then(|x| x.as_str()).filter(|s| !s.is_empty()).map(str::to_string)
+    v.get(k)
+        .and_then(|x| x.as_str())
+        .filter(|s| !s.is_empty())
+        .map(str::to_string)
 }
 
 fn captcha_node(v: &Value) -> Option<&Value> {
@@ -140,14 +159,20 @@ fn captcha_node(v: &Value) -> Option<&Value> {
 }
 
 fn parse_challenge(node: Option<&Value>) -> Challenge {
-    let Some(c) = node else { return Challenge::default() };
+    let Some(c) = node else {
+        return Challenge::default();
+    };
     let kind = str_of(c, "type").unwrap_or_else(|| "none".into());
     let (mut site_key, mut rq_data) = (None, None);
     if let Some(hc) = c.get("hcaptcha") {
         site_key = str_of(hc, "key");
         rq_data = str_of(hc, "data");
     }
-    Challenge { kind, site_key, rq_data }
+    Challenge {
+        kind,
+        site_key,
+        rq_data,
+    }
 }
 
 /// Cherche un `login_token` / `loginToken` n'importe où dans la réponse.
@@ -179,7 +204,11 @@ fn parse_outcome(v: &Value) -> Outcome {
         let methods = mf
             .and_then(|m| m.get("methods"))
             .and_then(|x| x.as_array())
-            .map(|a| a.iter().filter_map(|x| x.as_str().map(str::to_string)).collect())
+            .map(|a| {
+                a.iter()
+                    .filter_map(|x| x.as_str().map(str::to_string))
+                    .collect()
+            })
             .unwrap_or_default();
         let email = mf.and_then(|m| str_of(m, "email"));
         return Outcome::Mfa { methods, email };
@@ -234,21 +263,29 @@ mod tests {
         let ok = parse_outcome(&json!({"type": "success", "success": {"login_token": "tok"}}));
         assert!(matches!(ok, Outcome::Success { login_token } if login_token == "tok"));
 
-        let mfa = parse_outcome(&json!({"type": "multifactor", "multifactor": {"methods": ["email"], "email": "a***@b.com"}}));
+        let mfa = parse_outcome(
+            &json!({"type": "multifactor", "multifactor": {"methods": ["email"], "email": "a***@b.com"}}),
+        );
         assert!(matches!(mfa, Outcome::Mfa { .. }));
 
         let fail = parse_outcome(&json!({"type": "auth", "error": "auth_failure"}));
         assert!(matches!(fail, Outcome::Failed { reason } if reason == "auth_failure"));
 
-        let chal = parse_outcome(&json!({"type": "auth", "captcha": {"type": "hcaptcha", "hcaptcha": {"key": "k"}}}));
+        let chal = parse_outcome(
+            &json!({"type": "auth", "captcha": {"type": "hcaptcha", "hcaptcha": {"key": "k"}}}),
+        );
         assert!(matches!(chal, Outcome::Challenge { .. }));
         // Un refus arrive avec un nouveau captcha : c'est l'erreur qui compte.
         let captcha = json!({"type": "hcaptcha", "hcaptcha": {"key": "k"}});
-        let refused = parse_outcome(&json!({"type": "auth", "error": "rate_limited", "captcha": captcha}));
+        let refused =
+            parse_outcome(&json!({"type": "auth", "error": "rate_limited", "captcha": captcha}));
         assert!(matches!(refused, Outcome::Failed { ref reason } if reason == "rate_limited"));
-        let nested = parse_outcome(&json!({"type": "auth", "riot_identity": {"error": "auth_failure"}, "captcha": captcha}));
+        let nested = parse_outcome(
+            &json!({"type": "auth", "riot_identity": {"error": "auth_failure"}, "captcha": captcha}),
+        );
         assert!(matches!(nested, Outcome::Failed { ref reason } if reason == "auth_failure"));
-        let bad_captcha = parse_outcome(&json!({"type": "auth", "error": "captcha_failure", "captcha": captcha}));
+        let bad_captcha =
+            parse_outcome(&json!({"type": "auth", "error": "captcha_failure", "captcha": captcha}));
         assert!(matches!(bad_captcha, Outcome::Challenge { .. }));
     }
 }

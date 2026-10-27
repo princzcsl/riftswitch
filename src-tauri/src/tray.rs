@@ -76,12 +76,33 @@ fn tr(lang: &str, key: &str) -> &'static str {
                 "Quit"
             }
         }
-        "noAccounts" => pick(lang, ["No accounts", "Aucun compte", "Sin cuentas", "Nessun account", "Keine Konten"]),
+        "noAccounts" => pick(
+            lang,
+            [
+                "No accounts",
+                "Aucun compte",
+                "Sin cuentas",
+                "Nessun account",
+                "Keine Konten",
+            ],
+        ),
         "status" => pick(lang, ["Status", "Statut", "Estado", "Stato", "Status"]),
-        "online" => pick(lang, ["Online", "Connecté", "Conectado", "Online", "Online"]),
+        "online" => pick(
+            lang,
+            ["Online", "Connecté", "Conectado", "Online", "Online"],
+        ),
         "away" => pick(lang, ["Away", "Absent", "Ausente", "Assente", "Abwesend"]),
         "mobile" => pick(lang, ["Mobile", "Mobile", "Móvil", "Mobile", "Mobil"]),
-        "offline" => pick(lang, ["Offline", "Hors ligne", "Desconectado", "Offline", "Offline"]),
+        "offline" => pick(
+            lang,
+            [
+                "Offline",
+                "Hors ligne",
+                "Desconectado",
+                "Offline",
+                "Offline",
+            ],
+        ),
         _ => "",
     }
 }
@@ -104,9 +125,21 @@ fn build_menu(app: &AppHandle) -> tauri::Result<Menu<Wry>> {
     if let Some(current) = state.status.lock().unwrap().chat_status.clone() {
         let items = ["online", "away", "mobile", "offline"]
             .iter()
-            .map(|s| CheckMenuItem::with_id(app, format!("status:{s}"), tr(&lang, s), true, current == *s, None::<&str>))
+            .map(|s| {
+                CheckMenuItem::with_id(
+                    app,
+                    format!("status:{s}"),
+                    tr(&lang, s),
+                    true,
+                    current == *s,
+                    None::<&str>,
+                )
+            })
             .collect::<tauri::Result<Vec<_>>>()?;
-        let refs: Vec<&dyn tauri::menu::IsMenuItem<Wry>> = items.iter().map(|i| i as &dyn tauri::menu::IsMenuItem<Wry>).collect();
+        let refs: Vec<&dyn tauri::menu::IsMenuItem<Wry>> = items
+            .iter()
+            .map(|i| i as &dyn tauri::menu::IsMenuItem<Wry>)
+            .collect();
         menu.append(&Submenu::with_items(app, tr(&lang, "status"), true, &refs)?)?;
         menu.append(&PredefinedMenuItem::separator(app)?)?;
     }
@@ -121,13 +154,22 @@ fn build_menu(app: &AppHandle) -> tauri::Result<Menu<Wry>> {
                 .into_iter()
                 .take(3)
                 .map(|a| {
-                    let base = if a.label.is_empty() { a.game_name.clone() } else { a.label.clone() };
-                    let name = if settings.streamer_mode || a.riot_id().is_empty() || a.label.is_empty() {
-                        base
+                    let base = if a.label.is_empty() {
+                        a.game_name.clone()
                     } else {
-                        format!("{base} · {}", a.riot_id())
+                        a.label.clone()
                     };
-                    let name = if active.as_deref() == Some(a.id.as_str()) { format!("✓ {name}") } else { name };
+                    let name =
+                        if settings.streamer_mode || a.riot_id().is_empty() || a.label.is_empty() {
+                            base
+                        } else {
+                            format!("{base} · {}", a.riot_id())
+                        };
+                    let name = if active.as_deref() == Some(a.id.as_str()) {
+                        format!("✓ {name}")
+                    } else {
+                        name
+                    };
                     (a.id.clone(), name)
                 })
                 .collect::<Vec<_>>())
@@ -136,10 +178,22 @@ fn build_menu(app: &AppHandle) -> tauri::Result<Menu<Wry>> {
 
     match accounts {
         None => {
-            menu.append(&MenuItem::with_id(app, "noop", tr(&lang, "locked"), false, None::<&str>)?)?;
+            menu.append(&MenuItem::with_id(
+                app,
+                "noop",
+                tr(&lang, "locked"),
+                false,
+                None::<&str>,
+            )?)?;
         }
         Some(list) if list.is_empty() => {
-            menu.append(&MenuItem::with_id(app, "noop", tr(&lang, "noAccounts"), false, None::<&str>)?)?;
+            menu.append(&MenuItem::with_id(
+                app,
+                "noop",
+                tr(&lang, "noAccounts"),
+                false,
+                None::<&str>,
+            )?)?;
         }
         Some(list) => {
             for (id, name) in list {
@@ -148,9 +202,27 @@ fn build_menu(app: &AppHandle) -> tauri::Result<Menu<Wry>> {
                     name,
                     true,
                     &[
-                        &MenuItem::with_id(app, format!("play:{id}:lol"), "League of Legends", true, None::<&str>)?,
-                        &MenuItem::with_id(app, format!("play:{id}:tft"), "Teamfight Tactics", true, None::<&str>)?,
-                        &MenuItem::with_id(app, format!("play:{id}:val"), "VALORANT", true, None::<&str>)?,
+                        &MenuItem::with_id(
+                            app,
+                            format!("play:{id}:lol"),
+                            "League of Legends",
+                            true,
+                            None::<&str>,
+                        )?,
+                        &MenuItem::with_id(
+                            app,
+                            format!("play:{id}:tft"),
+                            "Teamfight Tactics",
+                            true,
+                            None::<&str>,
+                        )?,
+                        &MenuItem::with_id(
+                            app,
+                            format!("play:{id}:val"),
+                            "VALORANT",
+                            true,
+                            None::<&str>,
+                        )?,
                     ],
                 )?;
                 menu.append(&sub)?;
@@ -226,14 +298,18 @@ fn handle(app: &AppHandle, id: &str) {
             let parts: Vec<&str> = other.splitn(3, ':').collect();
             if parts.len() == 3 {
                 let state = app.state::<AppState>();
-                *state.pending_tray_play.lock().unwrap() = Some((parts[1].to_string(), parts[2].to_string()));
+                *state.pending_tray_play.lock().unwrap() =
+                    Some((parts[1].to_string(), parts[2].to_string()));
                 show_main(app);
                 let _ = app.emit("tray-play", ());
             }
         }
         other if other.starts_with("status:") => {
             let state = app.state::<AppState>();
-            if let (Some(p), Some(st)) = (state.proxy(), crate::offline::ChatStatus::parse(&other[7..])) {
+            if let (Some(p), Some(st)) = (
+                state.proxy(),
+                crate::offline::ChatStatus::parse(&other[7..]),
+            ) {
                 p.set_status(st);
                 if let Some(cs) = state.status.lock().unwrap().chat_status.as_mut() {
                     *cs = st.as_str().to_string();

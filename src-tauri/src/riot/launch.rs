@@ -125,7 +125,9 @@ pub async fn launch_product(exe: &Path, game: &str, locale: Option<&str>) -> App
                         return Ok(());
                     }
                     Err(e) if e.detail.contains("423") => {
-                        log(format!("launch: {product} déjà en cours de lancement (423)"));
+                        log(format!(
+                            "launch: {product} déjà en cours de lancement (423)"
+                        ));
                         in_progress = true;
                     }
                     Err(e) => last = e.detail,

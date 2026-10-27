@@ -88,6 +88,30 @@ impl IniDoc {
         }
     }
 
+    /// Copie ne gardant que les clés acceptées par `keep(section, clé)` (sections vides retirées).
+    pub fn filtered(&self, keep: impl Fn(&str, &str) -> bool) -> IniDoc {
+        IniDoc {
+            sections: self
+                .sections
+                .iter()
+                .map(|s| IniSection {
+                    name: s.name.clone(),
+                    entries: s
+                        .entries
+                        .iter()
+                        .filter(|(k, _)| keep(&s.name, k))
+                        .cloned()
+                        .collect(),
+                })
+                .filter(|s| !s.entries.is_empty())
+                .collect(),
+        }
+    }
+
+    pub fn names(&self) -> Vec<&str> {
+        self.sections.iter().map(|s| s.name.as_str()).collect()
+    }
+
     pub fn only(&self, names: &[&str]) -> IniDoc {
         IniDoc {
             sections: self

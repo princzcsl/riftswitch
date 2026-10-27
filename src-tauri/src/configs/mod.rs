@@ -35,6 +35,47 @@ const LOL_INTERFACE: [&str; 8] = [
 const LOL_SOUND: [&str; 2] = ["Volume", "Voice"];
 const LOL_GRAPHICS: [&str; 2] = ["Performance", "General"];
 
+/// Clés propres à un PC ou à une version du jeu : jamais affichées ni copiées d'un compte à l'autre.
+pub fn is_volatile(key: &str) -> bool {
+    let k = key.rsplit("::").next().unwrap_or(key);
+    const PARTS: [&str; 9] = [
+        "DeviceID",
+        "MonitorIndex",
+        "Benchmark",
+        "LastConfirmed",
+        "LastUserConfirmed",
+        "LastRecommended",
+        "WindowPos",
+        "PreferredMonitor",
+        "LastSeen",
+    ];
+    k.ends_with("Version") || PARTS.iter().any(|p| k.contains(p))
+}
+
+/// Réglage VALORANT rangé dans « Son ».
+pub fn is_val_sound(key: &str) -> bool {
+    let k = key.rsplit("::").next().unwrap_or(key);
+    [
+        "Volume",
+        "Music",
+        "Sound",
+        "Audio",
+        "VoiceChat",
+        "Speaker",
+        "Microphone",
+        "Mic",
+    ]
+    .iter()
+    .any(|p| k.contains(p))
+}
+
+/// Anciennes catégories VALORANT : « settings » couvrait interface et son.
+fn has_cat(categories: &[String], cat: &str) -> bool {
+    categories
+        .iter()
+        .any(|c| c == cat || (c == "settings" && matches!(cat, "interface" | "sound")))
+}
+
 const VAL_KEYBINDS: &str = "WindowsClient/BackupKeybinds.json";
 const VAL_SETTINGS: &str = "Windows/RiotUserSettings.ini";
 const VAL_GRAPHICS: &str = "WindowsClient/GameUserSettings.ini";
@@ -70,6 +111,10 @@ pub struct ConfigProfile {
     /// keybinds, settings, graphics (Valorant).
     pub categories: Vec<String>,
     pub notes: String,
+    /// Compte d'origine : identifiant local (vide pour un profil importé), Riot ID et icône.
+    pub source_account: String,
+    pub source_name: String,
+    pub source_icon: Option<i64>,
     pub lol: Option<LolConfig>,
     pub val: Option<ValConfig>,
 }
@@ -137,6 +182,7 @@ pub fn to_code(p: &ConfigProfile) -> AppResult<String> {
     let mut clean = p.clone();
     clean.id.clear();
     clean.notes.clear();
+    clean.source_account.clear();
     let json = serde_json::to_vec(&clean)?;
     let mut enc = DeflateEncoder::new(Vec::new(), Compression::best());
     enc.write_all(&json)?;
@@ -160,6 +206,7 @@ pub fn from_code(code: &str) -> AppResult<ConfigProfile> {
     let mut p: ConfigProfile =
         serde_json::from_slice(&out).map_err(|_| AppError::code("code_invalid"))?;
     p.id.clear();
+    p.source_account.clear();
     p.source = "import".into();
     Ok(p)
 }
@@ -241,7 +288,7 @@ pub async fn apply_lol(
         if !sections.is_empty() {
             let path = dir.join("game.cfg");
             let mut current = IniDoc::parse(&std::fs::read_to_string(&path).unwrap_or_default());
-            current.merge_sections(&cfg.game, &sections);
+            current.merge_sections(&cfg.game.filtered(|_, k| !is_volatile(k)), &sections);
             util::atomic_write(&path, current.to_text().as_bytes(), true)?;
         }
         done.push("files".to_string());
@@ -265,7 +312,11 @@ pub async fn apply_lol(
                 .get("/lol-game-settings/v1/game-settings")
                 .await
                 .unwrap_or(Value::Null);
-            let body = cfg.game.only(&sections).to_json_like(&current);
+            let body = cfg
+                .game
+                .only(&sections)
+                .filtered(|_, k| !is_volatile(k))
+                .to_json_like(&current);
             ok &= api
                 .patch("/lol-game-settings/v1/game-settings", &body)
                 .await
@@ -355,23 +406,38 @@ pub fn apply_val(p: &ConfigProfile, dir_name: &str) -> AppResult<Vec<String>> {
         .as_ref()
         .ok_or_else(|| AppError::new("invalid", "val"))?;
     let dir = val_dir(dir_name)?;
-    let wanted: Vec<&str> = p
-        .categories
-        .iter()
-        .filter_map(|c| match c.as_str() {
-            "keybinds" => Some(VAL_KEYBINDS),
-            "settings" => Some(VAL_SETTINGS),
-            "graphics" => Some(VAL_GRAPHICS),
-            _ => None,
-        })
-        .collect();
+    let cats = &p.categories;
     let mut done = Vec::new();
-    for rel in wanted {
-        if let Some(text) = cfg.files.get(rel) {
-            let target = dir.join(rel);
-            util::atomic_write(&target, text.as_bytes(), true)?;
-            done.push(rel.to_string());
+    if has_cat(cats, "keybinds") {
+        if let Some(text) = cfg.files.get(VAL_KEYBINDS) {
+            util::atomic_write(&dir.join(VAL_KEYBINDS), text.as_bytes(), true)?;
+            done.push("keybinds".to_string());
         }
+    }
+    // Réglages : fusion clé par clé dans le fichier du compte, sans les clés propres au PC.
+    let (interface, sound) = (has_cat(cats, "interface"), has_cat(cats, "sound"));
+    let graphics = has_cat(cats, "graphics");
+    // Fichier, et catégorie d'une clé : interface / son pour RiotUserSettings, graphismes sinon.
+    let parts = [(VAL_SETTINGS, interface || sound), (VAL_GRAPHICS, graphics)];
+    let keep = |rel: &str, k: &str| {
+        if rel == VAL_GRAPHICS {
+            graphics
+        } else if is_val_sound(k) {
+            sound
+        } else {
+            interface
+        }
+    };
+    for (rel, wanted) in parts {
+        let Some(text) = cfg.files.get(rel).filter(|_| wanted) else {
+            continue;
+        };
+        let src = IniDoc::parse(text).filtered(|_, k| !is_volatile(k) && keep(rel, k));
+        let path = dir.join(rel);
+        let mut current = IniDoc::parse(&std::fs::read_to_string(&path).unwrap_or_default());
+        current.merge_sections(&src, &src.names());
+        util::atomic_write(&path, current.to_text().as_bytes(), true)?;
+        done.push(rel.to_string());
     }
     Ok(done)
 }
@@ -389,6 +455,7 @@ pub fn read_file(path: &Path) -> AppResult<ConfigProfile> {
     let mut p: ConfigProfile =
         serde_json::from_slice(&bytes).map_err(|_| AppError::code("import_invalid"))?;
     p.id.clear();
+    p.source_account.clear();
     p.source = "import".into();
     Ok(p)
 }
@@ -418,6 +485,18 @@ mod tests {
         assert_eq!(back.lol.unwrap().input, p.lol.unwrap().input);
         assert!(from_code("RSC1.@@@").is_err());
         assert!(from_code("nope").is_err());
+    }
+
+    #[test]
+    fn volatile_and_sound_keys() {
+        assert!(is_volatile("DefaultMonitorDeviceID"));
+        assert!(is_volatile("EAresIntSettingName::LocalSettingsVersion"));
+        assert!(is_volatile("CfgVersion"));
+        assert!(!is_volatile("ResolutionSizeX"));
+        assert!(is_val_sound("EAresFloatSettingName::OverallVolume"));
+        assert!(!is_val_sound("EAresFloatSettingName::MouseSensitivity"));
+        assert!(has_cat(&["settings".into()], "sound"));
+        assert!(!has_cat(&["settings".into()], "graphics"));
     }
 
     #[test]

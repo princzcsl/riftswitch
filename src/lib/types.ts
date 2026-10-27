@@ -153,6 +153,9 @@ export interface ConfigProfile {
   source: string;
   categories: string[];
   notes: string;
+  sourceAccount: string;
+  sourceName: string;
+  sourceIcon: number | null;
   lol: { input: IniDoc; game: IniDoc } | null;
   val: { files: Record<string, string> } | null;
 }

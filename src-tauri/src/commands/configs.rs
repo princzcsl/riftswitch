@@ -87,7 +87,20 @@ pub async fn capture_profile(
         ..Default::default()
     };
     if let Some(acc) = source_account {
-        p.notes = format!("account:{acc}");
+        if let Ok(Some((name, icon))) = state.with_vault(|v| {
+            Ok(v.data.accounts.iter().find(|a| a.id == acc).map(|a| {
+                let name = if a.tag_line.is_empty() {
+                    a.game_name.clone()
+                } else {
+                    format!("{}#{}", a.game_name, a.tag_line)
+                };
+                (name, a.profile_icon_id)
+            }))
+        }) {
+            p.source_name = name;
+            p.source_icon = icon;
+        }
+        p.source_account = acc;
     }
     match game.as_str() {
         "lol" => {

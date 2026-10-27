@@ -22,7 +22,10 @@ use crate::error::{AppError, AppResult};
 use crate::offline::OfflineProxy;
 use crate::riot::rso_login::{LoginSession, Outcome};
 use crate::riot::session::RsoTokens;
-use crate::riot::{captcha, identity, launch, lcu, paths, presence, process, redeem, rso_login, session, window, RiotStatus};
+use crate::riot::{
+    captcha, identity, launch, lcu, paths, presence, process, redeem, rso_login, session, window,
+    RiotStatus,
+};
 use crate::state::AppState;
 use crate::util::{log, now_ms};
 use crate::vault::model::Account;
@@ -189,7 +192,15 @@ pub async fn play(
     let _guard = state.busy.try_lock().map_err(|_| AppError::code("busy"))?;
     state.cancel_login.store(false, Ordering::Relaxed);
     set_busy(&app, &state, Some("switching"));
-    let result = do_play(&app, &state, &account_id, game, offline, force.unwrap_or(false)).await;
+    let result = do_play(
+        &app,
+        &state,
+        &account_id,
+        game,
+        offline,
+        force.unwrap_or(false),
+    )
+    .await;
     state.launch_ghost_open.store(false, Ordering::Relaxed);
     set_busy(&app, &state, None);
     if result.as_ref().is_ok_and(|r| r.offline) {
@@ -251,7 +262,11 @@ async fn do_play(
     state.launch_ghost.store(offline, Ordering::Relaxed);
     state.launch_ghost_open.store(restart, Ordering::Relaxed);
     // Surnom du compte (ou début de son identifiant interne) : jamais le Riot ID ni l'identifiant.
-    let who = if target.label.is_empty() { target.id.chars().take(8).collect() } else { target.label.clone() };
+    let who = if target.label.is_empty() {
+        target.id.chars().take(8).collect()
+    } else {
+        target.label.clone()
+    };
     log(format!(
         "play: compte={who} jeu={game} hors_ligne={offline} client={} authentifié={} cible_active={target_active} redémarrage={restart}",
         procs.riot_client,
@@ -265,7 +280,9 @@ async fn do_play(
         if blocked {
             return Err(AppError::code("game_in_progress"));
         }
-        log(format!("play: fermeture de {product} (un seul jeu à la fois)"));
+        log(format!(
+            "play: fermeture de {product} (un seul jeu à la fois)"
+        ));
         process::kill_product(product);
         tokio::time::sleep(Duration::from_millis(1500)).await;
     }
@@ -425,7 +442,11 @@ async fn try_restore(state: &AppState, target: &Account) -> AppResult<bool> {
             let ok = target.matches_identity(i.puuid.as_deref(), &i.game_name, &i.tag_line);
             log(format!(
                 "session: session enregistrée {} en {} ms",
-                if ok { "acceptée, sans captcha" } else { "ouverte sur un autre compte" },
+                if ok {
+                    "acceptée, sans captcha"
+                } else {
+                    "ouverte sur un autre compte"
+                },
                 start.elapsed().as_millis()
             ));
             return Ok(ok);
@@ -476,7 +497,10 @@ async fn credential_login(
             }
             Outcome::Mfa { methods, email } => {
                 log("login: A2F requise");
-                let _ = app.emit("login-mfa", serde_json::json!({ "methods": methods, "email": email }));
+                let _ = app.emit(
+                    "login-mfa",
+                    serde_json::json!({ "methods": methods, "email": email }),
+                );
                 let otp = await_otp(state).await?;
                 outcome = session.submit_mfa(&otp, true).await?;
             }
@@ -858,7 +882,9 @@ pub fn set_offline(state: State<'_, AppState>, offline: bool) -> AppResult<bool>
     // Lancement en cours, client pas encore démarré : le choix est repris au dernier moment.
     if state.launch_ghost_open.load(Ordering::Relaxed) {
         state.launch_ghost.store(offline, Ordering::Relaxed);
-        log(format!("offline: mode fantôme changé pendant le lancement ({offline})"));
+        log(format!(
+            "offline: mode fantôme changé pendant le lancement ({offline})"
+        ));
         return Ok(true);
     }
     match state.proxy() {
@@ -879,7 +905,10 @@ pub fn riot_status(state: State<'_, AppState>) -> RiotStatus {
 #[tauri::command]
 pub async fn quit_riot(state: State<'_, AppState>) -> AppResult<()> {
     let _guard = state.busy.try_lock().map_err(|_| AppError::code("busy"))?;
-    if presence::with_match_state(process::snapshot()).await.game_in_progress() {
+    if presence::with_match_state(process::snapshot())
+        .await
+        .game_in_progress()
+    {
         return Err(AppError::code("game_in_progress"));
     }
     launch::shutdown(Duration::from_secs(12)).await;

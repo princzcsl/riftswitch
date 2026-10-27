@@ -225,8 +225,33 @@ const profiles = [
     source: "client",
     categories: ["keybinds", "interface"],
     notes: "",
+    sourceAccount: "a1",
+    sourceName: "PrinceMid#EUW",
+    sourceIcon: null,
     lol: { input: parseIni(input), game: parseIni("[HUD]\nGlobalScale=0.5000\nShowTimestamps=1\nMinimapScale=1.2000\n[Volume]\nMasterVolume=0.6000") },
     val: null,
+  },
+  {
+    id: "pr2",
+    name: "Duo",
+    game: "val",
+    createdAt: now - 5 * day,
+    updatedAt: now - 2 * day,
+    source: "files",
+    categories: ["keybinds", "settings"],
+    notes: "",
+    sourceAccount: "",
+    sourceName: "Ami#0001",
+    sourceIcon: 29,
+    lol: null,
+    val: {
+      files: {
+        "Windows/RiotUserSettings.ini":
+          "[Settings]\nLocalSettingsVersion=7\nEAresFloatSettingName::MouseSensitivity=0.5\nEAresFloatSettingName::MinimapSize=0.985000014\nEAresFloatSettingName::OverallVolume=0.227500007\nEAresFloatSettingName::CrosshairCenterDotSize=1\nEAresBoolSettingName::ShowCorpses=True\n",
+        "WindowsClient/GameUserSettings.ini":
+          "[/Script/ShooterGame.ShooterGameUserSettings]\nDefaultMonitorDeviceID=MONITOR\nbUseVSync=False\nResolutionSizeX=1920\nResolutionSizeY=1080\nLastConfirmedFullscreenMode=0\n",
+      },
+    },
   },
 ];
 

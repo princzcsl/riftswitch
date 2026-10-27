@@ -41,7 +41,11 @@ pub async fn valorant_state() -> Option<String> {
         .flatten()
         .filter(|p| p.get("puuid").and_then(|x| x.as_str()) == Some(puuid.as_str()))
         .filter(|p| p.get("product").and_then(|x| x.as_str()) == Some("valorant"))
-        .filter_map(|p| p.get("private").and_then(|x| x.as_str()).and_then(loop_state))
+        .filter_map(|p| {
+            p.get("private")
+                .and_then(|x| x.as_str())
+                .and_then(loop_state)
+        })
         .next()
 }
 

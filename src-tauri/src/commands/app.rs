@@ -320,7 +320,10 @@ pub async fn install_update(app: AppHandle) -> AppResult<()> {
     update.verify(&bytes).map_err(err)?;
     let path = std::env::temp_dir().join(format!("RiftSwitch_{}_setup.exe", update.version));
     std::fs::write(&path, &bytes)?;
-    crate::util::log(format!("update: installation de la version {}", update.version));
+    crate::util::log(format!(
+        "update: installation de la version {}",
+        update.version
+    ));
     std::process::Command::new(&path)
         .args(["/S", "/UPDATE", "/R"])
         .spawn()
@@ -331,7 +334,12 @@ pub async fn install_update(app: AppHandle) -> AppResult<()> {
 /// Confirmation de fermeture en attente (la fenêtre vient peut-être d'être recréée).
 #[tauri::command]
 pub fn exit_prompt(state: State<'_, AppState>) -> Option<serde_json::Value> {
-    state.pending_exit.lock().unwrap().as_ref().map(|(p, _)| p.clone())
+    state
+        .pending_exit
+        .lock()
+        .unwrap()
+        .as_ref()
+        .map(|(p, _)| p.clone())
 }
 
 /// Lancement demandé depuis la zone de notification (compte, jeu), pris en charge une seule fois.
