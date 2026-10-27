@@ -32,6 +32,8 @@ const AUTH_TIMEOUT: Duration = Duration::from_secs(30);
 /// Délai laissé à l'utilisateur pour se connecter quand les jetons ont expiré.
 const LOGIN_TIMEOUT: Duration = Duration::from_secs(300);
 const MAX_CAPTCHA_ATTEMPTS: u32 = 5;
+/// Délai laissé au client pour se reconnecter avec la session enregistrée, une fois son API prête.
+const RESTORE_TIMEOUT: Duration = Duration::from_secs(15);
 // Riot a refusé un jeton obtenu en fenêtre discrète : on passe en visible pour la session.
 static DISCREET_REJECTED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 
@@ -350,12 +352,24 @@ async fn sign_in_target(
     game: &'static str,
     extra: &[String],
 ) -> AppResult<()> {
-    // 1) Identifiants enregistrés → connexion assistée.
+    // 1) Identifiants enregistrés → session « Rester connecté » d'abord, sinon connexion assistée.
     if let Some((user, pass)) = stored_credentials(state, &target.id)? {
-        // Démarrer le client déconnecté AVANT la connexion (comme LAM) : il a le temps d'être prêt
-        // pendant que l'utilisateur résout le captcha, et reçoit ensuite le jeton sans délai.
-        session::clear_persisted()?;
-        launch::start_client(exe, Some(game), extra)?;
+        if let Some(tokens) = stored_tokens(state, &target.id)? {
+            // Le client démarre déjà connecté au compte, sans identifiants ni captcha.
+            session::write_persisted(&tokens)?;
+            launch::start_client(exe, Some(game), extra)?;
+            emit_step(app, "restore");
+            if try_restore(state, target).await? {
+                let _ = refresh_tokens(state, &target.id).await;
+                return Ok(());
+            }
+            // Session expirée ou révoquée : connexion par identifiants sur le client déjà ouvert.
+        } else {
+            // Démarrer le client déconnecté AVANT la connexion (comme LAM) : il a le temps d'être
+            // prêt pendant que l'utilisateur résout le captcha, et reçoit ensuite le jeton sans délai.
+            session::clear_persisted()?;
+            launch::start_client(exe, Some(game), extra)?;
+        }
         emit_step(app, "login");
         let token = credential_login(app, state, &user, &pass).await?;
         drop((user, pass));
@@ -383,6 +397,31 @@ async fn sign_in_target(
     launch::start_client(exe, Some(game), extra)?;
     emit_step(app, "manual");
     wait_signed_in(app, state, target, false).await
+}
+
+/// Le client, démarré avec la session enregistrée du compte, s'y reconnecte-t-il tout seul ?
+async fn try_restore(state: &AppState, target: &Account) -> AppResult<bool> {
+    if !launch::wait_api(Duration::from_secs(45)).await {
+        return Ok(false);
+    }
+    let start = Instant::now();
+    while start.elapsed() < RESTORE_TIMEOUT {
+        if state.cancel_login.load(Ordering::Relaxed) {
+            return Err(AppError::code("cancelled"));
+        }
+        if let Some(i) = signed_in_identity().await {
+            let ok = target.matches_identity(i.puuid.as_deref(), &i.game_name, &i.tag_line);
+            log(format!(
+                "session: session enregistrée {} en {} ms",
+                if ok { "acceptée, sans captcha" } else { "ouverte sur un autre compte" },
+                start.elapsed().as_millis()
+            ));
+            return Ok(ok);
+        }
+        tokio::time::sleep(Duration::from_millis(500)).await;
+    }
+    log("session: session enregistrée refusée, connexion par identifiants");
+    Ok(false)
 }
 
 /// Connexion au service d'authentification de Riot avec les identifiants enregistrés.
