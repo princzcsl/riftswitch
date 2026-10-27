@@ -51,8 +51,12 @@ export function lolCat(section: string, key: string): string | null {
 }
 
 /** Catégorie d'une clé de RiotUserSettings (VALORANT). */
+const VAL_GRAPHICS = ["Quality", "Framerate", "Vignette", "Anisotropic", "AntiAliasing", "PlayerPerf", "Bloom", "Distortion", "Shadow", "Clarity", "Sharpening", "VSync"];
+
 export function valCat(key: string): string {
-  if (bare(key).includes("Crosshair")) return "crosshair";
+  const k = bare(key);
+  if (k.includes("Crosshair")) return "crosshair";
+  if (VAL_GRAPHICS.some((p) => k.includes(p))) return "graphics";
   return isValSound(key) ? "sound" : "interface";
 }
 

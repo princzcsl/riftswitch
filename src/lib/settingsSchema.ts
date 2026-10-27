@@ -3,7 +3,7 @@
 
 export type Field = {
   key: string;
-  kind: "bool" | "slider" | "select" | "number" | "key" | "mapSkins";
+  kind: "bool" | "slider" | "select" | "number" | "key" | "text" | "mapSkins";
   min?: number;
   max?: number;
   step?: number;
@@ -79,7 +79,7 @@ export const LOL_SCHEMA: Record<string, Group[]> = {
     { id: "map", fields: [{ key: "MapSkinOptionDisable", kind: "mapSkins" }] },
     {
       id: "floatingText",
-      fields: bools("Damage_Enabled", "EnemyDamage_Enabled", "Heal_Enabled", "ManaDamage_Enabled", "Gold_Enabled", "Experience_Enabled", "Level_Enabled", "Dodge_Enabled", "Invulnerable_Enabled", "QuestReceived_Enabled", "Score_Enabled", "Special_Enabled"),
+      fields: bools("Damage_Enabled", "EnemyDamage_Enabled", "ManaDamage_Enabled", "Heal_Enabled", "Gold_Enabled", "Experience_Enabled", "Level_Enabled", "Dodge_Enabled", "Invulnerable_Enabled", "QuestReceived_Enabled", "Score_Enabled", "Special_Enabled"),
     },
   ],
   sound: [
@@ -104,6 +104,7 @@ export const LOL_SCHEMA: Record<string, Group[]> = {
       id: "display",
       fields: [
         { key: "WindowMode", kind: "select", options: [0, 1, 2], list: "lolWindow" },
+        { key: "FrameCapType", kind: "select", options: [1, 2, 3, 4, 5, 6, 7, 8, 9], list: "lolFps" },
         { key: "Width", kind: "number" },
         { key: "Height", kind: "number" },
         ...bools("WaitForVerticalSync"),
@@ -167,12 +168,39 @@ export const VAL_SCHEMA: Record<string, Group[]> = {
         ...bools("bUseVSync", "bShouldLetterbox"),
       ],
     },
-    {
-      id: "quality",
-      fields: ["sg.TextureQuality", "sg.EffectsQuality", "sg.ShadowQuality", "sg.AntiAliasingQuality", "sg.PostProcessQuality", "sg.ViewDistanceQuality", "sg.FoliageQuality", "sg.ShadingQuality", "sg.ReflectionQuality", "sg.GlobalIlluminationQuality"].map(quality("valQuality", 4)),
-    },
   ],
 };
+
+/** Graphismes VALORANT rangés dans RiotUserSettings (les vrais réglages du menu Vidéo). */
+export const VAL_GRAPHICS_USER: Group[] = [
+  {
+    id: "quality",
+    fields: [
+      ...["MaterialQuality", "TextureQuality", "DetailQuality", "UIQuality"].map(quality("valLevel", 3)),
+      { key: "AnisotropicFiltering", kind: "select", options: [1, 2, 4, 8, 16], list: "aniso" },
+      { key: "AntiAliasing", kind: "select", options: [0, 1, 2, 3], list: "valAA" },
+      ...bools("VignetteEnabled", "ImproveClarity", "ExperimentalSharpening", "BloomEnabled", "DistortionEnabled", "CastShadows"),
+    ],
+  },
+  {
+    id: "fps",
+    fields: [
+      ...[
+        ["LimitFramerateOnBattery", "MaxFramerateOnBattery"],
+        ["LimitFramerateInMenu", "MaxFramerateInMenu"],
+        ["LimitFramerateInBackground", "MaxFramerateInBackground"],
+        ["LimitFramerateAlways", "MaxFramerateAlways"],
+      ].flatMap(([on, max]): Field[] => [{ key: on, kind: "bool" }, { key: max, kind: "number" }]),
+    ],
+  },
+  {
+    id: "perf",
+    fields: [
+      { key: "PlayerPerfShowFrameRate", kind: "select", options: [0, 1, 2, 3], list: "perfStat" },
+      { key: "PlayerPerfPresetType", kind: "text" },
+    ],
+  },
+];
 
 /** Clé sans préfixe VALORANT (« EAresFloatSettingName::X » → « X »). */
 export const bareKey = (k: string) => k.split("::").pop() ?? k;

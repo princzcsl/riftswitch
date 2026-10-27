@@ -13,6 +13,7 @@
     groups,
     advanced,
     numericBools = true,
+    search = true,
     onchange,
   }: {
     doc: IniDoc;
@@ -21,6 +22,7 @@
     advanced: ((section: string, key: string) => boolean) | null;
     /** 0 / 1 lus comme des cases à cocher dans « Avancé » (LoL ; VALORANT écrit True / False). */
     numericBools?: boolean;
+    search?: boolean;
     onchange?: () => void;
   } = $props();
 
@@ -88,7 +90,7 @@
 </script>
 
 <div class="col">
-  <input class="input" placeholder={t("kb.searchSetting")} bind:value={q} />
+  {#if search}<input class="input" placeholder={t("kb.searchSetting")} bind:value={q} />{/if}
   <div class="groups">
     {#each visible as g (g.id)}
       <div class="card">
@@ -125,7 +127,10 @@
               {:else if f.kind === "select"}
                 <select class="input sel" value={String(Math.round(Number(v)))} onchange={(e) => write(pos, numText(v, Number(e.currentTarget.value)))}>
                   {#each f.options ?? [] as o}<option value={String(o)}>{t(`cfgopt.${f.list}_${o}`)}</option>{/each}
+                  {#if !(f.options ?? []).includes(Math.round(Number(v)))}<option value={String(Math.round(Number(v)))}>{t("cfgopt.other", { v })}</option>{/if}
                 </select>
+              {:else if f.kind === "text"}
+                <input class="input v" value={v} onchange={(e) => write(pos, e.currentTarget.value)} />
               {:else if f.kind === "key"}
                 <KeyCapture mode="val" valKey={{ key: v, shift: false, ctrl: false, alt: false }} onval={(k) => write(pos, k?.key ?? "None")} />
               {:else}

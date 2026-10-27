@@ -7,7 +7,7 @@
   import { errorText, t } from "../lib/i18n.svelte";
   import { relativeTime } from "../lib/format";
   import { iniText, lolCat, parseIni, valCat } from "../lib/ini";
-  import { LOL_SCHEMA, VAL_SCHEMA } from "../lib/settingsSchema";
+  import { LOL_SCHEMA, VAL_GRAPHICS_USER, VAL_SCHEMA } from "../lib/settingsSchema";
   import { loadLayout } from "../lib/keys";
   import Avatar from "../components/Avatar.svelte";
   import GameIcon from "../components/GameIcon.svelte";
@@ -157,6 +157,10 @@
     }
   }
 
+  /** Comptes VALORANT sans dossier de config sur ce PC (jeu jamais lancé ici avec eux). */
+  const missingVal = $derived(
+    app.accounts.filter((a) => !valDirs.some((d) => d.puuid === a.puuid) && (a.lastGame === "val" || !!a.valShard || !!a.ranks?.val || (a.playtime?.val ?? 0) > 0)),
+  );
   const dirOf = (a: Account) => valDirs.find((d) => d.puuid === a.puuid)?.name;
 
   function openApply() {
@@ -310,6 +314,20 @@
     {#if game === "val"}<span class="risk medium">● {t("risk.experimental")}</span>{/if}
   </div>
 
+  {#if !list.length}
+    <div class="start">
+      <button class="tile glass" onclick={openCapture}>
+        <span class="tile-ic"><Icon name="download" size={26} /></span>
+        <strong>{t("configs.capture")}</strong>
+        <span class="muted small">{game === "lol" ? t("configs.startCaptureLol") : t("configs.startCaptureVal")}</span>
+      </button>
+      <button class="tile glass" onclick={() => (importOpen = true)}>
+        <span class="tile-ic"><Icon name="upload" size={26} /></span>
+        <strong>{t("configs.importTitle")}</strong>
+        <span class="muted small">{t("configs.startImport")}</span>
+      </button>
+    </div>
+  {:else}
   <div class="layout">
     <aside class="list">
       <div class="list-actions">
@@ -318,28 +336,35 @@
       </div>
       {#each list as p (p.id)}
         {@const users = app.accounts.filter((a) => (p.game === "lol" ? a.profiles.lol : a.profiles.val) === p.id)}
+        {@const from = app.accounts.find((a) => a.id === p.sourceAccount)}
         <button class="item glass" class:sel={p.id === selectedId} onclick={() => select(p.id)}>
-          <div class="row">
-            <strong class="ellipsis grow">{p.name}</strong>
-            <span class="faint small">{relativeTime(p.updatedAt)}</span>
-          </div>
-          <div class="row" style="flex-wrap:wrap;gap:4px">
-            {#if p.source === "backup"}<span class="chip warning">{t("configs.backupChip")}</span>{/if}
-            {#each normalize({ ...p }).categories as c}<span class="chip">{t(`configs.cat_${c}`)}</span>{/each}
-          </div>
-          {#if users.length}
-            <div class="avatars">
-              {#each users.slice(0, 6) as u}<Avatar icon={u.icon} autoIconId={u.profileIconId} color={u.color} size={20} label={u.label} />{/each}
-              {#if users.length > 6}<span class="faint small">+{users.length - 6}</span>{/if}
+          <div class="item-head">
+            <Avatar
+              icon={from?.icon ?? (p.sourceAvatar || undefined)}
+              autoIconId={from?.profileIconId ?? p.sourceIcon}
+              color={from?.color ?? (p.sourceColor || undefined)}
+              size={36}
+              label={from?.label || p.sourceName || p.name}
+            />
+            <div class="item-text">
+              <strong class="ellipsis">{p.name}</strong>
+              <span class="faint small ellipsis">{from ? riotId(from) : p.sourceName || t(`configs.source_${p.source}`)} · {relativeTime(p.updatedAt)}</span>
             </div>
-          {/if}
+          </div>
+          <div class="item-foot">
+            {#each normalize({ ...p }).categories as c}
+              <span class="cat-ic" title={t(`configs.cat_${c}`)}><Icon name={CAT_ICONS[c]} size={13} /></span>
+            {/each}
+            {#if p.source === "backup"}<span class="chip warning">{t("configs.backupChip")}</span>{/if}
+            <span class="spacer"></span>
+            {#if users.length}
+              <span class="avatars" title={t("configs.usedBy", { n: users.length })}>
+                {#each users.slice(0, 4) as u}<Avatar icon={u.icon} autoIconId={u.profileIconId} color={u.color} size={20} label={u.label} />{/each}
+                {#if users.length > 4}<span class="faint small">+{users.length - 4}</span>{/if}
+              </span>
+            {/if}
+          </div>
         </button>
-      {:else}
-        <div class="empty glass">
-          <Icon name="keyboard" size={30} />
-          <p>{t("configs.empty")}</p>
-          <button class="btn primary sm" onclick={openCapture}>{t("configs.capture")}</button>
-        </div>
       {/each}
     </aside>
 
@@ -418,8 +443,17 @@
               {/if}
             {:else if draft.lol}
               <SettingsPanel bind:doc={draft.lol.game} groups={LOL_SCHEMA[tab] ?? []} advanced={(s, k) => lolCat(s, k) === tab} onchange={markDirty} />
+            {:else if draft.val && tab === "graphics"}
+              <div class="col" style="gap:12px">
+                {#if valDocs[VAL_GRAPHICS]}
+                  <SettingsPanel bind:doc={valDocs[VAL_GRAPHICS]} groups={VAL_SCHEMA.graphics} advanced={null} numericBools={false} search={false} onchange={() => valChanged(VAL_GRAPHICS)} />
+                {/if}
+                {#if valDocs[VAL_SETTINGS]}
+                  <SettingsPanel bind:doc={valDocs[VAL_SETTINGS]} groups={VAL_GRAPHICS_USER} advanced={null} numericBools={false} search={false} onchange={() => valChanged(VAL_SETTINGS)} />
+                {/if}
+              </div>
             {:else if draft.val}
-              {@const file = tab === "graphics" ? VAL_GRAPHICS : VAL_SETTINGS}
+              {@const file = VAL_SETTINGS}
               {#if !valDocs[file]}
                 <p class="faint small">{t("configs.notCaptured")}</p>
               {:else if tab === "crosshair"}
@@ -439,10 +473,11 @@
           <p class="faint small">{t("configs.noCategory")}</p>
         {/if}
       </section>
-    {:else if list.length}
+    {:else}
       <section class="detail glass empty"><p>{t("configs.pick")}</p></section>
     {/if}
   </div>
+  {/if}
 </div>
 
 <Modal bind:open={captureOpen} title={t("configs.captureTitle")} width={500}>
@@ -464,8 +499,16 @@
                 <strong class="ellipsis">{a ? nameOf(a) : t("configs.unknownAccount")}</strong>
                 <span class="faint small">{a && a.gameName ? riotId(a) : d.puuid.slice(0, 8)} · {d.shard.toUpperCase()}</span>
               </span>
-              <span class="faint small">{t("configs.lastPlayed", { when: relativeTime(d.modified) })}</span>
             </button>
+          {/each}
+          {#each missingVal as a (a.id)}
+            <div class="dir off" title={t("configs.neverInit")}>
+              <Avatar icon={a.icon} autoIconId={a.profileIconId} color={a.color} size={30} label={a.label} />
+              <span class="grow dir-name">
+                <strong class="ellipsis">{nameOf(a)}</strong>
+                <span class="faint small">{t("configs.neverInit")}</span>
+              </span>
+            </div>
           {/each}
         </div>
         {#if !valDirs.length}<p class="small" style="color:var(--warning)">{t("configs.noValDirs")}</p>{/if}
@@ -606,6 +649,73 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
+  }
+  .start {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+  }
+  .tile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-height: 220px;
+    padding: 24px;
+    border-radius: var(--radius-lg);
+    color: var(--text);
+    text-align: center;
+    cursor: pointer;
+    font-size: 15px;
+    transition:
+      border-color 0.15s,
+      transform 0.15s;
+  }
+  .tile:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+  }
+  .tile-ic {
+    display: grid;
+    place-items: center;
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+  .tile .muted {
+    max-width: 300px;
+  }
+  .item-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+  }
+  .item-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  .item-foot {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .cat-ic {
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 7px;
+    background: var(--surface-2);
+    color: var(--text-2);
+  }
+  .dir.off {
+    opacity: 0.55;
+    cursor: default;
   }
   .list-actions {
     display: flex;
