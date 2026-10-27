@@ -228,7 +228,7 @@ const profiles = [
     sourceAccount: "a1",
     sourceName: "PrinceMid#EUW",
     sourceIcon: null,
-    lol: { input: parseIni(input), game: parseIni("[HUD]\nGlobalScale=0.5000\nShowTimestamps=1\nMinimapScale=1.2000\n[Volume]\nMasterVolume=0.6000") },
+    lol: { input: parseIni(input), game: parseIni("[HUD]\nGlobalScale=0.5000\nShowTimestamps=1\nMinimapScale=1.2000\nFlipMiniMap=0\n[General]\nGameMouseSpeed=7\nCursorScale=0.4000\nWindowMode=2\nWidth=1920\nHeight=1080\nCfgVersion=16.21\n[Performance]\nShadowQuality=2\nEnableFXAA=1\nFrameCapType=9\n[MapSkinOptions]\nMapSkinOptionDisableURF=0\nMapSkinOptionDisableArcade=0\n[Volume]\nMasterVolume=0.6000\nMasterMute=0\nMusicVolume=0.0200\nMusicMute=1\n[Voice]\nInputVolume=0.5000") },
     val: null,
   },
   {
@@ -248,6 +248,15 @@ const profiles = [
       files: {
         "Windows/RiotUserSettings.ini":
           "[Settings]\nLocalSettingsVersion=7\nEAresFloatSettingName::MouseSensitivity=0.5\nEAresFloatSettingName::MinimapSize=0.985000014\nEAresFloatSettingName::OverallVolume=0.227500007\nEAresFloatSettingName::CrosshairCenterDotSize=1\nEAresBoolSettingName::ShowCorpses=True\n",
+        "WindowsClient/BackupKeybinds.json": JSON.stringify({
+          settingsVersion: 15,
+          actionMappings: [
+            ["MoveForward", 0, "Z"],
+            ["Jump", 0, "SpaceBar"],
+            ["Jump", 1, "MouseScrollDown"],
+            ["Activate_Ability1", 0, "A"],
+          ].map(([name, bindIndex, key]) => ({ name, characterName: "None", bindIndex, key, shift: false, ctrl: false, alt: false, cmd: false, tapHoldType: "None" })),
+        }),
         "WindowsClient/GameUserSettings.ini":
           "[/Script/ShooterGame.ShooterGameUserSettings]\nDefaultMonitorDeviceID=MONITOR\nbUseVSync=False\nResolutionSizeX=1920\nResolutionSizeY=1080\nLastConfirmedFullscreenMode=0\n",
       },

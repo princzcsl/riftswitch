@@ -5,6 +5,7 @@
   import { LOL_UNBOUND, joinLolValue, splitLolValue } from "../lib/keys";
   import { i18n, t } from "../lib/i18n.svelte";
   import KeyCapture from "./KeyCapture.svelte";
+  import Toggle from "./Toggle.svelte";
 
   let { input = $bindable(), onchange }: { input: IniDoc; onchange?: () => void } = $props();
 
@@ -69,6 +70,32 @@
   });
 
   const quick = $derived(input.sections.find((x) => x.name === "Quickbinds"));
+
+  // Incantation rapide rangée comme dans le jeu : compétences, sorts d'invocateur, objets, autres.
+  const QUICK_ORDER = ["evtCastSpell1", "evtCastSpell2", "evtCastSpell3", "evtCastSpell4", "evtCastAvatarSpell1", "evtCastAvatarSpell2"];
+  const quickGroup = (id: string) =>
+    /^evtCastSpell/.test(id) ? "spells" : /^evtCastAvatarSpell/.test(id) ? "summoners" : /^evtUse(Item|VisionItem)/.test(id) ? "items" : "other";
+  const quickRank = (id: string) => {
+    const i = QUICK_ORDER.indexOf(id);
+    const n = Number(id.match(/(\d+)$/)?.[1] ?? 99);
+    return i >= 0 ? i : /VisionItem/.test(id) ? 50 : n;
+  };
+  const quickGroups = $derived.by(() => {
+    if (!quick) return [];
+    const by = new Map<string, number[]>();
+    quick.entries.forEach(([k], i) => {
+      const g = quickGroup(k.replace(/smart$/, ""));
+      by.set(g, [...(by.get(g) ?? []), i]);
+    });
+    return ["spells", "summoners", "items", "other"]
+      .filter((g) => by.has(g))
+      .map((g) => ({ g, idx: by.get(g)!.sort((a, b) => quickRank(quick.entries[a][0].replace(/smart$/, "")) - quickRank(quick.entries[b][0].replace(/smart$/, ""))) }));
+  });
+  function setQuick(idx: number[], on: boolean) {
+    if (!quick) return;
+    for (const i of idx) quick.entries[i][1] = on ? "1" : "0";
+    onchange?.();
+  }
 </script>
 
 <div class="kb">
@@ -85,20 +112,22 @@
 
   {#if group === "quick" && quick && !q}
     <p class="faint small">{t("kb.quickHint")}</p>
-    <div class="list">
-      {#each quick.entries as entry, i}
-        <label class="row-item">
-          <span class="grow">{actionLabel(LOL_ACTIONS, entry[0].replace(/smart$/, ""), i18n.lang)}</span>
-          <span class="faint small mono">{entry[0]}</span>
-          <input
-            type="checkbox"
-            checked={entry[1] === "1"}
-            onchange={(e) => {
-              quick.entries[i][1] = e.currentTarget.checked ? "1" : "0";
-              onchange?.();
-            }}
-          />
-        </label>
+    <div class="qgrid">
+      {#each quickGroups as { g, idx } (g)}
+        <div class="qcard">
+          <div class="qhead">
+            <span class="section-title">{t(`kb.quick_${g}`)}</span>
+            <button class="btn ghost sm" onclick={() => setQuick(idx, !idx.every((i) => quick.entries[i][1] === "1"))}>
+              {idx.every((i) => quick.entries[i][1] === "1") ? t("kb.allOff") : t("kb.allOn")}
+            </button>
+          </div>
+          {#each idx as i (i)}
+            <div class="qrow">
+              <span class="grow">{actionLabel(LOL_ACTIONS, quick.entries[i][0].replace(/smart$/, ""), i18n.lang)}</span>
+              <Toggle checked={quick.entries[i][1] === "1"} onchange={(on) => setQuick([i], on)} />
+            </div>
+          {/each}
+        </div>
       {/each}
     </div>
   {:else}
@@ -192,6 +221,34 @@
   }
   .row-item:hover {
     background: var(--surface-hover);
+  }
+  .qgrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+    align-items: start;
+  }
+  .qcard {
+    padding: 10px 12px;
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    border: 1px solid var(--border);
+  }
+  .qhead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+  }
+  .qhead .section-title {
+    margin: 0;
+  }
+  .qrow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 34px;
+    font-weight: 540;
   }
   .name {
     display: flex;

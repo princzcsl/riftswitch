@@ -30,7 +30,30 @@ const bare = (key: string) => key.split("::").pop() ?? key;
 /** Clé propre à un PC ou à une version du jeu : ni affichée ni copiée. */
 export function isVolatile(key: string): boolean {
   const k = bare(key);
-  return k.endsWith("Version") || ["DeviceID", "MonitorIndex", "Benchmark", "LastConfirmed", "LastUserConfirmed", "LastRecommended", "WindowPos", "PreferredMonitor", "LastSeen"].some((p) => k.includes(p));
+  return (
+    k.endsWith("Version") ||
+    ["DeviceID", "MonitorIndex", "Benchmark", "LastConfirmed", "LastUserConfirmed", "LastRecommended", "WindowPos", "PreferredMonitor", "LastSeen", "Tutorial"].some((p) => k.includes(p)) ||
+    ["HasSeen", "HasAccepted", "HasEver", "LastAccepted", "ShootingRange", "ContextAware"].some((p) => k.startsWith(p))
+  );
+}
+
+const LOL_GENERAL_GRAPHICS = ["Width", "Height", "WindowMode", "WaitForVerticalSync", "ShowGodray", "HideEyeCandy"];
+const LOL_GENERAL_SOUND = ["EnableAudio", "ThemeMusic", "EnableCustomAnnouncer", "EnableCosmeticArenaAudioTFT", "EnableAllCosmeticArenaAudioTFT"];
+
+/** Catégorie d'une clé de game.cfg (null : jamais copiée). */
+export function lolCat(section: string, key: string): string | null {
+  if (section === "Volume" || section === "Voice") return "sound";
+  if (section === "Performance") return "graphics";
+  if (section === "General" && LOL_GENERAL_GRAPHICS.includes(key)) return "graphics";
+  if (section === "General" && LOL_GENERAL_SOUND.includes(key)) return "sound";
+  if (["Mobile", "GameModes", "Replay"].includes(section)) return null;
+  return "interface";
+}
+
+/** Catégorie d'une clé de RiotUserSettings (VALORANT). */
+export function valCat(key: string): string {
+  if (bare(key).includes("Crosshair")) return "crosshair";
+  return isValSound(key) ? "sound" : "interface";
 }
 
 export function isValSound(key: string): boolean {

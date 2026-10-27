@@ -6,25 +6,24 @@
   import { app } from "../lib/app.svelte";
   import { errorText, t } from "../lib/i18n.svelte";
   import { relativeTime } from "../lib/format";
-  import { iniText, isValSound, parseIni, valGroup } from "../lib/ini";
+  import { iniText, lolCat, parseIni, valCat } from "../lib/ini";
+  import { LOL_SCHEMA, VAL_SCHEMA } from "../lib/settingsSchema";
   import { loadLayout } from "../lib/keys";
   import Avatar from "../components/Avatar.svelte";
   import GameIcon from "../components/GameIcon.svelte";
   import Icon from "../components/Icon.svelte";
-  import IniTable from "../components/IniTable.svelte";
+  import CrosshairProfiles from "../components/CrosshairProfiles.svelte";
   import LolKeybinds from "../components/LolKeybinds.svelte";
   import Modal from "../components/Modal.svelte";
   import Popover from "../components/Popover.svelte";
+  import SettingsPanel from "../components/SettingsPanel.svelte";
   import ValKeybinds from "../components/ValKeybinds.svelte";
 
-  // Mêmes catégories pour les deux jeux : elles filtrent l'affichage et ce qui est appliqué.
-  const CATS = ["keybinds", "interface", "sound", "graphics"];
-  const CAT_ICONS: Record<string, string> = { keybinds: "keyboard", interface: "image", sound: "signal", graphics: "sparkle" };
-  const LOL_SECTIONS: Record<string, string[]> = {
-    interface: ["HUD", "FloatingText", "LossOfControl", "Chat", "MapSkinOptions", "ItemShop", "TFT", "Highlights"],
-    sound: ["Volume", "Voice"],
-    graphics: ["Performance", "General"],
-  };
+  // Catégories : elles filtrent l'affichage et ce qui est appliqué. Tout est toujours capturé.
+  const LOL_CATS = ["keybinds", "interface", "sound", "graphics"];
+  const VAL_CATS = ["keybinds", "interface", "crosshair", "sound", "graphics"];
+  const catsOf = (g: string) => (g === "lol" ? LOL_CATS : VAL_CATS);
+  const CAT_ICONS: Record<string, string> = { keybinds: "keyboard", interface: "image", crosshair: "target", sound: "signal", graphics: "sparkle" };
   const VAL_KEYBINDS = "WindowsClient/BackupKeybinds.json";
   const VAL_SETTINGS = "Windows/RiotUserSettings.ini";
   const VAL_GRAPHICS = "WindowsClient/GameUserSettings.ini";
@@ -46,10 +45,8 @@
   let capDir = $state("");
   let importOpen = $state(false);
   let importCode = $state("");
-  let assignOpen = $state(false);
-  let assignIds = $state<string[]>([]);
   let applyOpen = $state(false);
-  let applyDir = $state("");
+  let applyIds = $state<string[]>([]);
   let shareMenu = $state(false);
   let moreMenu = $state(false);
   let deleteOpen = $state(false);
@@ -67,9 +64,9 @@
     if (!list.find((p) => p.id === selectedId)) select(list[0]?.id ?? null);
   });
 
-  /** Anciens profils VALORANT : « settings » couvrait interface et son. */
+  /** Anciens profils VALORANT : « settings » couvrait interface, viseur et son. */
   function normalize(p: ConfigProfile): ConfigProfile {
-    if (p.categories.includes("settings")) p.categories = [...new Set(p.categories.flatMap((c) => (c === "settings" ? ["interface", "sound"] : [c])))];
+    if (p.categories.includes("settings")) p.categories = [...new Set(p.categories.flatMap((c) => (c === "settings" ? ["interface", "crosshair", "sound"] : [c])))];
     if (!p.sourceAccount && p.notes.startsWith("account:")) p.sourceAccount = p.notes.slice(8);
     return p;
   }
@@ -82,7 +79,7 @@
     draft = id ? normalize(await api.getProfile(id)) : null;
     valDocs = {};
     for (const f of [VAL_SETTINGS, VAL_GRAPHICS]) if (draft?.val?.files[f]) valDocs[f] = parseIni(draft.val.files[f]);
-    tab = CATS.find((c) => draft?.categories.includes(c)) ?? "keybinds";
+    tab = catsOf(draft?.game ?? game).find((c) => draft?.categories.includes(c)) ?? "keybinds";
   }
 
   function markDirty() {
@@ -121,7 +118,7 @@
 
   function openCapture() {
     const active = app.activeAccount;
-    capCats = game === "lol" ? ["keybinds"] : ["keybinds", "interface", "sound"];
+    capCats = [...catsOf(game)];
     capDir = game === "val" ? (valDirs.find((d) => d.puuid === active?.puuid)?.name ?? valDirs[0]?.name ?? "") : "";
     capNameEdited = false;
     capName = defaultName();
@@ -151,7 +148,7 @@
     if (!draft) return;
     try {
       const saved = await api.saveProfile($state.snapshot(draft) as ConfigProfile);
-      draft = normalize(saved);
+      if (saved) draft = normalize(saved);
       dirty = false;
       await app.refreshProfiles();
       app.toast("success", t("configs.saved"));
@@ -160,40 +157,45 @@
     }
   }
 
-  async function apply() {
+  const dirOf = (a: Account) => valDirs.find((d) => d.puuid === a.puuid)?.name;
+
+  function openApply() {
+    if (!draft) return;
+    const id = draft.id;
+    applyIds = app.accounts.filter((a) => (draft!.game === "lol" ? a.profiles.lol : a.profiles.val) === id).map((a) => a.id);
+    if (!applyIds.length && app.activeAccount) applyIds = [app.activeAccount.id];
+    applyOpen = true;
+  }
+
+  /** Lie le profil aux comptes cochés (réappliqué à chaque lancement) et l'applique tout de suite quand c'est possible. */
+  async function doApply() {
     if (!draft) return;
     if (dirty) await saveDraft();
-    if (draft.game === "val" && !applyDir) {
-      applyDir = valDirs.find((d) => d.puuid === app.activeAccount?.puuid)?.name ?? valDirs[0]?.name ?? "";
-      applyOpen = true;
-      return;
-    }
     busy = true;
     try {
-      const done = await api.applyProfile(draft.id, draft.game === "val" ? applyDir : null);
+      await api.assignProfile(draft.id, applyIds);
+      let now = 0;
+      if (draft.game === "lol") {
+        const active = app.activeAccount;
+        if (active && applyIds.includes(active.id) && app.status.procs.lolClient) {
+          await api.applyProfile(draft.id, null);
+          now = 1;
+        }
+      } else {
+        for (const a of app.accounts.filter((x) => applyIds.includes(x.id))) {
+          const dir = dirOf(a);
+          if (dir) (await api.applyProfile(draft.id, dir), now++);
+        }
+      }
       applyOpen = false;
-      app.toast("success", done.includes("client") ? t("configs.appliedClient") : t("configs.appliedFiles"), 6000);
+      app.toast("success", now ? t("configs.appliedN", { n: now, total: applyIds.length }) : t("configs.assigned", { n: applyIds.length }), 6000);
+      app.refreshAccounts();
+      app.refreshProfiles();
     } catch (e) {
       app.toast("error", errorText(e), 6000);
     } finally {
       busy = false;
-      applyDir = "";
     }
-  }
-
-  function openAssign() {
-    if (!draft) return;
-    const id = draft.id;
-    assignIds = app.accounts.filter((a) => (draft!.game === "lol" ? a.profiles.lol : a.profiles.val) === id).map((a) => a.id);
-    assignOpen = true;
-  }
-
-  async function doAssign() {
-    if (!draft) return;
-    await api.assignProfile(draft.id, assignIds);
-    assignOpen = false;
-    app.toast("success", t("configs.assigned", { n: assignIds.length }));
-    app.refreshAccounts();
   }
 
   async function copyCode() {
@@ -202,7 +204,7 @@
     if (dirty) await saveDraft();
     const code = await api.exportProfileCode(draft.id);
     await navigator.clipboard.writeText(code);
-    app.toast("success", t("configs.codeCopied", { n: code.length }));
+    app.toast("success", t("configs.codeCopied"));
   }
 
   async function exportFile() {
@@ -260,7 +262,7 @@
 
   function toggleCat(c: string) {
     if (!draft) return;
-    draft.categories = draft.categories.includes(c) ? draft.categories.filter((x) => x !== c) : CATS.filter((x) => x === c || draft!.categories.includes(x));
+    draft.categories = draft.categories.includes(c) ? draft.categories.filter((x) => x !== c) : catsOf(draft.game).filter((x) => x === c || draft!.categories.includes(x));
     if (!draft.categories.includes(tab)) tab = draft.categories[0] ?? "keybinds";
     else if (draft.categories.length === 1) tab = c;
     markDirty();
@@ -269,7 +271,7 @@
   const linked = $derived(
     draft ? app.accounts.filter((a) => (draft!.game === "lol" ? a.profiles.lol : a.profiles.val) === draft!.id) : [],
   );
-  const tabs = $derived(draft ? CATS.filter((c) => draft!.categories.includes(c)) : []);
+  const tabs = $derived(draft ? catsOf(draft.game).filter((c) => draft!.categories.includes(c)) : []);
   const source = $derived(draft?.sourceAccount ? app.accounts.find((a) => a.id === draft!.sourceAccount) : undefined);
 </script>
 
@@ -310,6 +312,7 @@
             <span class="faint small">{relativeTime(p.updatedAt)}</span>
           </div>
           <div class="row" style="flex-wrap:wrap;gap:4px">
+            {#if p.source === "backup"}<span class="chip warning">{t("configs.backupChip")}</span>{/if}
             {#each normalize({ ...p }).categories as c}<span class="chip">{t(`configs.cat_${c}`)}</span>{/each}
           </div>
           {#if users.length}
@@ -333,8 +336,7 @@
         <div class="dhead">
           <input class="input name" bind:value={draft.name} oninput={markDirty} />
           {#if dirty}<button class="btn primary sm" onclick={saveDraft}><Icon name="check" size={15} />{t("common.save")}</button>{/if}
-          <button class="btn sm primary" onclick={apply} disabled={busy}><Icon name="play" size={13} />{t("configs.applyNow")}</button>
-          <button class="btn sm" onclick={openAssign}><Icon name="users" size={15} />{t("configs.assign")}</button>
+          <button class="btn sm primary" onclick={openApply} disabled={busy}><Icon name="play" size={13} />{t("configs.applyBtn")}</button>
           <Popover bind:open={shareMenu} width={250}>
             {#snippet trigger()}
               <button class="btn sm" onclick={() => (shareMenu = !shareMenu)}><Icon name="link" size={14} />{t("configs.shareBtn")}</button>
@@ -353,13 +355,15 @@
         </div>
 
         <div class="meta row small muted">
-          <span>{t(`configs.source_${draft.source}`)}</span>
           {#if source || draft.sourceName}
             <span class="src">
-              <Avatar icon={source?.icon} autoIconId={source?.profileIconId ?? draft.sourceIcon} color={source?.color} size={20} label={source?.label || draft.sourceName} />
+              <Avatar icon={source?.icon} autoIconId={source?.profileIconId ?? draft.sourceIcon} color={source?.color} size={22} label={source?.label || draft.sourceName} />
               <strong>{source ? riotId(source) : draft.sourceName}</strong>
             </span>
+          {:else}
+            <span>{t(`configs.source_${draft.source}`)}</span>
           {/if}
+          {#if draft.source === "backup"}<span class="chip warning">{t("configs.backupChip")}</span>{/if}
           {#if linked.length}
             <span>·</span><span>{t("configs.usedBy", { n: linked.length })}</span>
             <span class="avatars">{#each linked.slice(0, 5) as u}<Avatar icon={u.icon} autoIconId={u.profileIconId} color={u.color} size={18} label={u.label} />{/each}</span>
@@ -368,7 +372,7 @@
 
         <div class="cats">
           <span class="label">{t("configs.appliesTo")}</span>
-          {#each CATS as c}
+          {#each catsOf(draft.game) as c}
             <button class="chip" class:accent={draft.categories.includes(c)} style="cursor:pointer" onclick={() => toggleCat(c)}>
               {#if draft.categories.includes(c)}<Icon name="check" size={12} />{/if}{t(`configs.cat_${c}`)}
             </button>
@@ -392,22 +396,20 @@
                 <p class="faint small">{t("configs.notCaptured")}</p>
               {/if}
             {:else if draft.lol}
-              <IniTable bind:doc={draft.lol.game} sections={LOL_SECTIONS[tab]} onchange={markDirty} />
+              <SettingsPanel bind:doc={draft.lol.game} groups={LOL_SCHEMA[tab] ?? []} advanced={(s, k) => lolCat(s, k) === tab} onchange={markDirty} />
             {:else if draft.val}
               {@const file = tab === "graphics" ? VAL_GRAPHICS : VAL_SETTINGS}
-              {#if valDocs[file]}
-                {#if tab === "graphics"}
-                  <IniTable bind:doc={valDocs[file]} group={() => "display"} onchange={() => valChanged(file)} />
-                {:else}
-                  <IniTable
-                    bind:doc={valDocs[file]}
-                    filter={(_, k) => isValSound(k) === (tab === "sound")}
-                    group={tab === "sound" ? () => "sound" : valGroup}
-                    onchange={() => valChanged(file)}
-                  />
-                {/if}
-              {:else}
+              {#if !valDocs[file]}
                 <p class="faint small">{t("configs.notCaptured")}</p>
+              {:else if tab === "crosshair"}
+                <CrosshairProfiles bind:doc={valDocs[file]} onchange={() => valChanged(file)} />
+              {:else}
+                <SettingsPanel
+                  bind:doc={valDocs[file]}
+                  groups={VAL_SCHEMA[tab] ?? []}
+                  advanced={(_, k) => tab === "graphics" || valCat(k) === tab}
+                  onchange={() => valChanged(file)}
+                />
               {/if}
             {/if}
           </div>
@@ -439,7 +441,7 @@
     </div>
     <span class="label">{t("configs.categories")}</span>
     <div class="row" style="flex-wrap:wrap;gap:6px">
-      {#each CATS as c}
+      {#each catsOf(game) as c}
         <button
           class="chip"
           class:accent={capCats.includes(c)}
@@ -469,46 +471,35 @@
   </div>
 </Modal>
 
-<Modal bind:open={assignOpen} title={t("configs.assignTitle")} width={500}>
-  <p class="muted small">{t("configs.assignHint")}</p>
+<Modal bind:open={applyOpen} title={t("configs.applyTitle")} width={520}>
+  <p class="muted small">{draft?.game === "val" ? t("configs.applyHintVal") : t("configs.applyHintLol")}</p>
   <div class="row" style="margin-bottom:8px">
-    <button class="btn sm" onclick={() => (assignIds = app.accounts.map((a) => a.id))}>{t("configs.selectAll")}</button>
-    <button class="btn sm ghost" onclick={() => (assignIds = [])}>{t("configs.selectNone")}</button>
+    <button class="btn sm" onclick={() => (applyIds = app.accounts.map((a) => a.id))}>{t("configs.selectAll")}</button>
+    <button class="btn sm ghost" onclick={() => (applyIds = [])}>{t("configs.selectNone")}</button>
   </div>
   <div class="assign">
     {#each app.accounts as a (a.id)}
       <label class="arow">
         <input
           type="checkbox"
-          checked={assignIds.includes(a.id)}
-          onchange={(e) => (assignIds = e.currentTarget.checked ? [...assignIds, a.id] : assignIds.filter((x) => x !== a.id))}
+          checked={applyIds.includes(a.id)}
+          onchange={(e) => (applyIds = e.currentTarget.checked ? [...applyIds, a.id] : applyIds.filter((x) => x !== a.id))}
         />
         <Avatar icon={a.icon} autoIconId={a.profileIconId} color={a.color} size={28} label={a.label} />
         <span class="grow ellipsis">
           {nameOf(a)}
           {#if a.label && a.gameName}<span class="faint small">{riotId(a)}</span>{:else if a.tagLine}<span class="faint small">#{a.tagLine}</span>{/if}
         </span>
+        {#if a.id === app.status.activeAccountId}<span class="chip accent">{t("configs.connected")}</span>{/if}
+        {#if draft?.game === "val" && !dirOf(a)}<span class="faint small">{t("configs.noValDir")}</span>{/if}
         <span class="faint small">{a.region}</span>
       </label>
     {/each}
   </div>
+  <p class="faint small" style="margin-top:8px">{t("configs.backupHint")}</p>
   {#snippet footer()}
-    <button class="btn" onclick={() => (assignOpen = false)}>{t("common.cancel")}</button>
-    <button class="btn primary" onclick={doAssign}>{t("common.save")}</button>
-  {/snippet}
-</Modal>
-
-<Modal bind:open={applyOpen} title={t("configs.applyVal")} width={460}>
-  <div class="field">
-    <label for="ad">{t("configs.valAccountDir")}</label>
-    <select id="ad" class="input" bind:value={applyDir}>
-      {#each valDirs as d}<option value={d.name}>{dirLabel(d)}</option>{/each}
-    </select>
-  </div>
-  <p class="faint small">{t("configs.valWarn")}</p>
-  {#snippet footer()}
-    <button class="btn" onclick={() => ((applyOpen = false), (applyDir = ""))}>{t("common.cancel")}</button>
-    <button class="btn primary" onclick={apply} disabled={!applyDir}>{t("configs.applyNow")}</button>
+    <button class="btn" onclick={() => (applyOpen = false)}>{t("common.cancel")}</button>
+    <button class="btn primary" onclick={doApply} disabled={busy}><Icon name="play" size={13} />{t("configs.applyNow")}</button>
   {/snippet}
 </Modal>
 
