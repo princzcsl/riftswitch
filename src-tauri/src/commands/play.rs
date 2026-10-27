@@ -47,6 +47,8 @@ pub struct Notice {
 #[serde(rename_all = "camelCase")]
 pub struct PlayOutcome {
     pub switched: bool,
+    /// Mode fantôme réellement appliqué (il a pu changer pendant le lancement).
+    pub offline: bool,
 }
 
 fn set_busy(app: &AppHandle, state: &AppState, busy: Option<&str>) {
@@ -188,8 +190,9 @@ pub async fn play(
     state.cancel_login.store(false, Ordering::Relaxed);
     set_busy(&app, &state, Some("switching"));
     let result = do_play(&app, &state, &account_id, game, offline, force.unwrap_or(false)).await;
+    state.launch_ghost_open.store(false, Ordering::Relaxed);
     set_busy(&app, &state, None);
-    if result.is_ok() && offline {
+    if result.as_ref().is_ok_and(|r| r.offline) {
         if let Some(n) = notice {
             // Seule notification système de l'app : confirmation du mode hors ligne.
             let _ = app
@@ -244,6 +247,9 @@ async fn do_play(
     let via_proxy = state.client_via_proxy.load(Ordering::Relaxed) && state.proxy().is_some();
     // Relance aussi pour repasser en ligne : sinon le client resterait derrière le proxy.
     let restart = !procs.riot_client || !target_active || offline != via_proxy;
+    // Choix du mode fantôme encore ouvert jusqu'au démarrage du client (relance seulement).
+    state.launch_ghost.store(offline, Ordering::Relaxed);
+    state.launch_ghost_open.store(restart, Ordering::Relaxed);
     // Surnom du compte (ou début de son identifiant interne) : jamais le Riot ID ni l'identifiant.
     let who = if target.label.is_empty() { target.id.chars().take(8).collect() } else { target.label.clone() };
     log(format!(
@@ -275,6 +281,9 @@ async fn do_play(
         }
         state.client_via_proxy.store(false, Ordering::Relaxed);
 
+        // Dernier moment où le mode fantôme peut encore changer : le client démarre juste après.
+        state.launch_ghost_open.store(false, Ordering::Relaxed);
+        let offline = state.launch_ghost.load(Ordering::Relaxed);
         let mut extra = Vec::new();
         if offline {
             let p = ensure_proxy(state, true).await?;
@@ -314,8 +323,11 @@ async fn do_play(
     launch::launch_product(&exe, game, locale.as_deref()).await?;
     record_launch(state, &target.id, game);
     after_launch(app.clone(), target.id.clone(), game);
+    let offline = state.client_via_proxy.load(Ordering::Relaxed)
+        && state.proxy().is_some_and(|p| p.is_offline());
     Ok(PlayOutcome {
         switched: !target_active,
+        offline,
     })
 }
 
@@ -843,6 +855,12 @@ pub fn set_chat_status(state: State<'_, AppState>, status: String) -> AppResult<
 
 #[tauri::command]
 pub fn set_offline(state: State<'_, AppState>, offline: bool) -> AppResult<bool> {
+    // Lancement en cours, client pas encore démarré : le choix est repris au dernier moment.
+    if state.launch_ghost_open.load(Ordering::Relaxed) {
+        state.launch_ghost.store(offline, Ordering::Relaxed);
+        log(format!("offline: mode fantôme changé pendant le lancement ({offline})"));
+        return Ok(true);
+    }
     match state.proxy() {
         Some(p) if state.client_via_proxy.load(Ordering::Relaxed) => {
             p.set_offline(offline);

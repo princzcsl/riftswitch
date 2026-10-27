@@ -214,7 +214,7 @@ class AppStore {
     this.launching = account.id;
     this.playSteps = [];
     try {
-      const notice = offline ? { title: t("offline.notifyTitle"), body: t("offline.notifyBody", { game: t(`games.${game}`) }) } : null;
+      const notice = { title: t("offline.notifyTitle"), body: t("offline.notifyBody", { game: t(`games.${game}`) }) };
       const r = await api.play(account.id, game, offline, notice, force);
       this.toast("success", r.switched ? t("play.switched", { name: account.label || account.gameName }) : t("play.launched", { game: t(`games.${game}`) }));
     } catch (e) {
@@ -245,6 +245,13 @@ class AppStore {
    * proxy, ou sans) : on le confirme puis on relance tout de suite sur le compte connecté.
    */
   async setGhost(on: boolean) {
+    // Pendant un lancement : accepté tant que le client n'est pas démarré, ou en direct via le proxy.
+    if (this.launching) {
+      const ok = await api.setOffline(on).catch(() => false);
+      if (ok) this.setPreferOffline(on);
+      else this.toast("info", t("offline.tooLate"));
+      return;
+    }
     const game = this.openGame();
     const account = this.activeAccount;
     const running = on ? !this.status.proxyRunning : this.status.proxyRunning;

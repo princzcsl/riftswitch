@@ -310,7 +310,7 @@ export function installMock() {
       case "runes_client_pages":
         throw { code: "lol_client_closed", detail: "" };
       case "play":
-        return new Promise((r) => setTimeout(() => r({ switched: a.accountId !== "a1" }), 1200));
+        return new Promise((r) => setTimeout(() => r({ switched: a.accountId !== "a1", offline: !!a.offline }), 1200));
       case "telemetry_preview":
         return { installId: "(généré à l'activation)", accountsBucket: "2-5", hoursPlayedRounded: 70 };
       case "plugin:event|listen":

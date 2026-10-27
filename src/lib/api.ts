@@ -41,7 +41,7 @@ export const api = {
   reorderFolders: (ids: string[]) => invoke<void>("reorder_folders", { ids }),
 
   play: (accountId: string, game: Game, offline: boolean, notice: { title: string; body: string } | null, force = false) =>
-    invoke<{ switched: boolean }>("play", { accountId, game, offline, notice, force }),
+    invoke<{ switched: boolean; offline: boolean }>("play", { accountId, game, offline, notice, force }),
   exitPrompt: () => invoke<{ ghost: boolean; inMatch: boolean; inSelect: boolean } | null>("exit_prompt"),
   answerExit: (ok: boolean) => invoke<void>("answer_exit", { ok }),
   takeTrayPlay: () => invoke<[string, string] | null>("take_tray_play"),

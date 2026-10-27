@@ -32,6 +32,9 @@ pub struct AppState {
     pub force_sync: AtomicBool,
     /// Le Riot Client en cours a été lancé à travers le proxy hors ligne.
     pub client_via_proxy: AtomicBool,
+    /// Mode fantôme du lancement en cours, modifiable tant que le Riot Client n'est pas démarré.
+    pub launch_ghost: AtomicBool,
+    pub launch_ghost_open: AtomicBool,
     /// Émetteur du code A2F attendu pendant une connexion (rempli par la commande `submit_mfa`).
     pub pending_otp: tokio::sync::Mutex<Option<tokio::sync::oneshot::Sender<String>>>,
     /// Confirmation de fermeture affichée par l'interface : (contenu, réponse attendue).
@@ -58,6 +61,8 @@ impl AppState {
             window_visible: AtomicBool::new(true),
             force_sync: AtomicBool::new(true),
             client_via_proxy: AtomicBool::new(false),
+            launch_ghost: AtomicBool::new(false),
+            launch_ghost_open: AtomicBool::new(false),
             pending_otp: tokio::sync::Mutex::new(None),
             pending_exit: Mutex::new(None),
             pending_tray_play: Mutex::new(None),
