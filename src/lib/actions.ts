@@ -98,8 +98,11 @@ export const LOL_ACTIONS: ActionDef[] = [
 export const VAL_GROUPS = ["movement", "equipment", "abilities", "communication", "interface"] as const;
 
 export const VAL_ACTIONS: ActionDef[] = [
-  L("MoveForward", "movement", "Move forward / back", "Avancer / reculer"),
-  L("MoveRight", "movement", "Strafe right / left", "Pas latéral"),
+  // Déplacements : axes VALORANT (touche + sens), identifiants internes à RiftSwitch.
+  L("axis:MoveForward:1", "movement", "Move forward", "Avancer"),
+  L("axis:MoveForward:-1", "movement", "Move backward", "Reculer"),
+  L("axis:MoveRight:-1", "movement", "Strafe left", "Gauche"),
+  L("axis:MoveRight:1", "movement", "Strafe right", "Droite"),
   L("Jump", "movement", "Jump", "Sauter"),
   L("Crouch", "movement", "Crouch", "S'accroupir"),
   L("Walk", "movement", "Walk", "Marcher"),
@@ -122,7 +125,7 @@ export const VAL_ACTIONS: ActionDef[] = [
   L("OpenCommMenu", "communication", "Comms wheel", "Roue de communication"),
   L("VOICE_TeamPTTAction", "communication", "Voice Team", "Voice Team"),
   L("VOICE_PartyPTTAction", "communication", "Voice Party", "Voice Party"),
-  L("VOICE_TeamClutchMuteAction", "communication", "Clutch mute", "Mute son clutch"),
+  L("VOICE_TeamClutchMuteAction", "communication", "Clutch mute", "Mettre en sourdine (clutch)"),
   L("VoteOption0", "communication", "Vote option 1", "Option de vote 1"),
   L("VoteOption1", "communication", "Vote option 2", "Option de vote 2"),
   L("VoteOption2", "communication", "Vote option 3", "Option de vote 3"),

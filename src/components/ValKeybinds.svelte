@@ -19,7 +19,17 @@
 
   let { json = $bindable(""), onchange }: { json: string; onchange?: () => void } = $props();
 
-  let doc = $state<{ actionMappings?: Mapping[]; [k: string]: unknown } | null>(null);
+  /** Liaison d'axe (déplacements) : une touche et un sens. */
+  interface Axis {
+    name: string;
+    characterName: string;
+    bindIndex: number;
+    key: string;
+    scale: number;
+  }
+  type Doc = { actionMappings?: Mapping[]; axisMappings?: Axis[]; [k: string]: unknown };
+
+  let doc = $state<Doc | null>(null);
   let parseError = $state(false);
   let q = $state("");
 
@@ -38,13 +48,33 @@
     onchange?.();
   }
 
-  const mappings = $derived((doc?.actionMappings ?? []) as Mapping[]);
+  // Une ligne = une action (« Jump ») ou un axe et son sens (« axis:MoveRight:-1 »).
+  const axisOf = (row: string) => {
+    const m = row.match(/^axis:(\w+):(-?\d+)$/);
+    return m ? { name: m[1], scale: Number(m[2]) } : null;
+  };
+  /** Toutes les liaisons d'une ligne, y compris les copies par agent que VALORANT enregistre. */
+  function entries(row: string): (Mapping | Axis)[] {
+    const ax = axisOf(row);
+    if (ax) return (doc?.axisMappings ?? []).filter((m) => m.name === ax.name && Math.sign(m.scale) === Math.sign(ax.scale));
+    return (doc?.actionMappings ?? []).filter((m) => m.name === row);
+  }
+  const slot = (row: string, i: number) => entries(row).find((m) => m.bindIndex === i && m.characterName === "None");
+  const keyOf = (m: Mapping | Axis | undefined): ValKey | null =>
+    m ? { key: m.key, shift: "shift" in m && m.shift, ctrl: "ctrl" in m && m.ctrl, alt: "alt" in m && m.alt } : null;
+  const comboOf = (m: Mapping | Axis) => `${"ctrl" in m && m.ctrl}${"alt" in m && m.alt}${"shift" in m && m.shift}${m.key}`;
+
+  const rows = $derived([
+    ...new Set([
+      ...VAL_ACTIONS.map((a) => a.id),
+      ...(doc?.actionMappings ?? []).filter((m) => m.characterName === "None").map((m) => m.name),
+    ]),
+  ]);
   // Actions connues (même sans liaison) + celles présentes dans le fichier, par groupe.
   const groups = $derived.by(() => {
     const words = q.trim().toLowerCase();
-    const names = [...new Set([...VAL_ACTIONS.map((a) => a.id), ...mappings.filter((m) => m.characterName === "None").map((m) => m.name)])];
     const by = new Map<string, string[]>();
-    for (const n of names) {
+    for (const n of rows) {
       if (words && !actionLabel(VAL_ACTIONS, n, i18n.lang).toLowerCase().includes(words) && !n.toLowerCase().includes(words)) continue;
       const g = VAL_ACTIONS.find((a) => a.id === n)?.group ?? "other";
       by.set(g, [...(by.get(g) ?? []), n]);
@@ -52,29 +82,30 @@
     return [...VAL_GROUPS, "other"].filter((g) => by.has(g)).map((g) => ({ g, names: by.get(g)! }));
   });
 
+  // Conflits : même touche sur deux lignes différentes (les copies par agent ne comptent pas).
   const conflicts = $derived.by(() => {
     const count = new Map<string, number>();
-    for (const m of mappings) {
-      const k = `${m.ctrl}${m.alt}${m.shift}${m.key}`;
-      count.set(k, (count.get(k) ?? 0) + 1);
+    for (const m of [...(doc?.actionMappings ?? []), ...(doc?.axisMappings ?? [])]) {
+      if (m.characterName !== "None" || m.key === "None") continue;
+      count.set(comboOf(m), (count.get(comboOf(m)) ?? 0) + 1);
     }
     return count;
   });
 
-  const slot = (name: string, i: number) => mappings.find((m) => m.name === name && m.bindIndex === i && m.characterName === "None");
-  const keyOf = (m: Mapping | undefined): ValKey | null => (m ? { key: m.key, shift: m.shift, ctrl: m.ctrl, alt: m.alt } : null);
-
-  function setKey(name: string, i: number, v: ValKey | null) {
+  /** Change une liaison partout où elle existe (y compris les copies par agent). */
+  function setKey(row: string, i: number, v: ValKey | null) {
     if (!doc) return;
-    doc.actionMappings ??= [];
-    const list = doc.actionMappings;
-    const at = list.findIndex((m) => m.name === name && m.bindIndex === i && m.characterName === "None");
+    const ax = axisOf(row);
+    const list = (ax ? (doc.axisMappings ??= []) : (doc.actionMappings ??= [])) as (Mapping | Axis)[];
+    const same = entries(row).filter((m) => m.bindIndex === i);
     if (!v) {
-      if (at >= 0) list.splice(at, 1);
-    } else if (at >= 0) {
-      Object.assign(list[at], { key: v.key, shift: v.shift, ctrl: v.ctrl, alt: v.alt });
+      for (const m of same) list.splice(list.indexOf(m), 1);
+    } else if (same.length) {
+      for (const m of same) Object.assign(m, ax ? { key: v.key } : { key: v.key, shift: v.shift, ctrl: v.ctrl, alt: v.alt });
+    } else if (ax) {
+      list.push({ name: ax.name, characterName: "None", bindIndex: i, key: v.key, scale: ax.scale });
     } else {
-      list.push({ name, characterName: "None", bindIndex: i, key: v.key, shift: v.shift, ctrl: v.ctrl, alt: v.alt, cmd: false, tapHoldType: "None" });
+      list.push({ name: row, characterName: "None", bindIndex: i, key: v.key, shift: v.shift, ctrl: v.ctrl, alt: v.alt, cmd: false, tapHoldType: "None" });
     }
     commit();
   }
@@ -103,7 +134,7 @@
                 <KeyCapture
                   mode="val"
                   valKey={keyOf(m)}
-                  conflict={!!m && m.key !== "None" && (conflicts.get(`${m.ctrl}${m.alt}${m.shift}${m.key}`) ?? 0) > 1}
+                  conflict={!!m && (conflicts.get(comboOf(m)) ?? 0) > 1}
                   onval={(v) => setKey(name, i, v)}
                 />
               {/each}
