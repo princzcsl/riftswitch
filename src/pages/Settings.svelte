@@ -288,7 +288,7 @@
               <strong>{sch.time} · {accountName(sch.accountId)} · {t(`games.short_${sch.game}`)}</strong>
               <p>{sch.days.length === 7 ? t("schedule.everyDay") : DAYS.filter((d) => sch.days.includes(d)).map(dayName).join(", ")}{sch.offline ? ` · ${t("schedule.ghost")}` : ""}</p>
             </div>
-            <button class="btn sm ghost" title={t("schedule.remove")} onclick={() => patchSchedule(sch.id, null)}><Icon name="trash" size={14} /></button>
+            <button class="btn sm ghost" aria-label={t("schedule.remove")} onclick={() => patchSchedule(sch.id, null)}><Icon name="trash" size={14} /></button>
             <Toggle checked={sch.enabled} onchange={(v) => patchSchedule(sch.id, { enabled: v })} />
           </div>
         {:else}

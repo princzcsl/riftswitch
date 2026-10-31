@@ -27,7 +27,7 @@
 
 <ContextMenu bind:open {x} {y} {fromBottom}>
   {#each STATUSES as s}
-    <button class="menu-item" onclick={() => pick(s)} title={s === "away" ? t("chatStatus.awayHint") : undefined}>
+    <button class="menu-item" onclick={() => pick(s)} aria-label={s === "away" ? t("chatStatus.awayHint") : undefined}>
       <span class="status-dot {s}"></span>
       <span class="grow">{t(`chatStatus.${s}`)}</span>
       {#if app.status.chatStatus === s}<Icon name="check" size={14} />{/if}

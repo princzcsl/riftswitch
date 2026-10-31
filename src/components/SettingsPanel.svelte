@@ -14,6 +14,7 @@
     advanced,
     numericBools = true,
     search = true,
+    missing,
     onchange,
   }: {
     doc: IniDoc;
@@ -23,6 +24,8 @@
     /** 0 / 1 lus comme des cases à cocher dans « Avancé » (LoL ; VALORANT écrit True / False). */
     numericBools?: boolean;
     search?: boolean;
+    /** VALORANT : section où ajouter un réglage absent du fichier (le jeu n'écrit que les valeurs modifiées). */
+    missing?: string;
     onchange?: () => void;
   } = $props();
 
@@ -38,6 +41,17 @@
     return null;
   }
   const val = (p: Pos) => doc.sections[p.si].entries[p.ei][1];
+  const CAN_ADD = ["bool", "select", "number"];
+  /** Ajoute un réglage absent, avec le nom complet attendu par VALORANT. */
+  function add(f: Field, v: string) {
+    if (!missing || v === "") return;
+    const type = f.vt ?? (f.kind === "bool" ? "Bool" : f.kind === "select" ? "Int" : "Float");
+    let si = doc.sections.findIndex((s) => s.name === missing);
+    if (si < 0) si = doc.sections.push({ name: missing, entries: [] }) - 1;
+    doc.sections[si].entries.push([`EAres${type}SettingName::${f.key}`, v]);
+    onchange?.();
+  }
+
   function write(p: Pos, v: string) {
     doc.sections[p.si].entries[p.ei][1] = v;
     onchange?.();
@@ -78,7 +92,7 @@
         id: g.id,
         fields: g.fields
           .map((f) => ({ f, pos: f.kind === "mapSkins" ? null : find(f.key) }))
-          .filter(({ f, pos }) => (f.kind === "mapSkins" ? mapSkins.length > 0 : !!pos))
+          .filter(({ f, pos }) => (f.kind === "mapSkins" ? mapSkins.length > 0 : !!pos || (!!missing && CAN_ADD.includes(f.kind))))
           .filter(({ f }) => !q || label(f).toLowerCase().includes(q.toLowerCase())),
       }))
       .filter((g) => g.fields.length),
@@ -102,14 +116,14 @@
               <Toggle checked={mapSkins.every((e) => doc.sections[e.si].entries[e.ei][1] === "0")} onchange={setMapSkins} />
             {:else if pos}
               {@const v = val(pos)}
-              <span class="k" title={f.key}>{label(f)}</span>
+              <span class="k">{label(f)}</span>
               {#if f.kind === "bool"}
                 <Toggle checked={isOn(v)} onchange={(on) => write(pos, boolText(v, on))} />
               {:else if f.kind === "slider"}
                 {@const mute = f.mute ? find(f.mute) : null}
                 {@const muted = !!mute && isOn(val(mute))}
                 {#if mute}
-                  <button class="mute" class:muted title={t("cfgk.Mute")} onclick={() => write(mute, boolText(val(mute), !muted))}>
+                  <button class="mute" class:muted aria-label={t("cfgk.Mute")} onclick={() => write(mute, boolText(val(mute), !muted))}>
                     {t("cfgk.MuteShort")}
                   </button>
                 {/if}
@@ -141,6 +155,21 @@
                   value={shown(f, Number(v))}
                   onchange={(e) => write(pos, f.step && f.step < 1 ? e.currentTarget.value : numText(v, Number(e.currentTarget.value)))}
                 />
+              {/if}
+            {:else}
+              <span class="k">{label(f)}</span>
+              {#if f.kind === "number"}
+                <input class="input v" type="number" step={f.step ?? 1} placeholder={t("cfgopt.default")} onchange={(e) => add(f, e.currentTarget.value)} />
+              {:else}
+                <select class="input sel default" value="" onchange={(e) => add(f, e.currentTarget.value)}>
+                  <option value="">{t("cfgopt.default")}</option>
+                  {#if f.kind === "bool"}
+                    <option value="True">{t("cfgopt.on")}</option>
+                    <option value="False">{t("cfgopt.off")}</option>
+                  {:else}
+                    {#each f.options ?? [] as o}<option value={String(o)}>{t(`cfgopt.${f.list}_${o}`)}</option>{/each}
+                  {/if}
+                </select>
               {/if}
             {/if}
           </div>
@@ -222,6 +251,9 @@
   .sel {
     width: 170px;
     height: 30px;
+  }
+  .sel.default {
+    color: var(--text-3);
   }
   .v {
     width: 110px;

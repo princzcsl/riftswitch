@@ -107,13 +107,13 @@
 {/snippet}
 
 <span class="kc">
-  <button type="button" class="slot" class:capturing class:empty={label === "—"} class:conflict onclick={start} title={conflict ? t("keys.conflict") : ""}>
+  <button type="button" class="slot" class:capturing class:empty={label === "—"} class:conflict onclick={start} aria-label={conflict ? t("keys.conflict") : ""}>
     {#each label.split(/(🖱[^\s+]*)/) as part}
       {#if part.startsWith("🖱")}{@render mouse(part.slice(2))}{:else}{part}{/if}
     {/each}
   </button>
   {#if label !== "—" && !capturing}
-    <button type="button" class="clear" title={t("keys.unbind")} aria-label={t("keys.unbind")} onclick={emitUnbind}>×</button>
+    <button type="button" class="clear" aria-label={t("keys.unbind")} onclick={emitUnbind}>×</button>
   {/if}
 </span>
 
@@ -124,16 +124,18 @@
   }
   .clear {
     position: absolute;
-    top: 50%;
-    right: 4px;
-    transform: translateY(-50%);
+    top: -7px;
+    right: -7px;
+    display: grid;
+    place-items: center;
     width: 18px;
     height: 18px;
-    border: none;
+    padding: 0;
+    border: 1px solid var(--border);
     border-radius: 50%;
-    background: transparent;
-    color: var(--text-3);
-    font-size: 14px;
+    background: var(--surface-2);
+    color: var(--text-2);
+    font-size: 13px;
     line-height: 1;
     cursor: pointer;
     opacity: 0;
@@ -143,8 +145,9 @@
     opacity: 1;
   }
   .clear:hover {
-    background: var(--surface-2);
-    color: var(--danger);
+    background: var(--danger);
+    border-color: var(--danger);
+    color: #fff;
   }
   .mouse {
     vertical-align: -3px;

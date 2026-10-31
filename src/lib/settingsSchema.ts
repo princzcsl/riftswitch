@@ -15,6 +15,8 @@ export type Field = {
   list?: string;
   /** Libellé `cfgk.<label>` quand la clé seule est ambiguë entre les deux jeux. */
   label?: string;
+  /** Type VALORANT pour ajouter une clé absente (EAres<vt>SettingName::…), sinon déduit du genre. */
+  vt?: "Bool" | "Int" | "Float" | "String";
 };
 export type Group = { id: string; fields: Field[] };
 
@@ -148,7 +150,7 @@ export const VAL_SCHEMA: Record<string, Group[]> = {
     {
       id: "voice",
       fields: [
-        ...bools("VoiceChatEnabled", "PushToTalkEnabled", "VoipDucksMusicVolume"),
+        ...bools("PushToTalkEnabled", "VoipDucksMusicVolume"),
         { key: "PushToTalkKey", kind: "key" },
         { key: "TeamPushToTalkKey", kind: "key" },
         { key: "VoiceVolume", kind: "slider", min: 0, max: 100, step: 1, label: "VoiceChatVolume" },

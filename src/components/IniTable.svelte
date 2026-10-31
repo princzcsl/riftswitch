@@ -65,7 +65,7 @@
     <div class="section-title" style="margin:8px 0 0">{label(name)}</div>
     <div class="table">
       {#each rows as r (`${r.si}:${r.ei}`)}
-        <label class="tr" title={r.k}>
+        <label class="tr">
           <span class="k">{humanize(r.k)}</span>
           {#if Object.prototype.hasOwnProperty.call(BOOLS, r.v) && (numericBools || !/^[01]$/.test(r.v))}
             <input type="checkbox" checked={isOn(r.v)} onchange={() => write(r, BOOLS[r.v])} />

@@ -66,7 +66,7 @@
         <button class="btn ghost icon sm" onclick={() => move(i, 1)} disabled={i === app.folders.length - 1} aria-label="down">
           <Icon name="chevron" size={14} stroke={2} />
         </button>
-        <button class="btn ghost icon sm" onclick={() => remove(f.id)} title={t("common.delete")}><Icon name="trash" size={15} /></button>
+        <button class="btn ghost icon sm" onclick={() => remove(f.id)} aria-label={t("common.delete")}><Icon name="trash" size={15} /></button>
       </div>
     {:else}
       <p class="faint small" style="text-align:center;padding:16px">{t("folders.empty")}</p>

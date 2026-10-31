@@ -10,7 +10,7 @@
   const color = $derived(rank?.tier ? (TIER_COLORS[rank.tier] ?? "#888") : "var(--text-3)");
 </script>
 
-<div class="rank" class:compact title={rank?.tier ? `${rankShort(rank)} · ${rank.lp} LP` : t("ranks.unranked")}>
+<div class="rank" class:compact>
   <GameIcon {game} size={compact ? 14 : 16} />
   {#if hidden}
     <span class="txt faint">•••</span>

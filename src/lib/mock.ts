@@ -253,11 +253,16 @@ const profiles = [
         "WindowsClient/BackupKeybinds.json": JSON.stringify({
           settingsVersion: 15,
           actionMappings: [
-            ["MoveForward", 0, "Z"],
             ["Jump", 0, "SpaceBar"],
             ["Jump", 1, "MouseScrollDown"],
             ["Activate_Ability1", 0, "A"],
-          ].map(([name, bindIndex, key]) => ({ name, characterName: "None", bindIndex, key, shift: false, ctrl: false, alt: false, cmd: false, tapHoldType: "None" })),
+          ].flatMap(([name, bindIndex, key]) =>
+            ["None", "Phoenix"].map((characterName) => ({ name, characterName, bindIndex, key, shift: false, ctrl: false, alt: false, cmd: false, tapHoldType: "None" })),
+          ),
+          axisMappings: [
+            { name: "MoveForward", characterName: "None", bindIndex: 0, key: "Z", scale: 1 },
+            { name: "MoveRight", characterName: "None", bindIndex: 0, key: "Q", scale: -1 },
+          ],
         }),
         "WindowsClient/GameUserSettings.ini":
           "[/Script/ShooterGame.ShooterGameUserSettings]\nDefaultMonitorDeviceID=MONITOR\nbUseVSync=False\nResolutionSizeX=1920\nResolutionSizeY=1080\nLastConfirmedFullscreenMode=0\n",

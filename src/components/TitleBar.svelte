@@ -61,8 +61,7 @@
     {/if}
     {#if status.chatStatus}
       <button
-        class="chip ghost status-chip"
-        title={t("chatStatus.title")}
+        class="chip ghost status-chip" aria-label={t("chatStatus.title")}
         onclick={(e) => {
           const r = e.currentTarget.getBoundingClientRect();
           statusMenu = { open: true, x: r.left, y: r.bottom + 6 };
@@ -78,17 +77,16 @@
   <div class="actions">
     <button
       class="tb-btn"
-      class:active={streamer}
-      title={t("streamer.toggle")}
+      class:active={streamer} aria-label={t("streamer.toggle")}
       onclick={() => app.saveSettings({ streamerMode: !streamer })}
     >
       <Icon name={streamer ? "eyeoff" : "eye"} size={16} />
     </button>
-    <button class="tb-btn" title={t("window.minimize")} onclick={() => win.minimize()}><Icon name="min" size={16} /></button>
-    <button class="tb-btn" title={t("window.maximize")} onclick={() => win.toggleMaximize()}>
+    <button class="tb-btn" aria-label={t("window.minimize")} onclick={() => win.minimize()}><Icon name="min" size={16} /></button>
+    <button class="tb-btn" aria-label={t("window.maximize")} onclick={() => win.toggleMaximize()}>
       <Icon name={maximized ? "restore" : "max"} size={14} />
     </button>
-    <button class="tb-btn close" title={t("window.close")} onclick={() => api.closeWindow()}><Icon name="x" size={16} /></button>
+    <button class="tb-btn close" aria-label={t("window.close")} onclick={() => api.closeWindow()}><Icon name="x" size={16} /></button>
   </div>
 </header>
 

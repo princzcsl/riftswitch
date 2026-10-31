@@ -980,7 +980,7 @@
     "LimitFramerateInBackground": "Limita FPS in background",
     "MaxFramerateInBackground": "FPS max in background",
     "LimitFramerateAlways": "Limita sempre gli FPS",
-    "MaxFramerateAlways": "FPS max",
+    "MaxFramerateAlways": "FPS max (sempre)",
     "PlayerPerfShowFrameRate": "Mostra FPS",
     "PlayerPerfPresetType": "Preimpostazione statistiche"
   },
@@ -1029,7 +1029,10 @@
     "perfStat_1": "Solo testo",
     "perfStat_2": "Solo grafico",
     "perfStat_3": "Testo e grafico",
-    "other": "Valore {v}"
+    "other": "Valore {v}",
+    "default": "Predefinito",
+    "on": "Attivo",
+    "off": "Disattivo"
   },
   "whatsNew": {
     "title": "Novità",

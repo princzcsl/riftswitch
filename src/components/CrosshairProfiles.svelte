@@ -158,7 +158,7 @@
       {@const p = pr.primary}
       {@const color = p.bUseCustomColor ? p.colorCustom : p.color}
       <div class="card" class:on={i === data.currentProfile}>
-        <button class="pick" onclick={() => choose(i)} title={t("configs.crosshairPick")}>
+        <button class="pick" onclick={() => choose(i)} aria-label={t("configs.crosshairPick")}>
           <svg viewBox="0 0 96 96" width="96" height="96" aria-hidden="true">
             <rect width="96" height="96" rx="10" fill="#5b6b78" />
             {#each rects(p) as r}
@@ -171,13 +171,13 @@
               <rect x={r.x} y={r.y} width={r.w} height={r.h} fill={rgba(color, r.o)} />
             {/each}
           </svg>
-          <span class="name ellipsis" title={pr.profileName}>{pr.profileName}</span>
+          <span class="name ellipsis">{pr.profileName}</span>
         </button>
         <div class="actions">
           {#if i === data.currentProfile}<span class="chip accent">{t("configs.crosshairActive")}</span>{/if}
           <span class="spacer"></span>
-          <button class="btn ghost icon sm" title={t("configs.crosshairCopy")} onclick={() => copy(pr)}><Icon name="copy" size={14} /></button>
-          <button class="btn ghost icon sm" title={t("configs.crosshairRemove")} disabled={data.profiles.length < 2} onclick={() => remove(i)}><Icon name="trash" size={14} /></button>
+          <button class="btn ghost icon sm" aria-label={t("configs.crosshairCopy")} onclick={() => copy(pr)}><Icon name="copy" size={14} /></button>
+          <button class="btn ghost icon sm" aria-label={t("configs.crosshairRemove")} disabled={data.profiles.length < 2} onclick={() => remove(i)}><Icon name="trash" size={14} /></button>
         </div>
       </div>
     {/each}

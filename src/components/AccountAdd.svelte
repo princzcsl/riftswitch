@@ -111,7 +111,7 @@
   <div class="add">
     <!-- En-tête : icône + nom + couleurs -->
     <div class="hero">
-      <button class="avatar-btn" onclick={() => (showIcons = !showIcons)} title={t("icon.change")}>
+      <button class="avatar-btn" onclick={() => (showIcons = !showIcons)} aria-label={t("icon.change")}>
         <Avatar icon={form.icon} color={form.color} size={76} label={form.label} />
         <span class="edit-badge"><Icon name="image" size={13} /></span>
       </button>
@@ -121,7 +121,7 @@
           {#each ACCOUNT_COLORS.slice(0, 7) as c}
             <button class="swatch" class:sel={form.color === c} style="background:{c}" onclick={() => (form.color = c)} aria-label={c}></button>
           {/each}
-          <label class="swatch native" style="background:{form.color}" title={t("editor.customColor")}>
+          <label class="swatch native" style="background:{form.color}">
             <Icon name="sparkle" size={13} />
             <input type="color" bind:value={form.color} />
           </label>
@@ -176,7 +176,7 @@
                   <option value={null}>{t("editor.noFolder")}</option>
                   {#each app.folders as f}<option value={f.id}>{f.name}</option>{/each}
                 </select>
-                <button class="btn sm" onclick={() => (creatingFolder = true)} title={t("add.newFolder")}><Icon name="plus" size={15} /></button>
+                <button class="btn sm" onclick={() => (creatingFolder = true)} aria-label={t("add.newFolder")}><Icon name="plus" size={15} /></button>
               </div>
             {/if}
           </div>
@@ -187,7 +187,7 @@
                 <option value="">{t("add.regionAuto")}</option>
                 {#each ["EUW", "EUNE", "NA", "KR", "JP", "BR", "LAN", "LAS", "OCE", "TR", "RU", "ME", "SEA", "TW", "VN"] as r}<option value={r}>{r}</option>{/each}
               </select>
-              <label class="fav-toggle" title={t("editor.favorite")}><Toggle bind:checked={form.favorite} /><Icon name={form.favorite ? "starFill" : "star"} size={16} /></label>
+              <label class="fav-toggle"><Toggle bind:checked={form.favorite} /><Icon name={form.favorite ? "starFill" : "star"} size={16} /></label>
             </div>
           </div>
         </div>

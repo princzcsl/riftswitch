@@ -15,6 +15,7 @@
   import CrosshairProfiles from "../components/CrosshairProfiles.svelte";
   import LolKeybinds from "../components/LolKeybinds.svelte";
   import Modal from "../components/Modal.svelte";
+  import ContextMenu from "../components/ContextMenu.svelte";
   import Popover from "../components/Popover.svelte";
   import SettingsPanel from "../components/SettingsPanel.svelte";
   import ValKeybinds from "../components/ValKeybinds.svelte";
@@ -50,6 +51,15 @@
   let shareMenu = $state(false);
   let moreMenu = $state(false);
   let deleteOpen = $state(false);
+  let ctx = $state({ open: false, x: 0, y: 0 });
+
+  /** Clic droit sur un profil : il est sélectionné, puis le menu propose Dupliquer / Supprimer. */
+  async function openCtx(e: MouseEvent, id: string) {
+    e.preventDefault();
+    const { clientX: x, clientY: y } = e;
+    if (id !== selectedId) await select(id);
+    ctx = { open: true, x, y };
+  }
 
   loadLayout();
 
@@ -332,12 +342,12 @@
     <aside class="list">
       <div class="list-actions">
         <button class="btn primary grow" onclick={openCapture}><Icon name="plus" size={16} />{t("configs.add")}</button>
-        <button class="btn icon" onclick={() => (importOpen = true)} title={t("configs.importTitle")} aria-label={t("configs.importTitle")}><Icon name="upload" size={16} /></button>
+        <button class="btn icon" onclick={() => (importOpen = true)} aria-label={t("configs.importTitle")}><Icon name="upload" size={16} /></button>
       </div>
       {#each list as p (p.id)}
         {@const users = app.accounts.filter((a) => (p.game === "lol" ? a.profiles.lol : a.profiles.val) === p.id)}
         {@const from = app.accounts.find((a) => a.id === p.sourceAccount)}
-        <button class="item glass" class:sel={p.id === selectedId} onclick={() => select(p.id)}>
+        <button class="item glass" class:sel={p.id === selectedId} onclick={() => select(p.id)} oncontextmenu={(e) => openCtx(e, p.id)}>
           <div class="item-head">
             <Avatar
               icon={from?.icon ?? (p.sourceAvatar || undefined)}
@@ -353,12 +363,12 @@
           </div>
           <div class="item-foot">
             {#each normalize({ ...p }).categories as c}
-              <span class="cat-ic" title={t(`configs.cat_${c}`)}><Icon name={CAT_ICONS[c]} size={13} /></span>
+              <span class="cat-ic"><Icon name={CAT_ICONS[c]} size={13} /></span>
             {/each}
             {#if p.source === "backup"}<span class="chip warning">{t("configs.backupChip")}</span>{/if}
             <span class="spacer"></span>
             {#if users.length}
-              <span class="avatars" title={t("configs.usedBy", { n: users.length })}>
+              <span class="avatars">
                 {#each users.slice(0, 4) as u}<Avatar icon={u.icon} autoIconId={u.profileIconId} color={u.color} size={20} label={u.label} />{/each}
                 {#if users.length > 4}<span class="faint small">+{users.length - 4}</span>{/if}
               </span>
@@ -386,7 +396,7 @@
           </Popover>
           <Popover bind:open={moreMenu} width={200}>
             {#snippet trigger()}
-              <button class="btn sm icon" onclick={() => (moreMenu = !moreMenu)} title={t("common.more")}><Icon name="more" /></button>
+              <button class="btn sm icon" onclick={() => (moreMenu = !moreMenu)} aria-label={t("common.more")}><Icon name="more" /></button>
             {/snippet}
             <button class="menu-item" onclick={() => ((moreMenu = false), duplicate())}><Icon name="copy" size={16} />{t("configs.duplicate")}</button>
             <div class="divider"></div>
@@ -449,7 +459,15 @@
                   <SettingsPanel bind:doc={valDocs[VAL_GRAPHICS]} groups={VAL_SCHEMA.graphics} advanced={null} numericBools={false} search={false} onchange={() => valChanged(VAL_GRAPHICS)} />
                 {/if}
                 {#if valDocs[VAL_SETTINGS]}
-                  <SettingsPanel bind:doc={valDocs[VAL_SETTINGS]} groups={VAL_GRAPHICS_USER} advanced={null} numericBools={false} search={false} onchange={() => valChanged(VAL_SETTINGS)} />
+                  <SettingsPanel
+                    bind:doc={valDocs[VAL_SETTINGS]}
+                    groups={VAL_GRAPHICS_USER}
+                    advanced={null}
+                    numericBools={false}
+                    search={false}
+                    missing="Settings"
+                    onchange={() => valChanged(VAL_SETTINGS)}
+                  />
                 {/if}
               </div>
             {:else if draft.val}
@@ -502,7 +520,7 @@
             </button>
           {/each}
           {#each missingVal as a (a.id)}
-            <div class="dir off" title={t("configs.neverInit")}>
+            <div class="dir off">
               <Avatar icon={a.icon} autoIconId={a.profileIconId} color={a.color} size={30} label={a.label} />
               <span class="grow dir-name">
                 <strong class="ellipsis">{nameOf(a)}</strong>
@@ -581,6 +599,12 @@
     <button class="btn primary" onclick={doApply} disabled={busy}><Icon name="play" size={13} />{t("configs.applyNow")}</button>
   {/snippet}
 </Modal>
+
+<ContextMenu bind:open={ctx.open} x={ctx.x} y={ctx.y}>
+  <button class="menu-item" onclick={() => ((ctx.open = false), duplicate())}><Icon name="copy" size={16} />{t("configs.duplicate")}</button>
+  <div class="divider"></div>
+  <button class="menu-item danger" onclick={() => ((ctx.open = false), (deleteOpen = true))}><Icon name="trash" size={16} />{t("common.delete")}</button>
+</ContextMenu>
 
 <Modal bind:open={deleteOpen} title={t("configs.deleteTitle")} width={420}>
   <p>{t("configs.deleteText", { name: draft?.name ?? "" })}</p>

@@ -148,7 +148,7 @@
 
 <Modal bind:open title={account ? t("editor.editTitle") : t("editor.newTitle")} width={680}>
   <div class="head">
-    <button class="avatar-btn" onclick={() => (showIcons = !showIcons)} title={t("icon.change")}>
+    <button class="avatar-btn" onclick={() => (showIcons = !showIcons)} aria-label={t("icon.change")}>
       <Avatar icon={form.icon} color={form.color} size={72} label={form.label} />
       <span class="edit-badge"><Icon name="image" size={13} /></span>
     </button>
@@ -158,7 +158,7 @@
         {#each ACCOUNT_COLORS as c}
           <button class="swatch" class:sel={form.color === c} style="background:{c}" onclick={() => (form.color = c)} aria-label={c}></button>
         {/each}
-        <input type="color" class="swatch native" bind:value={form.color} title={t("editor.customColor")} />
+        <input type="color" class="swatch native" bind:value={form.color} />
       </div>
     </div>
   </div>

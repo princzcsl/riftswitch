@@ -43,11 +43,11 @@
 
   {#if tab === "set"}
     <div class="grid">
-      <button class="cell auto" class:sel={value === "auto" || !value} onclick={() => (value = "auto")} title={t("icon.autoHint")}>
+      <button class="cell auto" class:sel={value === "auto" || !value} onclick={() => (value = "auto")} aria-label={t("icon.autoHint")}>
         <div class="auto-badge" style="--c:{color}">{t("icon.autoShort")}</div>
       </button>
       {#if profileIconId}
-        <button class="cell" class:sel={value === `profile:${profileIconId}`} onclick={() => (value = `profile:${profileIconId}`)} title={t("icon.summoner")}>
+        <button class="cell" class:sel={value === `profile:${profileIconId}`} onclick={() => (value = `profile:${profileIconId}`)} aria-label={t("icon.summoner")}>
           <Avatar icon={`profile:${profileIconId}`} {color} size={46} />
         </button>
       {/if}
@@ -62,7 +62,7 @@
     <input class="input" placeholder={t("common.search")} bind:value={q} />
     <div class="grid champs">
       {#each filtered as c (c.id)}
-        <button class="cell" class:sel={value === `champ:${c.id}`} onclick={() => (value = `champ:${c.id}`)} title={c.name}>
+        <button class="cell" class:sel={value === `champ:${c.id}`} onclick={() => (value = `champ:${c.id}`)} aria-label={c.name}>
           {#if app.ddVersion}<img src={championIcon(app.ddVersion, c.id)} alt={c.name} loading="lazy" />{/if}
         </button>
       {:else}
@@ -74,7 +74,7 @@
     <input class="input" placeholder={t("common.search")} bind:value={q} />
     <div class="grid champs">
       {#each filteredAgents as a (a.uuid)}
-        <button class="cell" class:sel={value === `agent:${a.uuid}`} onclick={() => (value = `agent:${a.uuid}`)} title={a.name}>
+        <button class="cell" class:sel={value === `agent:${a.uuid}`} onclick={() => (value = `agent:${a.uuid}`)} aria-label={a.name}>
           <img src={a.icon} alt={a.name} loading="lazy" />
         </button>
       {:else}

@@ -102,7 +102,7 @@
     {#if kind === "lib" && p.sourceAccount}
       {@const src = app.accounts.find((a) => a.id === p.sourceAccount)}
       {#if src}
-        <span class="source faint small" title={t("runes.source")}>
+        <span class="source faint small">
           <span class="dot" style="background:{src.color}"></span>{src.label || src.gameName}
         </span>
       {/if}
@@ -110,7 +110,7 @@
     <div class="perks">
       {#each p.selectedPerkIds.slice(0, 6) as id, i}
         {@const r = perk(id)}
-        {#if r}<img class="perk" class:key={i === 0} src={runeIcon(r.icon)} alt={r.name} title={r.name} />{:else}<span class="perk ph"></span>{/if}
+        {#if r}<img class="perk" class:key={i === 0} src={runeIcon(r.icon)} alt={r.name} />{:else}<span class="perk ph"></span>{/if}
       {/each}
     </div>
     <div class="row actions">
@@ -119,8 +119,8 @@
       {:else}
         <button class="btn sm primary" onclick={() => push(p)} disabled={!!clientError}><Icon name="upload" size={14} />{t("runes.push")}</button>
       {/if}
-      <button class="btn sm ghost" onclick={() => share(p)} title={t("runes.copyCode")}><Icon name="copy" size={14} /></button>
-      {#if kind === "lib"}<button class="btn sm ghost" onclick={() => remove(p)} title={t("common.delete")}><Icon name="trash" size={14} /></button>{/if}
+      <button class="btn sm ghost" onclick={() => share(p)} aria-label={t("runes.copyCode")}><Icon name="copy" size={14} /></button>
+      {#if kind === "lib"}<button class="btn sm ghost" onclick={() => remove(p)} aria-label={t("common.delete")}><Icon name="trash" size={14} /></button>{/if}
     </div>
   </div>
 {/snippet}
