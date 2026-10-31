@@ -41,6 +41,13 @@
     return null;
   }
   const val = (p: Pos) => doc.sections[p.si].entries[p.ei][1];
+  /** Champs numériques : chiffres et un seul point décimal, sans signe ni lettre. */
+  function digitsOnly(e: Event & { currentTarget: HTMLInputElement }) {
+    const el = e.currentTarget;
+    const clean = el.value.replace(",", ".").replace(/[^0-9.]/g, "").replace(/(\.\d*)\./g, "$1");
+    if (clean !== el.value) el.value = clean;
+  }
+
   const CAN_ADD = ["bool", "select", "number"];
   /** Ajoute un réglage absent, avec le nom complet attendu par VALORANT. */
   function add(f: Field, v: string) {
@@ -150,8 +157,8 @@
               {:else}
                 <input
                   class="input v"
-                  type="number"
-                  step={f.step ?? 1}
+                  inputmode="decimal"
+                  oninput={digitsOnly}
                   value={shown(f, Number(v))}
                   onchange={(e) => write(pos, f.step && f.step < 1 ? e.currentTarget.value : numText(v, Number(e.currentTarget.value)))}
                 />
@@ -159,7 +166,7 @@
             {:else}
               <span class="k">{label(f)}</span>
               {#if f.kind === "number"}
-                <input class="input v" type="number" step={f.step ?? 1} placeholder={t("cfgopt.default")} onchange={(e) => add(f, e.currentTarget.value)} />
+                <input class="input v" inputmode="decimal" oninput={digitsOnly} placeholder={t("cfgopt.default")} onchange={(e) => add(f, e.currentTarget.value)} />
               {:else}
                 <select class="input sel default" value="" onchange={(e) => add(f, e.currentTarget.value)}>
                   <option value="">{t("cfgopt.default")}</option>

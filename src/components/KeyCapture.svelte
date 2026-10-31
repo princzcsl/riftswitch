@@ -113,7 +113,9 @@
     {/each}
   </button>
   {#if label !== "—" && !capturing}
-    <button type="button" class="clear" aria-label={t("keys.unbind")} onclick={emitUnbind}>×</button>
+    <button type="button" class="clear" aria-label={t("keys.unbind")} onclick={emitUnbind}>
+      <svg viewBox="0 0 10 10" width="8" height="8" aria-hidden="true"><path d="M1 1l8 8M9 1l-8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" /></svg>
+    </button>
   {/if}
 </span>
 
@@ -124,19 +126,18 @@
   }
   .clear {
     position: absolute;
-    top: -7px;
-    right: -7px;
+    top: 50%;
+    right: 4px;
+    transform: translateY(-50%);
     display: grid;
     place-items: center;
     width: 18px;
     height: 18px;
     padding: 0;
-    border: 1px solid var(--border);
+    border: none;
     border-radius: 50%;
-    background: var(--surface-2);
-    color: var(--text-2);
-    font-size: 13px;
-    line-height: 1;
+    background: transparent;
+    color: var(--text-3);
     cursor: pointer;
     opacity: 0;
     transition: opacity 0.15s;
@@ -145,9 +146,8 @@
     opacity: 1;
   }
   .clear:hover {
-    background: var(--danger);
-    border-color: var(--danger);
-    color: #fff;
+    background: var(--surface-2);
+    color: var(--danger);
   }
   .mouse {
     vertical-align: -3px;

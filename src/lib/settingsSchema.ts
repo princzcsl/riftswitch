@@ -187,12 +187,7 @@ export const VAL_GRAPHICS_USER: Group[] = [
   {
     id: "fps",
     fields: [
-      ...[
-        ["LimitFramerateOnBattery", "MaxFramerateOnBattery"],
-        ["LimitFramerateInMenu", "MaxFramerateInMenu"],
-        ["LimitFramerateInBackground", "MaxFramerateInBackground"],
-        ["LimitFramerateAlways", "MaxFramerateAlways"],
-      ].flatMap(([on, max]): Field[] => [{ key: on, kind: "bool" }, { key: max, kind: "number" }]),
+      ...bools("LimitFramerateOnBattery", "LimitFramerateInMenu", "LimitFramerateInBackground", "LimitFramerateAlways"),
     ],
   },
   {
